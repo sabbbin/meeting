@@ -5,6 +5,7 @@ import {
     getCoreRowModel,
     useReactTable,
 } from '@tanstack/react-table';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { ReactNode, useState } from "react";
 
 export interface IAgenda {
@@ -42,7 +43,7 @@ const defaultData: IAgenda[] = [
         email: 'abc@gmail.com',
         description: 'This is a dummy disc',
         postedBy: 'Hari',
-        postedOn: '1914/6/10'
+        postedOn: '1914/6/6'
     },
     {
         agenda: 'This is a dummy agenda 3',
@@ -54,42 +55,46 @@ const defaultData: IAgenda[] = [
     },
 ]
 
-const columns = [
-    columnHelper.accessor('agenda', {
-        header: "Agenda",
-        cell: info => info.getValue(),
-        footer: info => info.column.id,
-    }),
-    columnHelper.accessor('meetType', {
-        header: "MeetType",
-        cell: info => info.getValue(),
-        footer: info => info.column.id,
-    }),
-    columnHelper.accessor(row => row.email, {
-        header: "Email",
-        cell: info => info.getValue(),
-        footer: info => info.column.id,
-    }),
-    columnHelper.accessor(row => row.description, {
-        header: "Description",
-        cell: info => info.getValue(),
-        footer: info => info.column.id,
-    }),
-    columnHelper.accessor(row => row.postedBy, {
-        header: "Posted By",
-        cell: info => info.getValue(),
-        footer: info => info.column.id,
-    }),
-    columnHelper.accessor(row => row.postedOn, {
-        header: "Posted On",
-        cell: info => info.getValue(),
-        footer: info => info.column.id,
-    }),
-
-]
-
 
 export default function AgendaTable() {
+
+    const columns = [
+        columnHelper.accessor('agenda', {
+            header: "Agenda",
+            cell: info => info.getValue(),
+            footer: info => info.column.id,
+        }),
+        columnHelper.accessor('meetType', {
+            header: "MeetType",
+            cell: info => info.getValue(),
+            footer: info => info.column.id,
+        }),
+        columnHelper.accessor(row => row.email, {
+            header: "Email",
+            cell: info => info.getValue(),
+            footer: info => info.column.id,
+        }),
+        columnHelper.accessor(row => row.description, {
+            header: "Description",
+            cell: info => info.getValue(),
+            footer: info => info.column.id,
+        }),
+        columnHelper.accessor(row => row.postedBy, {
+            header: "Posted By",
+            cell: info => info.getValue(),
+            footer: info => info.column.id,
+        }),
+        columnHelper.accessor(row => row.postedOn, {
+            header: "Posted On",
+            cell: info => info.getValue(),
+            footer: info => info.column.id,
+        }),
+        // columnHelper.display({
+        //     header: 'Actions',
+        //     cell: () => <MoreVertIcon />,
+        // }),
+    ]
+
 
     const table = useReactTable({
         data: defaultData,

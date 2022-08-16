@@ -1,11 +1,15 @@
-import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Toolbar } from "@mui/material";
+import { Fab, IconButton, Menu, MenuItem, MenuList, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Toolbar } from "@mui/material";
 import {
     createColumnHelper,
     flexRender,
     getCoreRowModel,
     useReactTable,
 } from '@tanstack/react-table';
-import { useState } from "react";
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { MouseEvent, useMemo, useState } from "react";
+import useUsers from "../hooks/useUsers";
+import usePagination from "@mui/material/usePagination/usePagination";
+import { Add } from "@mui/icons-material";
 
 export interface IUser {
     username: string,
@@ -41,7 +45,7 @@ const defaultData: IUser[] = [
         email: 'madhav@gmail.com',
         fullName: 'maya dov  bro',
         status: 'Active',
-        createdBy: 'raj',
+        createdBy: 'myaj',
         createdOn: 'april 2 2022'
     },
     {
@@ -54,47 +58,69 @@ const defaultData: IUser[] = [
     }
 ]
 
-const columns = [
-    columnHelper.accessor('username', {
-        header: "Username",
-        cell: info => info.getValue(),
-        footer: info => info.column.id,
-    }),
-    columnHelper.accessor('fullName', {
-        header: "Full Name",
-        cell: info => info.getValue(),
-        footer: info => info.column.id,
-    }),
-    columnHelper.accessor(row => row.email, {
-        header: "Email",
-        cell: info => info.getValue(),
-        footer: info => info.column.id,
-    }),
-    columnHelper.accessor(row => row.status, {
-        header: "Status",
-        cell: info => info.getValue(),
-        footer: info => info.column.id,
-    }),
-    columnHelper.accessor(row => row.createdBy, {
-        header: "Created By",
-        cell: info => info.getValue(),
-        footer: info => info.column.id,
-    }),
-    columnHelper.accessor(row => row.createdOn, {
-        header: "Created On",
-        cell: info => info.getValue(),
-        footer: info => info.column.id,
-    }),
-
-]
-
 
 export default function UserTable() {
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const open = Boolean(anchorEl);
+    const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+
+    const columns = useMemo(() =>
+        [
+            columnHelper.accessor('username', {
+                header: "Username",
+                cell: info => info.getValue(),
+                footer: info => info.column.id,
+            }),
+            columnHelper.accessor('fullName', {
+                header: "Full Name",
+                cell: info => info.getValue(),
+                footer: info => info.column.id,
+            }),
+            columnHelper.accessor(row => row.email, {
+                header: "Email",
+                cell: info => info.getValue(),
+                footer: info => info.column.id,
+            }),
+            columnHelper.accessor(row => row.status, {
+                header: "Status",
+                cell: info => info.getValue(),
+                footer: info => info.column.id,
+            }),
+            columnHelper.accessor(row => row.createdBy, {
+                header: "Created By",
+                cell: info => info.getValue(),
+                footer: info => info.column.id,
+            }),
+            columnHelper.accessor(row => row.createdOn, {
+                header: "Created On",
+                cell: info => info.getValue(),
+                footer: info => info.column.id,
+            }),
+            columnHelper.display({
+                header: 'Actions',
+                cell: () => <IconButton
+                    onClick={handleClick}>
+                    <MoreVertIcon />
+                </IconButton>,
+            }),
+        ],
+        ([]))
+
+
+    const { data } = useUsers();
 
     const table = useReactTable({
         data: defaultData,
         columns,
-        getCoreRowModel: getCoreRowModel()
+        getCoreRowModel: getCoreRowModel(),
+
     });
 
     return (
@@ -132,6 +158,21 @@ export default function UserTable() {
                         ))}
                     </TableBody>
                 </Table>
+                <Fab
+                    size='small'
+                    color='primary'
+                    aria-label='add'
+                    style={{ position: 'fixed', bottom: '32px', right: '32px' }}
+                    onClick={() => {
+                        setIsDialogOpen(true);
+
+                    }}>
+                    <Add />
+                </Fab>
+                <Menu open={open} anchorEl={anchorEl} onClose={handleClose}>
+                    <MenuItem>Edit</MenuItem>
+                    <MenuItem>Delete</MenuItem>
+                </Menu>
             </TableContainer>
         </>
     )
