@@ -5,63 +5,63 @@ import {
     getCoreRowModel,
     useReactTable,
 } from '@tanstack/react-table';
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 
-export interface IUser {
-    username: string,
-    fullName: string,
+export interface IAgenda {
+    agenda: string,
+    meetType: number,
     email: string,
-    status: string,
-    createdBy: string,
-    createdOn: string
+    description: string,
+    postedBy: string,
+    postedOn: string
 
 };
 
-const columnHelper = createColumnHelper<IUser>()
+const columnHelper = createColumnHelper<IAgenda>()
 
-const defaultData: IUser[] = [
+const defaultData: IAgenda[] = [
     {
-        username: 'hemraj',
-        fullName: 'Hyam ryaj bro',
-        email: 'dangalsushant@gmail.com',
-        status: 'Active',
-        createdBy: 'raj',
-        createdOn: 'april 4 2022',
+        agenda: 'This is a dummy agenda 0',
+        meetType: 0,
+        email: 'abc@gmail.com',
+        description: 'This is a dummy disc',
+        postedBy: 'Ram',
+        postedOn: '1914/6/9'
     },
     {
-        username: 'yadav',
-        fullName: 'wyadov  bro',
-        email: 'yadav@gmail.com',
-        status: 'Active',
-        createdBy: 'yaj',
-        createdOn: 'april 3 2022'
+        agenda: 'This is a dummy agenda 1',
+        meetType: 1,
+        email: 'abc@gmail.com',
+        description: 'This is a dummy disc',
+        postedBy: 'Shyam',
+        postedOn: '1914/6/8'
     },
     {
-        username: 'madhav',
-        email: 'madhav@gmail.com',
-        fullName: 'maya dov  bro',
-        status: 'Active',
-        createdBy: 'raj',
-        createdOn: 'april 2 2022'
+        agenda: 'This is a dummy agenda 2',
+        meetType: 2,
+        email: 'abc@gmail.com',
+        description: 'This is a dummy disc',
+        postedBy: 'Hari',
+        postedOn: '1914/6/10'
     },
     {
-        username: 'padhav',
-        email: 'padhav@gmail.com',
-        fullName: 'paya dov bro',
-        status: 'Active',
-        createdBy: 'pyaj',
-        createdOn: 'april 1 2022'
-    }
+        agenda: 'This is a dummy agenda 3',
+        meetType: 3,
+        email: 'abc@gmail.com',
+        description: 'This is a dummy disc',
+        postedBy: 'Puri',
+        postedOn: '1914/6/5'
+    },
 ]
 
 const columns = [
-    columnHelper.accessor('username', {
-        header: "Username",
+    columnHelper.accessor('agenda', {
+        header: "Agenda",
         cell: info => info.getValue(),
         footer: info => info.column.id,
     }),
-    columnHelper.accessor('fullName', {
-        header: "Full Name",
+    columnHelper.accessor('meetType', {
+        header: "MeetType",
         cell: info => info.getValue(),
         footer: info => info.column.id,
     }),
@@ -70,18 +70,18 @@ const columns = [
         cell: info => info.getValue(),
         footer: info => info.column.id,
     }),
-    columnHelper.accessor(row => row.status, {
-        header: "Status",
+    columnHelper.accessor(row => row.description, {
+        header: "Description",
         cell: info => info.getValue(),
         footer: info => info.column.id,
     }),
-    columnHelper.accessor(row => row.createdBy, {
-        header: "Created By",
+    columnHelper.accessor(row => row.postedBy, {
+        header: "Posted By",
         cell: info => info.getValue(),
         footer: info => info.column.id,
     }),
-    columnHelper.accessor(row => row.createdOn, {
-        header: "Created On",
+    columnHelper.accessor(row => row.postedOn, {
+        header: "Posted On",
         cell: info => info.getValue(),
         footer: info => info.column.id,
     }),
@@ -89,7 +89,7 @@ const columns = [
 ]
 
 
-export default function User() {
+export default function AgendaTable() {
 
     const table = useReactTable({
         data: defaultData,
@@ -106,7 +106,9 @@ export default function User() {
                         {table.getHeaderGroups().map(headerGroup => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map(header => (
-                                    <TableCell key={header.id}>
+                                    <TableCell sx={{
+                                        fontWeight: '600'
+                                    }} key={header.id}>
                                         {header.isPlaceholder
                                             ? null
                                             : flexRender(

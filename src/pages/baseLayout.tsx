@@ -115,9 +115,9 @@ export default function BaseLayout() {
       label: 'Agenda',
       icon: <CalendarMonth />,
       role: [Roles.ADMIN],
-      // onClick: () => {
-      //   navigate('./user');
-      // },
+      onClick: () => {
+        navigate('./agendaTable');
+      },
     }
   ]
 
