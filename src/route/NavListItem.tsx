@@ -1,7 +1,7 @@
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { Collapse, Divider, List, ListItem, ListItemIcon, ListItemText } from "@mui/material";
 import { ReactNode, useState } from "react";
-import { Roles } from "../pages/roles";
+import { Roles } from "../roles/roles";
 
 
 interface INavListProps {

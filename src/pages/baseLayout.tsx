@@ -14,7 +14,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import GroupIcon from '@mui/icons-material/Group';
 import { useNavigate } from "react-router-dom";
 import { Outlet } from 'react-router-dom';
-import { Roles } from './roles';
+import { Roles } from '../roles/roles';
 import Navlist from '../route/NavListItem';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import { CalendarMonth } from '@mui/icons-material';
