@@ -15,10 +15,10 @@ export interface IUser {
     username: string,
     fullName: string,
     email: string,
+    role: string,
     status: string,
     createdBy: string,
     createdOn: string
-
 };
 
 const columnHelper = createColumnHelper<IUser>()
@@ -31,6 +31,7 @@ const defaultData: IUser[] = [
         status: 'Active',
         createdBy: 'raj',
         createdOn: 'april 4 2022',
+        role: 'admin',
     },
     {
         username: 'yadav',
@@ -38,7 +39,8 @@ const defaultData: IUser[] = [
         email: 'yadav@gmail.com',
         status: 'Active',
         createdBy: 'yaj',
-        createdOn: 'april 3 2022'
+        createdOn: 'april 3 2022',
+        role: 'admin',
     },
     {
         username: 'madhav',
@@ -46,7 +48,8 @@ const defaultData: IUser[] = [
         fullName: 'maya dov  bro',
         status: 'Active',
         createdBy: 'myaj',
-        createdOn: 'april 2 2022'
+        createdOn: 'april 2 2022',
+        role: 'admin',
     },
     {
         username: 'padhav',
@@ -54,7 +57,8 @@ const defaultData: IUser[] = [
         fullName: 'paya dov bro',
         status: 'Active',
         createdBy: 'pyaj',
-        createdOn: 'april 1 2022'
+        createdOn: 'april 1 2022',
+        role: 'admin',
     }
 ]
 
@@ -83,8 +87,14 @@ export default function UserTable() {
                 cell: info => info.getValue(),
                 footer: info => info.column.id,
             }),
+
             columnHelper.accessor(row => row.email, {
                 header: "Email",
+                cell: info => info.getValue(),
+                footer: info => info.column.id,
+            }),
+            columnHelper.accessor('role', {
+                header: "Role",
                 cell: info => info.getValue(),
                 footer: info => info.column.id,
             }),
@@ -172,6 +182,7 @@ export default function UserTable() {
                 <Menu open={open} anchorEl={anchorEl} onClose={handleClose}>
                     <MenuItem>Edit</MenuItem>
                     <MenuItem>Delete</MenuItem>
+                    <MenuItem>Change Status</MenuItem>
                 </Menu>
             </TableContainer>
         </>
