@@ -1,4 +1,4 @@
-import { Fab, IconButton, Menu, MenuItem, MenuList, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Toolbar } from "@mui/material";
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Fab, IconButton, Menu, MenuItem, MenuList, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Toolbar } from "@mui/material";
 import {
     createColumnHelper,
     flexRender,
@@ -25,8 +25,8 @@ const columnHelper = createColumnHelper<IUser>()
 
 const defaultData: IUser[] = [
     {
-        username: 'hemraj',
-        fullName: 'Hyam ryaj bro',
+        username: 'Jadhav',
+        fullName: 'jyaa dyab bro',
         email: 'dangalsushant@gmail.com',
         status: 'Active',
         createdBy: 'raj',
@@ -66,13 +66,24 @@ const defaultData: IUser[] = [
 export default function UserTable() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const open = Boolean(anchorEl);
-    const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+    const openMenu = Boolean(anchorEl);
+    const handleClickColumn = (event: MouseEvent<HTMLButtonElement>) => {
         setAnchorEl(event.currentTarget);
     };
-    const handleClose = () => {
+    const handleCloseMenu = () => {
         setAnchorEl(null);
     };
+
+    const [open, setOpen] = useState(false);
+
+    const handleClickOpen = () => {
+        setOpen(true);
+    };
+
+    const handleClose = () => {
+        setOpen(false);
+    };
+
 
 
     const columns = useMemo(() =>
@@ -116,7 +127,7 @@ export default function UserTable() {
             columnHelper.display({
                 header: 'Actions',
                 cell: () => <IconButton
-                    onClick={handleClick}>
+                    onClick={handleClickColumn}>
                     <MoreVertIcon />
                 </IconButton>,
             }),
@@ -136,7 +147,65 @@ export default function UserTable() {
     return (
         <>
             <Toolbar />
-            <TableContainer sx={{ minWidth: 1000 }} component={Paper} >
+            <Button variant="contained" onClick={handleClickOpen}>
+                Add User
+            </Button>
+            <Dialog open={open} onClose={handleClose}>
+                <DialogTitle>Add user to Channakya-Meetings</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        id="name"
+                        label="Username"
+                        type="Username"
+                        fullWidth
+                        variant="standard"
+                    />
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        id="name"
+                        label="Email Address"
+                        type="email"
+                        fullWidth
+                        variant="standard"
+                    />
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        id="name"
+                        label="Full Name"
+                        type="name"
+                        fullWidth
+                        variant="standard"
+                    />
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        id="Password"
+                        label="Password"
+                        type="Password"
+                        fullWidth
+                        variant="standard"
+                    />
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        id="Password"
+                        label="Confirm Password"
+                        type="Password"
+                        fullWidth
+                        variant="standard"
+                    />
+
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleClose}>Cancel</Button>
+                    <Button onClick={handleClose}>Add user</Button>
+                </DialogActions>
+            </Dialog>
+            <TableContainer sx={{ minWidth: 1000, margin: '1' }} component={Paper} >
                 <Table>
                     <TableHead>
                         {table.getHeaderGroups().map(headerGroup => (
@@ -168,23 +237,12 @@ export default function UserTable() {
                         ))}
                     </TableBody>
                 </Table>
-                <Fab
-                    size='small'
-                    color='primary'
-                    aria-label='add'
-                    style={{ position: 'fixed', bottom: '32px', right: '32px' }}
-                    onClick={() => {
-                        setIsDialogOpen(true);
 
-                    }}>
-                    <Add />
-                </Fab>
-                <Menu open={open} anchorEl={anchorEl} onClose={handleClose}>
+                <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
                     <MenuItem>Edit</MenuItem>
                     <MenuItem>Delete</MenuItem>
                     <MenuItem>Change Status</MenuItem>
                 </Menu>
             </TableContainer>
-        </>
-    )
+        </>)
 }
