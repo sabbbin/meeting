@@ -15,7 +15,7 @@ import * as yup from 'yup';
 import { OverridableComponent } from "@mui/material/OverridableComponent";
 
 export interface IUser {
-    userName: string,
+    username: string,
     fullName: string,
     email: string,
     role: string,
@@ -26,7 +26,7 @@ export interface IUser {
 
 
 interface Values {
-    userName: string,
+    username: string,
     email: string,
     fullName: string,
     password: string,
@@ -34,7 +34,7 @@ interface Values {
 }
 
 const validationSchema = yup.object({
-    userName: yup
+    username: yup
         .string()
         .required('Username is required')
         .typeError('Username name must be a string'),
@@ -64,45 +64,6 @@ const validationSchema = yup.object({
 
 const columnHelper = createColumnHelper<IUser>()
 
-// const defaultData: IUser[] = [
-//     {
-//         username: 'Jadhav',
-//         fullName: 'jyaa dyab bro',
-//         email: 'dangalsushant@gmail.com',
-//         status: 'Active',
-//         createdBy: 'raj',
-//         createdOn: 'april 4 2022',
-//         role: 'admin',
-//     },
-//     {
-//         username: 'yadav',
-//         fullName: 'wyadov  bro',
-//         email: 'yadav@gmail.com',
-//         status: 'Active',
-//         createdBy: 'yaj',
-//         createdOn: 'april 3 2022',
-//         role: 'admin',
-//     },
-//     {
-//         username: 'madhav',
-//         email: 'madhav@gmail.com',
-//         fullName: 'maya dov  bro',
-//         status: 'Active',
-//         createdBy: 'myaj',
-//         createdOn: 'april 2 2022',
-//         role: 'admin',
-//     },
-//     {
-//         username: 'padhav',
-//         email: 'padhav@gmail.com',
-//         fullName: 'paya dov bro',
-//         status: 'Active',
-//         createdBy: 'pyaj',
-//         createdOn: 'april 1 2022',
-//         role: 'admin',
-//     }
-
-// ]
 
 const FormDialogPaper = (props: OverridableComponent<PaperTypeMap<{}, "div">>) => <Paper {...props as any} as="form" />
 
@@ -132,7 +93,7 @@ export default function UserTable() {
 
     const columns = useMemo(() =>
         [
-            columnHelper.accessor('userName', {
+            columnHelper.accessor('username', {
                 header: "Username",
                 cell: info => info.getValue(),
                 footer: info => info.column.id,
@@ -156,6 +117,7 @@ export default function UserTable() {
             columnHelper.accessor(row => row.status, {
                 header: "Status",
                 cell: info => info.getValue(),
+
             }),
             columnHelper.accessor(row => row.createdBy, {
                 header: "Created By",
@@ -178,12 +140,17 @@ export default function UserTable() {
         ],
         ([]))
 
+    let accessToken = localStorage.getItem('access_token')
+
+
 
     const { data } = useUsers({
         headers: {
-            Authorization: `Bearer eyJhbGciOiJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGRzaWctbW9yZSNobWFjLXNoYTUxMiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9naXZlbm5hbWUiOiJOaXIgS3IuIFJhaSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWVpZGVudGlmaWVyIjoibmlya3JhaSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6Im5pci5yYWlAY2hhbm5ha3lhc29mdC5jb20iLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiIzIiwiZXhwIjoxNjYwODE3NDQ4LCJpc3MiOiJodHRwczovL2xvY2FsaG9zdDo3MjgzIiwiYXVkIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NzI4MyJ9.78ethsXk_Ehz7CwzGaCxIZEEyTfjsPKHjwohPQ6custRX0beT-jw2-hpaXI7rvIBGkCeAezWQpTklqcYMMc-WA`
-        }
+            Authorization: 'Bearer ' + accessToken
+        },
+
     });
+    console.log(data)
 
     const table = useReactTable({
         data,
@@ -194,7 +161,7 @@ export default function UserTable() {
 
     const formik = useFormik({
         initialValues: {
-            userName: '',
+            username: '',
             email: '',
             fullName: '',
             password: '',
@@ -226,10 +193,10 @@ export default function UserTable() {
                         margin="dense"
                         id="name"
                         name="userName"
-                        value={formik.values.userName}
+                        value={formik.values.username}
                         onChange={formik.handleChange}
-                        error={formik.touched.userName && Boolean(formik.errors.userName)}
-                        helperText={formik.touched.userName && formik.errors.userName}
+                        error={formik.touched.username && Boolean(formik.errors.username)}
+                        helperText={formik.touched.username && formik.errors.username}
                         label="Username"
                         type="name"
                         fullWidth
@@ -304,7 +271,9 @@ export default function UserTable() {
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map(header => (
                                     <TableCell sx={{
-                                        fontWeight: '600'
+                                        fontWeight: '600',
+
+
                                     }} key={header.id}>
                                         {header.isPlaceholder
                                             ? null
@@ -317,7 +286,7 @@ export default function UserTable() {
                             </TableRow>
                         ))}
                     </TableHead>
-                    <TableBody>
+                    <TableBody sx={{}}>
                         {table.getRowModel().rows.map(row => (
                             <TableRow key={row.id}>
                                 {row.getVisibleCells().map(cell => (
@@ -329,7 +298,6 @@ export default function UserTable() {
                         ))}
                     </TableBody>
                 </Table>
-
                 <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
                     <MenuItem>Edit</MenuItem>
                     <MenuItem>Delete</MenuItem>
