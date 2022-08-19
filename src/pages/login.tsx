@@ -8,18 +8,75 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Card, CardContent, InputLabel } from '@mui/material';
+import { Form, Formik, FormikHelpers, useFormik } from 'formik';
+import * as yup from 'yup';
+import { useMutation } from '@tanstack/react-query';
+import axios, { AxiosRequestConfig } from 'axios';
+import { useAuthenticationStore } from '../hooks/useAuthenticationLogin';
+import { IUser } from '../Tables/userTable';
+import { useNavigate } from "react-router-dom";
+
 
 const theme = createTheme();
 
+export interface ILogin {
+    username: string,
+    password: string,
+}
+
+const validationSchema = yup.object({
+    username: yup
+        .string()
+        .required('Username is required')
+        .typeError('Username name must be a string'),
+    password: yup
+        .string()
+        // .min(8, 'Password should be of minimum 8 characters length')
+        .required('Password is required')
+        .typeError('Username name must be a string'),
+});
+
 export default function Login() {
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        const data = new FormData(event.currentTarget);
-        console.log({
-            email: data.get('email'),
-            password: data.get('password'),
-        });
-    };
+
+
+    const useLogin = useAuthenticationStore(
+        state => state.Login
+    );
+    let navigate = useNavigate();
+
+    const formik = useFormik({
+        initialValues: {
+            username: '',
+            password: '',
+        },
+        validationSchema: validationSchema,
+        onSubmit: (values: ILogin, { setSubmitting }: FormikHelpers<ILogin>) => {
+            console.log(values)
+            LoginMutation.mutate(values);
+        },
+
+    });
+    interface ILoginOutput {
+        accessToken: string,
+        refreshToken: string,
+        userId: string
+    }
+
+    const LoginMutation = useMutation<ILoginOutput, unknown, ILogin>(
+        async (data) => await axios.post(
+            "api/User/Login",
+            data
+        ).then((res) => res.data)
+        , {
+            onSuccess(data) {
+                localStorage.setItem('access_token', data.accessToken)
+                localStorage.setItem('refresh_toke', data.refreshToken)
+                localStorage.setItem('userId', data.userId)
+                navigate('/', {
+                    replace: true
+                })
+            }
+        })
 
     return (
         <ThemeProvider theme={theme}>
@@ -43,15 +100,19 @@ export default function Login() {
                     </Typography>
                     <Card>
                         <CardContent>
-                            <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+                            <Box component="form" onSubmit={formik.handleSubmit} noValidate sx={{ mt: 1 }}>
                                 <InputLabel>
-                                    Username /Email
+                                    Username/Email
                                 </InputLabel>
                                 <TextField
                                     margin="normal"
                                     fullWidth
-                                    id="email"
-                                    name="email"
+                                    id="username"
+                                    name="username"
+                                    value={formik.values.username}
+                                    onChange={formik.handleChange}
+                                    error={formik.touched.username && Boolean(formik.errors.username)}
+                                    helperText={formik.touched.username && formik.errors.username}
                                     autoFocus
                                 />
                                 <InputLabel sx={{
@@ -62,9 +123,13 @@ export default function Login() {
                                 <TextField
                                     margin="normal"
                                     fullWidth
+                                    id="password"
                                     name="password"
                                     type="password"
-                                    id="password"
+                                    value={formik.values.password}
+                                    onChange={formik.handleChange}
+                                    error={formik.touched.password && Boolean(formik.errors.password)}
+                                    helperText={formik.touched.password && formik.errors.password}
                                 />
                                 <Button
                                     type="submit"
