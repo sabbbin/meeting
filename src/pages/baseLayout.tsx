@@ -18,6 +18,7 @@ import { Roles } from '../roles/roles';
 import Navlist from '../route/NavListItem';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import { CalendarMonth } from '@mui/icons-material';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 const drawerWidth = 240;
 
@@ -94,6 +95,13 @@ export default function BaseLayout() {
 
   let navigate = useNavigate();
 
+  const handleLogOut = () => {
+    localStorage.clear
+    navigate('/login')
+  };
+
+
+
   const sidebarItems: INavItemsProps[] = [
     {
       label: 'Users',
@@ -125,7 +133,7 @@ export default function BaseLayout() {
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
       <AppBar position="fixed" open={open}>
-        <Toolbar>
+        <Toolbar >
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -138,6 +146,9 @@ export default function BaseLayout() {
           <Typography variant="h6" noWrap component="div">
             Channakya Meetings
           </Typography>
+          <IconButton onClick={handleLogOut} >
+            <LogoutIcon />
+          </IconButton>
         </Toolbar>
       </AppBar>
       <Drawer
