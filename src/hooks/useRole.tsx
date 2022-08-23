@@ -2,12 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import axios, { AxiosRequestConfig } from "axios";
 
 function useRole(axiosConfig: AxiosRequestConfig) {
-    return useQuery(
-        ["posts"],
+    return useQuery<[]>(
+        ["userRole"],
         async () => await axios.get(
-            "api/User/User/GetAllRole",
+            "api/User/GetAllRole",
             axiosConfig
-        ).then((res) => res.data)
+        ).then((res) => res.data), {
+        initialData: []
+    }
 
     )
 }

@@ -4,7 +4,7 @@ import axios, { AxiosRequestConfig } from "axios";
 
 function useUsers(pageSize: number, pageNumber: number, axiosConfig: AxiosRequestConfig) {
     return useQuery(
-        ["posts", pageSize, pageNumber],
+        ["users", pageSize, pageNumber],
         async () => await axios.get(
             `api/User/GetAllUser`,
             axiosConfig
