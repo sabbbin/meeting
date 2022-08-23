@@ -3,7 +3,7 @@ import axios, { AxiosRequestConfig } from "axios";
 
 function useCount(axiosConfig: AxiosRequestConfig) {
     return useQuery(
-        ["posts"],
+        ["userCount"],
         async () => await axios.get(
             "api/User/CountUser",
             axiosConfig
