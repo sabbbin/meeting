@@ -39,9 +39,9 @@ const validationSchema = yup.object({
 export default function Login() {
 
 
-    const useLogin = useAuthenticationStore(
-        state => state.Login
-    );
+    // const useLogin = useAuthenticationStore(
+    //     state => state.Login
+    // );
     let navigate = useNavigate();
 
     const formik = useFormik({
@@ -51,7 +51,7 @@ export default function Login() {
         },
         validationSchema: validationSchema,
         onSubmit: (values: ILogin, { setSubmitting }: FormikHelpers<ILogin>) => {
-            console.log(values)
+
             LoginMutation.mutate(values);
         },
 

@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Fab, IconButton, Menu, MenuItem, MenuList, Paper, PaperTypeMap, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Toolbar } from "@mui/material";
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Fab, IconButton, Menu, MenuItem, MenuList, Paper, PaperTypeMap, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Toolbar } from "@mui/material";
 import {
     createColumnHelper,
     flexRender,
@@ -8,11 +8,18 @@ import {
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { memo, MouseEvent, useMemo, useState } from "react";
 import useUsers from "../hooks/useUsers";
-import usePagination from "@mui/material/usePagination/usePagination";
+
 import { Add } from "@mui/icons-material";
 import { Field, Form, Formik, FormikHelpers, useFormik } from "formik";
 import * as yup from 'yup';
 import { OverridableComponent } from "@mui/material/OverridableComponent";
+import { useMutation } from "@tanstack/react-query";
+import usePagination from "../hooks/usePagination";
+import useRole from "../hooks/useRole";
+import dayjs from "dayjs";
+import { useQuery } from "@tanstack/react-query";
+import axios, { AxiosRequestConfig } from "axios";
+import useCount from "../hooks/useCount";
 
 export interface IUser {
     username: string,
@@ -31,6 +38,7 @@ interface Values {
     fullName: string,
     password: string,
     confirmPassword: string,
+    role: number,
 }
 
 const validationSchema = yup.object({
@@ -45,7 +53,7 @@ const validationSchema = yup.object({
         .typeError('Enter a valid email'),
     fullName: yup
         .string()
-        .required('Please enter your Full')
+        .required('Please enter your Full Name')
         .typeError('Fullname name must be a string'),
     password: yup
         .string()
@@ -58,6 +66,9 @@ const validationSchema = yup.object({
         .min(8, 'Password should be of minimum 8 characters length')
         .required('Password is required')
         .typeError('Password and confirm password should match'),
+    role: yup
+        .string()
+        .required('Role is required'),
 });
 
 
@@ -68,8 +79,13 @@ const columnHelper = createColumnHelper<IUser>()
 const FormDialogPaper = (props: OverridableComponent<PaperTypeMap<{}, "div">>) => <Paper {...props as any} as="form" />
 
 
-export default function UserTable() {
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
+export default function UserTable(axiosConfig: AxiosRequestConfig) {
+
+    const { pagination, handlePageNumberChange, handlePageSizeChange } =
+        usePagination({
+            pageNumber: 0,
+            pageSize: 10
+        });
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const openMenu = Boolean(anchorEl);
     const handleClickColumn = (event: MouseEvent<HTMLButtonElement>) => {
@@ -88,7 +104,6 @@ export default function UserTable() {
     const handleClose = () => {
         setOpen(false);
     };
-
 
 
     const columns = useMemo(() =>
@@ -127,7 +142,7 @@ export default function UserTable() {
             }),
             columnHelper.accessor(row => row.createdOn, {
                 header: "Created On",
-                cell: info => info.getValue(),
+                cell: info => dayjs(info.getValue()).format('DD/MM/YYYY'),
                 footer: info => info.column.id,
             }),
             columnHelper.display({
@@ -142,21 +157,34 @@ export default function UserTable() {
 
     let accessToken = localStorage.getItem('access_token')
 
-
-
-    const { data } = useUsers({
-        headers: {
-            Authorization: 'Bearer ' + accessToken
+    const { data: userData, refetch } = useUsers(pagination.pageSize, pagination.pageNumber + 1, {
+        params: {
+            size: pagination.pageSize,
+            page: pagination.pageNumber + 1,
         },
-
+        headers: {
+            Authorization: 'Bearer ' + accessToken,
+        },
     });
-    console.log(data)
+
+
+    const { data: countData } = useCount({
+        headers: {
+            Authorization: 'Bearer ' + accessToken,
+        },
+    })
+
+    const { data: roleData } = useRole({
+        headers: {
+            Authorization: 'Bearer ' + accessToken,
+        },
+    });
+
 
     const table = useReactTable({
-        data,
+        data: userData,
         columns,
         getCoreRowModel: getCoreRowModel(),
-
     });
 
     const formik = useFormik({
@@ -165,16 +193,31 @@ export default function UserTable() {
             email: '',
             fullName: '',
             password: '',
-            confirmPassword: ''
+            confirmPassword: '',
+            role: 1,
         },
         validationSchema: validationSchema,
         onSubmit:
             (values: Values, { setSubmitting }: FormikHelpers<Values>) => {
-                setTimeout(() => {
-                    alert(JSON.stringify(values, null, 2));
-                    setSubmitting(false);
-                }, 500);
+                RegisterMutation.mutate(values);
+
             }
+    })
+
+    const headers = {
+        Authorization: 'Bearer ' + accessToken
+    }
+    const RegisterMutation = useMutation<unknown, unknown, Values>(
+        async (data) => await axios.post(
+            "api/User/Register",
+            data,
+            {
+                headers: headers
+            }
+        ).then((res) => res.data), {
+        onSuccess() {
+            refetch()
+        },
     })
 
     return (
@@ -192,7 +235,7 @@ export default function UserTable() {
                         autoFocus
                         margin="dense"
                         id="name"
-                        name="userName"
+                        name="username"
                         value={formik.values.username}
                         onChange={formik.handleChange}
                         error={formik.touched.username && Boolean(formik.errors.username)}
@@ -203,7 +246,6 @@ export default function UserTable() {
                         variant="standard"
                     />
                     <TextField
-                        autoFocus
                         margin="dense"
                         id="name"
                         name="email"
@@ -217,7 +259,6 @@ export default function UserTable() {
                         variant="standard"
                     />
                     <TextField
-                        autoFocus
                         margin="dense"
                         id="name"
                         name="fullName"
@@ -231,7 +272,6 @@ export default function UserTable() {
                         variant="standard"
                     />
                     <TextField
-                        autoFocus
                         margin="dense"
                         id="Password"
                         name="password"
@@ -258,6 +298,22 @@ export default function UserTable() {
                         fullWidth
                         variant="standard"
                     />
+                    <TextField
+                        select
+                        fullWidth
+                        name="role"
+                        id="role"
+                        margin="dense"
+                        label="Role"
+                        variant="standard"
+                        SelectProps={{
+                            value: formik.values.role,
+                            onChange: formik.handleChange
+                        }}>
+                        {/* {roleData.map(() => (
+                            <MenuItem value="admin">Admin</MenuItem>
+                        ))} */}
+                    </TextField>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleClose}>Cancel</Button>
@@ -265,15 +321,13 @@ export default function UserTable() {
                 </DialogActions>
             </Dialog>
             <TableContainer sx={{ minWidth: 1000, margin: '1' }} component={Paper} >
-                <Table>
+                <Table size="small">
                     <TableHead>
                         {table.getHeaderGroups().map(headerGroup => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map(header => (
-                                    <TableCell sx={{
+                                    <TableCell width="140px" sx={{
                                         fontWeight: '600',
-
-
                                     }} key={header.id}>
                                         {header.isPlaceholder
                                             ? null
@@ -298,6 +352,15 @@ export default function UserTable() {
                         ))}
                     </TableBody>
                 </Table>
+                <TablePagination
+                    width="140px"
+                    component="div"
+                    count={countData.TotalCount}
+                    page={pagination.pageNumber}
+                    onPageChange={(e, page) => handlePageNumberChange(page)}
+                    rowsPerPage={pagination.pageSize}
+                    onRowsPerPageChange={(e) => handlePageSizeChange(+e.currentTarget.value)}
+                />
                 <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
                     <MenuItem>Edit</MenuItem>
                     <MenuItem>Delete</MenuItem>
