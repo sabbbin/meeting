@@ -20,17 +20,22 @@ import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import axios, { AxiosRequestConfig } from "axios";
 import useCount from "../hooks/useCount";
+import useRoleById from "../hooks/useRoleById";
+import useStatus from "../hooks/useStatus";
+import updateUser from "../hooks/updateUser";
 
 export interface IUser {
     username: string,
     fullName: string,
     email: string,
+    roleId: number,
     role: string,
+    statusId: number,
     status: string,
+    createdById: number,
     createdBy: string,
     createdOn: string
 };
-
 
 interface Values {
     username: string,
@@ -38,7 +43,17 @@ interface Values {
     fullName: string,
     password: string,
     confirmPassword: string,
-    role: number,
+    roleId: number,
+    statusId: number,
+    createdBy: string | null,
+}
+
+interface Role {
+    RoleId: number,
+    RoleName: string,
+    Alias: string,
+    OrderIdx: number,
+    IsEnable: boolean,
 }
 
 const validationSchema = yup.object({
@@ -66,12 +81,8 @@ const validationSchema = yup.object({
         .min(8, 'Password should be of minimum 8 characters length')
         .required('Password is required')
         .typeError('Password and confirm password should match'),
-    role: yup
-        .string()
-        .required('Role is required'),
+    role: yup.number(),
 });
-
-
 
 const columnHelper = createColumnHelper<IUser>()
 
@@ -167,18 +178,35 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
         },
     });
 
-
     const { data: countData } = useCount({
         headers: {
             Authorization: 'Bearer ' + accessToken,
         },
     })
 
-    const { data: roleData } = useRole({
+    // const { data: updateUserData } = updateUser({
+    //     headers: {
+    //         Authorization: 'Bearer ' + accessToken,
+    //     },
+    // })
+
+    const { data: roleData, refetch: refetchRoleData } = useRole({
         headers: {
             Authorization: 'Bearer ' + accessToken,
         },
     });
+
+    const { data: userStatusData, refetch: refetchStatus } = useStatus({
+        headers: {
+            Authorization: 'Bearer ' + accessToken,
+        },
+    });
+
+    // const { data: roleByIdData } = useRoleById(4, {
+    //     headers: {
+    //         Authorization: 'Bearer ' + accessToken,
+    //     },
+    // });
 
 
     const table = useReactTable({
@@ -187,26 +215,27 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
         getCoreRowModel: getCoreRowModel(),
     });
 
-    const formik = useFormik({
+    const formik = useFormik<Values>({
         initialValues: {
             username: '',
             email: '',
             fullName: '',
             password: '',
             confirmPassword: '',
-            role: 1,
+            roleId: 1,
+            createdBy: localStorage.getItem('userId'),
+            statusId: 1,
         },
         validationSchema: validationSchema,
-        onSubmit:
-            (values: Values, { setSubmitting }: FormikHelpers<Values>) => {
-                RegisterMutation.mutate(values);
-
-            }
+        onSubmit: (values) => {
+            RegisterMutation.mutate(values);
+        }
     })
 
     const headers = {
         Authorization: 'Bearer ' + accessToken
     }
+
     const RegisterMutation = useMutation<unknown, unknown, Values>(
         async (data) => await axios.post(
             "api/User/Register",
@@ -217,8 +246,10 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
         ).then((res) => res.data), {
         onSuccess() {
             refetch()
+            refetchRoleData()
         },
     })
+
 
     return (
         <>
@@ -301,18 +332,19 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
                     <TextField
                         select
                         fullWidth
-                        name="role"
-                        id="role"
+                        name="roleId"
+                        id="roleId"
                         margin="dense"
                         label="Role"
                         variant="standard"
                         SelectProps={{
-                            value: formik.values.role,
+                            value: formik.values.roleId,
                             onChange: formik.handleChange
                         }}>
-                        {/* {roleData.map(() => (
-                            <MenuItem value="admin">Admin</MenuItem>
-                        ))} */}
+                        {roleData.map((role: any, index: number) => (
+
+                            <MenuItem key={index} value={role.RoleId}>{role.RoleName}</MenuItem>
+                        ))}
                     </TextField>
                 </DialogContent>
                 <DialogActions>
