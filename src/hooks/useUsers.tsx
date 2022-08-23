@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import axios, { AxiosRequestConfig } from "axios";
 
-function useUsers(axiosConfig: AxiosRequestConfig) {
+
+function useUsers(pageSize: number, pageNumber: number, axiosConfig: AxiosRequestConfig) {
     return useQuery(
-        ["posts"],
+        ["posts", pageSize, pageNumber],
         async () => await axios.get(
-            "api/User/GetAllUser/3/1",
+            `api/User/GetAllUser`,
             axiosConfig
         ).then((res) => res.data)
         , { initialData: [] }
