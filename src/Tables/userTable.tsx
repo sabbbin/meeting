@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Fab, IconButton, Menu, MenuItem, MenuList, Paper, PaperTypeMap, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Toolbar } from "@mui/material";
+import { Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Fab, IconButton, Menu, MenuItem, MenuList, Paper, PaperTypeMap, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Toolbar } from "@mui/material";
 import {
     createColumnHelper,
     flexRender,
@@ -9,7 +9,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { memo, MouseEvent, useMemo, useState } from "react";
 import useUsers from "../hooks/useUsers";
 
-import { Add } from "@mui/icons-material";
+import { Add, Info } from "@mui/icons-material";
 import { Field, Form, Formik, FormikHelpers, useFormik } from "formik";
 import * as yup from 'yup';
 import { OverridableComponent } from "@mui/material/OverridableComponent";
@@ -23,6 +23,7 @@ import useCount from "../hooks/useCount";
 import useRoleById from "../hooks/useRoleById";
 import useStatus from "../hooks/useStatus";
 import updateUser from "../hooks/updateUser";
+import UserFormDialog from "../dialog/userFormDialog";
 
 export interface IUser {
     username: string,
@@ -31,22 +32,22 @@ export interface IUser {
     roleId: number,
     role: string,
     statusId: number,
-    status: string,
+    status: string | null,
     createdById: number,
     createdBy: string,
     createdOn: string
 };
 
-interface Values {
-    username: string,
-    email: string,
-    fullName: string,
-    password: string,
-    confirmPassword: string,
-    roleId: number,
-    statusId: number,
-    createdBy: string | null,
-}
+// interface Values {
+//     username: string,
+//     email: string,
+//     fullName: string,
+//     password: string,
+//     confirmPassword: string,
+//     roleId: number,
+//     statusId: number,
+//     createdBy: string | null,
+// }
 
 interface Role {
     RoleId: number,
@@ -56,38 +57,40 @@ interface Role {
     IsEnable: boolean,
 }
 
-const validationSchema = yup.object({
-    username: yup
-        .string()
-        .required('Username is required')
-        .typeError('Username name must be a string'),
-    email: yup
-        .string()
-        .email('Enter a valid email')
-        .required('Email is required')
-        .typeError('Enter a valid email'),
-    fullName: yup
-        .string()
-        .required('Please enter your Full Name')
-        .typeError('Fullname name must be a string'),
-    password: yup
-        .string()
-        .min(8, 'Password should be of minimum 8 characters length')
-        .required('Password is required')
-        .typeError('Password name must be a string'),
-    confirmPassword: yup
-        .string()
-        .oneOf([yup.ref('password'), null], 'Password and confirm password should match')
-        .min(8, 'Password should be of minimum 8 characters length')
-        .required('Password is required')
-        .typeError('Password and confirm password should match'),
-    role: yup.number(),
-});
+
+
+// const validationSchema = yup.object({
+//     username: yup
+//         .string()
+//         .required('Username is required')
+//         .typeError('Username name must be a string'),
+//     email: yup
+//         .string()
+//         .email('Enter a valid email')
+//         .required('Email is required')
+//         .typeError('Enter a valid email'),
+//     fullName: yup
+//         .string()
+//         .required('Please enter your Full Name')
+//         .typeError('Fullname name must be a string'),
+//     password: yup
+//         .string()
+//         .min(8, 'Password should be of minimum 8 characters length')
+//         .required('Password is required')
+//         .typeError('Password name must be a string'),
+//     confirmPassword: yup
+//         .string()
+//         .oneOf([yup.ref('password'), null], 'Password and confirm password should match')
+//         .min(8, 'Password should be of minimum 8 characters length')
+//         .required('Password is required')
+//         .typeError('Password and confirm password should match'),
+//     role: yup.number(),
+// });
 
 const columnHelper = createColumnHelper<IUser>()
 
 
-const FormDialogPaper = (props: OverridableComponent<PaperTypeMap<{}, "div">>) => <Paper {...props as any} as="form" />
+// const FormDialogPaper = (props: OverridableComponent<PaperTypeMap<{}, "div">>) => <Paper {...props as any} as="form" />
 
 
 export default function UserTable(axiosConfig: AxiosRequestConfig) {
@@ -97,6 +100,7 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
             pageNumber: 0,
             pageSize: 10
         });
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const openMenu = Boolean(anchorEl);
     const handleClickColumn = (event: MouseEvent<HTMLButtonElement>) => {
@@ -116,6 +120,21 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
         setOpen(false);
     };
 
+
+
+    const getStatusID = (statusId: number) => {
+        switch (statusId) {
+            case 1:
+                return 'success';
+            case 2:
+                return 'warning';
+            case 3:
+                return 'secondary';
+            case 4:
+                return 'error';
+
+        }
+    }
 
     const columns = useMemo(() =>
         [
@@ -140,10 +159,9 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
                 cell: info => info.getValue(),
                 footer: info => info.column.id,
             }),
-            columnHelper.accessor(row => row.status, {
+            columnHelper.accessor(row => row, {
                 header: "Status",
-                cell: info => info.getValue(),
-
+                cell: info => <Chip size="small" label={info.getValue().status} color={getStatusID(info.getValue().statusId)} />,
             }),
             columnHelper.accessor(row => row.createdBy, {
                 header: "Created By",
@@ -165,6 +183,8 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
             }),
         ],
         ([]))
+
+
 
     let accessToken = localStorage.getItem('access_token')
 
@@ -213,145 +233,65 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
         data: userData,
         columns,
         getCoreRowModel: getCoreRowModel(),
+
     });
 
-    const formik = useFormik<Values>({
-        initialValues: {
-            username: '',
-            email: '',
-            fullName: '',
-            password: '',
-            confirmPassword: '',
-            roleId: 1,
-            createdBy: localStorage.getItem('userId'),
-            statusId: 1,
-        },
-        validationSchema: validationSchema,
-        onSubmit: (values) => {
-            RegisterMutation.mutate(values);
-        }
-    })
+    // const formik = useFormik<Values>({
+    //     initialValues: {
+    //         username: '',
+    //         email: '',
+    //         fullName: '',
+    //         password: '',
+    //         confirmPassword: '',
+    //         roleId: 1,
+    //         createdBy: localStorage.getItem('userId'),
+    //         statusId: 1,
+    //     },
+    //     validationSchema: validationSchema,
+    //     onSubmit: (values) => {
+    //         RegisterMutation.mutate(values);
+    //     }
+    // })
 
-    const headers = {
-        Authorization: 'Bearer ' + accessToken
-    }
+    // const headers = {
+    //     Authorization: 'Bearer ' + accessToken
+    // }
 
-    const RegisterMutation = useMutation<unknown, unknown, Values>(
-        async (data) => await axios.post(
-            "api/User/Register",
-            data,
-            {
-                headers: headers
-            }
-        ).then((res) => res.data), {
-        onSuccess() {
-            refetch()
-            refetchRoleData()
-        },
-    })
+    // const RegisterMutation = useMutation<unknown, unknown, Values>(
+    //     async (data) => await axios.post(
+    //         "api/User/Register",
+    //         data,
+    //         {
+    //             headers: headers
+    //         }
+    //     ).then((res) => res.data), {
+    //     onSuccess() {
+    //         refetch()
+    //         refetchRoleData()
+    //     },
+    // })
 
 
     return (
         <>
             <Toolbar />
-            <Button sx={{ m: 1 }} variant="contained" onClick={handleClickOpen}>
+            <Button sx={{ m: 1 }} variant="contained" onClick={() => {
+                setIsDialogOpen(true);
+                handleClose();
+            }}>
                 Add User
             </Button>
-            <Dialog PaperComponent={FormDialogPaper as never} PaperProps={{
-                onSubmit: formik.handleSubmit as never
-            }} open={open} onClose={handleClose}>
-                <DialogTitle>Add user to Channakya-Meetings</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        id="name"
-                        name="username"
-                        value={formik.values.username}
-                        onChange={formik.handleChange}
-                        error={formik.touched.username && Boolean(formik.errors.username)}
-                        helperText={formik.touched.username && formik.errors.username}
-                        label="Username"
-                        type="name"
-                        fullWidth
-                        variant="standard"
-                    />
-                    <TextField
-                        margin="dense"
-                        id="name"
-                        name="email"
-                        value={formik.values.email}
-                        onChange={formik.handleChange}
-                        error={formik.touched.email && Boolean(formik.errors.email)}
-                        helperText={formik.touched.email && formik.errors.email}
-                        label="Email Address"
-                        type="email"
-                        fullWidth
-                        variant="standard"
-                    />
-                    <TextField
-                        margin="dense"
-                        id="name"
-                        name="fullName"
-                        value={formik.values.fullName}
-                        onChange={formik.handleChange}
-                        error={formik.touched.fullName && Boolean(formik.errors.fullName)}
-                        helperText={formik.touched.fullName && formik.errors.fullName}
-                        label="Full Name"
-                        type="name"
-                        fullWidth
-                        variant="standard"
-                    />
-                    <TextField
-                        margin="dense"
-                        id="Password"
-                        name="password"
-                        value={formik.values.password}
-                        onChange={formik.handleChange}
-                        error={formik.touched.password && Boolean(formik.errors.password)}
-                        helperText={formik.touched.password && formik.errors.password}
-                        label="Password"
-                        type="Password"
-                        fullWidth
-                        variant="standard"
-                    />
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        id="Password"
-                        name="confirmPassword"
-                        value={formik.values.confirmPassword}
-                        onChange={formik.handleChange}
-                        error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)}
-                        helperText={formik.touched.confirmPassword && formik.errors.confirmPassword}
-                        label="Confirm Password"
-                        type="Password"
-                        fullWidth
-                        variant="standard"
-                    />
-                    <TextField
-                        select
-                        fullWidth
-                        name="roleId"
-                        id="roleId"
-                        margin="dense"
-                        label="Role"
-                        variant="standard"
-                        SelectProps={{
-                            value: formik.values.roleId,
-                            onChange: formik.handleChange
-                        }}>
-                        {roleData.map((role: any, index: number) => (
+            <UserFormDialog
 
-                            <MenuItem key={index} value={role.RoleId}>{role.RoleName}</MenuItem>
-                        ))}
-                    </TextField>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleClose}>Cancel</Button>
-                    <Button type="submit">Add user</Button>
-                </DialogActions>
-            </Dialog>
+                open={isDialogOpen}
+                onSuccessDialog={() => {
+
+                    setIsDialogOpen(false);
+                }}
+                onDiscardDialog={() => {
+
+                    setIsDialogOpen(false);
+                }} />
             <TableContainer sx={{ minWidth: 1000, margin: '1' }} component={Paper} >
                 <Table size="small">
                     <TableHead>
@@ -372,7 +312,7 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
                             </TableRow>
                         ))}
                     </TableHead>
-                    <TableBody sx={{}}>
+                    <TableBody >
                         {table.getRowModel().rows.map(row => (
                             <TableRow key={row.id}>
                                 {row.getVisibleCells().map(cell => (
@@ -394,7 +334,7 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
                     onRowsPerPageChange={(e) => handlePageSizeChange(+e.currentTarget.value)}
                 />
                 <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
-                    <MenuItem>Edit</MenuItem>
+                    <MenuItem onClick={handleClickOpen}>Edit</MenuItem>
                     <MenuItem>Delete</MenuItem>
                     <MenuItem>Change Status</MenuItem>
                 </Menu>
