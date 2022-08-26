@@ -24,8 +24,10 @@ import useRoleById from "../hooks/useRoleById";
 import useStatus from "../hooks/useStatus";
 import updateUser from "../hooks/updateUser";
 import UserFormDialog from "../dialog/userFormDialog";
+import AddMemberDialog from "../dialog/addMemberDialog";
 
 export interface IUser {
+    userId: number,
     username: string,
     fullName: string,
     email: string,
@@ -38,16 +40,7 @@ export interface IUser {
     createdOn: string
 };
 
-// interface Values {
-//     username: string,
-//     email: string,
-//     fullName: string,
-//     password: string,
-//     confirmPassword: string,
-//     roleId: number,
-//     statusId: number,
-//     createdBy: string | null,
-// }
+
 
 interface Role {
     RoleId: number,
@@ -59,38 +52,9 @@ interface Role {
 
 
 
-// const validationSchema = yup.object({
-//     username: yup
-//         .string()
-//         .required('Username is required')
-//         .typeError('Username name must be a string'),
-//     email: yup
-//         .string()
-//         .email('Enter a valid email')
-//         .required('Email is required')
-//         .typeError('Enter a valid email'),
-//     fullName: yup
-//         .string()
-//         .required('Please enter your Full Name')
-//         .typeError('Fullname name must be a string'),
-//     password: yup
-//         .string()
-//         .min(8, 'Password should be of minimum 8 characters length')
-//         .required('Password is required')
-//         .typeError('Password name must be a string'),
-//     confirmPassword: yup
-//         .string()
-//         .oneOf([yup.ref('password'), null], 'Password and confirm password should match')
-//         .min(8, 'Password should be of minimum 8 characters length')
-//         .required('Password is required')
-//         .typeError('Password and confirm password should match'),
-//     role: yup.number(),
-// });
+
 
 const columnHelper = createColumnHelper<IUser>()
-
-
-// const FormDialogPaper = (props: OverridableComponent<PaperTypeMap<{}, "div">>) => <Paper {...props as any} as="form" />
 
 
 export default function UserTable(axiosConfig: AxiosRequestConfig) {
@@ -100,12 +64,17 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
             pageNumber: 0,
             pageSize: 10
         });
+
+    const [isforMenu, setisforMenu] = useState<IUser | null>();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const openMenu = Boolean(anchorEl);
-    const handleClickColumn = (event: MouseEvent<HTMLButtonElement>) => {
+    const handleClickColumn = (event: MouseEvent<HTMLButtonElement>, user: IUser) => {
         setAnchorEl(event.currentTarget);
+        setisforMenu(user);
     };
+
     const handleCloseMenu = () => {
         setAnchorEl(null);
     };
@@ -127,9 +96,9 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
             case 1:
                 return 'success';
             case 2:
-                return 'warning';
+                return 'default';
             case 3:
-                return 'secondary';
+                return 'warning';
             case 4:
                 return 'error';
 
@@ -174,10 +143,10 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
                 cell: info => dayjs(info.getValue()).format('DD/MM/YYYY'),
                 footer: info => info.column.id,
             }),
-            columnHelper.display({
+            columnHelper.accessor(row => row, {
                 header: 'Actions',
-                cell: () => <IconButton
-                    onClick={handleClickColumn}>
+                cell: (info) => <IconButton
+                    onClick={(e) => handleClickColumn(e, info.getValue())}>
                     <MoreVertIcon />
                 </IconButton>,
             }),
@@ -236,42 +205,6 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
 
     });
 
-    // const formik = useFormik<Values>({
-    //     initialValues: {
-    //         username: '',
-    //         email: '',
-    //         fullName: '',
-    //         password: '',
-    //         confirmPassword: '',
-    //         roleId: 1,
-    //         createdBy: localStorage.getItem('userId'),
-    //         statusId: 1,
-    //     },
-    //     validationSchema: validationSchema,
-    //     onSubmit: (values) => {
-    //         RegisterMutation.mutate(values);
-    //     }
-    // })
-
-    // const headers = {
-    //     Authorization: 'Bearer ' + accessToken
-    // }
-
-    // const RegisterMutation = useMutation<unknown, unknown, Values>(
-    //     async (data) => await axios.post(
-    //         "api/User/Register",
-    //         data,
-    //         {
-    //             headers: headers
-    //         }
-    //     ).then((res) => res.data), {
-    //     onSuccess() {
-    //         refetch()
-    //         refetchRoleData()
-    //     },
-    // })
-
-
     return (
         <>
             <Toolbar />
@@ -282,15 +215,24 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
                 Add User
             </Button>
             <UserFormDialog
-
+                toEdit={isforMenu}
                 open={isDialogOpen}
                 onSuccessDialog={() => {
-
+                    setisforMenu(null);
                     setIsDialogOpen(false);
+
                 }}
                 onDiscardDialog={() => {
-
+                    setisforMenu(null);
                     setIsDialogOpen(false);
+                }} />
+            <AddMemberDialog
+                open={isAddMemberDialogOpen}
+                onSuccessAddMemberDialog={() => {
+                    setIsAddMemberDialogOpen(false);
+                }}
+                onDiscardAddMemberDialog={() => {
+                    setIsAddMemberDialogOpen(false);
                 }} />
             <TableContainer sx={{ minWidth: 1000, margin: '1' }} component={Paper} >
                 <Table size="small">
@@ -334,9 +276,16 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
                     onRowsPerPageChange={(e) => handlePageSizeChange(+e.currentTarget.value)}
                 />
                 <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
-                    <MenuItem onClick={handleClickOpen}>Edit</MenuItem>
-                    <MenuItem>Delete</MenuItem>
+                    <MenuItem onClick={() => {
+                        setIsDialogOpen(true);
+                        handleClose();
+                    }}>Edit</MenuItem>
+                    <MenuItem onClick={() => {
+                        setIsAddMemberDialogOpen(true);
+                        handleClose();
+                    }}>Add Membership</MenuItem>
                     <MenuItem>Change Status</MenuItem>
+                    <MenuItem>Delete</MenuItem>
                 </Menu>
             </TableContainer>
         </>)

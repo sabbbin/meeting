@@ -1,4 +1,4 @@
-import { Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogProps, DialogTitle, Fab, IconButton, Menu, MenuItem, MenuList, Paper, PaperTypeMap, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Toolbar } from "@mui/material";
+import { Alert, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogProps, DialogTitle, Fab, IconButton, Menu, MenuItem, MenuList, Paper, PaperTypeMap, Snackbar, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Toolbar } from "@mui/material";
 import {
     createColumnHelper,
     flexRender,
@@ -6,7 +6,8 @@ import {
     useReactTable,
 } from '@tanstack/react-table';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { memo, MouseEvent, useMemo, useState } from "react";
+import CloseIcon from '@mui/icons-material/Close';
+import { Fragment, memo, MouseEvent, useEffect, useMemo, useState } from "react";
 import useUsers from "../hooks/useUsers";
 
 import { Add, Info } from "@mui/icons-material";
@@ -23,23 +24,26 @@ import useCount from "../hooks/useCount";
 import useRoleById from "../hooks/useRoleById";
 import useStatus from "../hooks/useStatus";
 import updateUser from "../hooks/updateUser";
+import { IUser } from "../Tables/userTable";
 
 
 const FormDialogPaper = (props: OverridableComponent<PaperTypeMap<{}, "div">>) => <Paper {...props as any} as="form" />
 
 interface Values {
+    userId?: number,
     username: string,
     email: string,
     fullName: string,
-    password: string,
-    confirmPassword: string,
+    password?: string,
+    confirmPassword?: string,
     roleId: number,
     statusId: number,
-    createdBy: string | null,
+    createdBy?: string | null,
 }
 interface UserDialogProps extends DialogProps {
     onDiscardDialog: () => void;
     onSuccessDialog: () => void;
+    toEdit?: IUser | null;
 }
 
 
@@ -60,24 +64,30 @@ const validationSchema = yup.object({
     password: yup
         .string()
         .min(8, 'Password should be of minimum 8 characters length')
-        .required('Password is required')
+        .optional()
         .typeError('Password name must be a string'),
     confirmPassword: yup
         .string()
         .oneOf([yup.ref('password'), null], 'Password and confirm password should match')
         .min(8, 'Password should be of minimum 8 characters length')
-        .required('Password is required')
+        .optional()
         .typeError('Password and confirm password should match'),
     role: yup.number(),
 });
 
 
-const UserFormDialog = ({ onDiscardDialog, onSuccessDialog, open }: UserDialogProps) => {
+const UserFormDialog = ({ onDiscardDialog, onSuccessDialog, toEdit, open }: UserDialogProps) => {
 
 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const handleCloseMenu = () => {
         setAnchorEl(null);
+    };
+    const handleCloseSnackbar = (event: React.SyntheticEvent | Event, reason?: string) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        onDiscardDialog();
     };
     let accessToken = localStorage.getItem('access_token')
 
@@ -119,7 +129,20 @@ const UserFormDialog = ({ onDiscardDialog, onSuccessDialog, open }: UserDialogPr
             refetch()
             refetchRoleData()
             onSuccessDialog()
+        },
+    })
 
+    const UpdateMutattion = useMutation<unknown, unknown, Values>(
+        async (data) => await axios.put(
+            "api/User/UpdateUser",
+            data,
+            {
+                headers: headers
+            }
+        ).then((res) => res.data), {
+        onSuccess() {
+            refetch()
+            onSuccessDialog()
         },
     })
 
@@ -136,20 +159,46 @@ const UserFormDialog = ({ onDiscardDialog, onSuccessDialog, open }: UserDialogPr
         },
         validationSchema: validationSchema,
         onSubmit: (values) => {
-            RegisterMutation.mutate(values);
+            if (toEdit) UpdateMutattion.mutate(values);
+            else RegisterMutation.mutate(values);
         }
     })
 
+    useEffect(() => {
+        if (toEdit) {
+            formik.setValues({
+                userId: toEdit.userId,
+                username: toEdit.username,
+                email: toEdit.email,
+                fullName: toEdit.fullName,
+                roleId: toEdit.roleId,
+                statusId: 1,
+            });
+        }
+    }, [toEdit]);
+
     const handleClose = () => {
         onDiscardDialog()
-
     };
+
+    const action = (
+        <Fragment>
+            <IconButton
+                size="small"
+                aria-label="close"
+                color="inherit"
+                onClick={handleClose}
+            >
+                <CloseIcon fontSize="small" />
+            </IconButton>
+        </Fragment>
+    );
 
     return (
         <Dialog PaperComponent={FormDialogPaper as never} PaperProps={{
             onSubmit: formik.handleSubmit as never
         }} open={open} onClose={handleClose}>
-            <DialogTitle>Add user to Channakya-Meetings</DialogTitle>
+            <DialogTitle>{!!toEdit ? 'Update' : 'Add'} User Form</DialogTitle>
             <DialogContent>
                 <TextField
                     autoFocus
@@ -191,7 +240,7 @@ const UserFormDialog = ({ onDiscardDialog, onSuccessDialog, open }: UserDialogPr
                     fullWidth
                     variant="standard"
                 />
-                <TextField
+                {!toEdit && (<TextField
                     margin="dense"
                     id="Password"
                     name="password"
@@ -203,8 +252,8 @@ const UserFormDialog = ({ onDiscardDialog, onSuccessDialog, open }: UserDialogPr
                     type="Password"
                     fullWidth
                     variant="standard"
-                />
-                <TextField
+                />)}
+                {!toEdit && (<TextField
                     autoFocus
                     margin="dense"
                     id="Password"
@@ -217,7 +266,7 @@ const UserFormDialog = ({ onDiscardDialog, onSuccessDialog, open }: UserDialogPr
                     type="Password"
                     fullWidth
                     variant="standard"
-                />
+                />)}
                 <TextField
                     select
                     fullWidth
@@ -238,6 +287,15 @@ const UserFormDialog = ({ onDiscardDialog, onSuccessDialog, open }: UserDialogPr
             <DialogActions>
                 <Button onClick={onDiscardDialog}>Cancel</Button>
                 <Button type="submit">Submit</Button>
+                {/* <Snackbar
+                    open={open}
+                    autoHideDuration={6000}
+                    onClose={handleCloseSnackbar}
+                    action={action}
+                ><Alert onClose={handleClose} severity="success" sx={{ width: '100%' }}>
+                        User created successfully.
+                </Alert>
+                </Snackbar> */}
             </DialogActions>
         </Dialog>
     )
