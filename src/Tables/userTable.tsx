@@ -25,6 +25,8 @@ import useStatus from "../hooks/useStatus";
 import updateUser from "../hooks/updateUser";
 import UserFormDialog from "../dialog/userFormDialog";
 import AddMemberDialog from "../dialog/addMemberDialog";
+import ChangeStatusDialog, { IChangeStatusDialog } from "../dialog/changeStatusDialog";
+import ChangePasswordDialog from "../dialog/changePasswordDialog copy";
 
 export interface IUser {
     userId: number,
@@ -37,7 +39,9 @@ export interface IUser {
     status: string | null,
     createdById: number,
     createdBy: string,
-    createdOn: string
+    createdOn: string,
+    password?: string,
+    confirmPassword?: string
 };
 
 
@@ -52,8 +56,6 @@ interface Role {
 
 
 
-
-
 const columnHelper = createColumnHelper<IUser>()
 
 
@@ -65,11 +67,14 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
             pageSize: 10
         });
 
-    const [isforMenu, setisforMenu] = useState<IUser | null>();
+    const [isforMenu, setisforMenu] = useState<IUser | null>()
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
+    const [isChangeStatus, setisChangeStatus] = useState(false);
+    const [isResetPassword, setisResetPassword] = useState(false);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const openMenu = Boolean(anchorEl);
+
     const handleClickColumn = (event: MouseEvent<HTMLButtonElement>, user: IUser) => {
         setAnchorEl(event.currentTarget);
         setisforMenu(user);
@@ -88,8 +93,6 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
     const handleClose = () => {
         setOpen(false);
     };
-
-
 
     const getStatusID = (statusId: number) => {
         switch (statusId) {
@@ -173,11 +176,7 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
         },
     })
 
-    // const { data: updateUserData } = updateUser({
-    //     headers: {
-    //         Authorization: 'Bearer ' + accessToken,
-    //     },
-    // })
+
 
     const { data: roleData, refetch: refetchRoleData } = useRole({
         headers: {
@@ -190,13 +189,6 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
             Authorization: 'Bearer ' + accessToken,
         },
     });
-
-    // const { data: roleByIdData } = useRoleById(4, {
-    //     headers: {
-    //         Authorization: 'Bearer ' + accessToken,
-    //     },
-    // });
-
 
     const table = useReactTable({
         data: userData,
@@ -234,6 +226,26 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
                 onDiscardAddMemberDialog={() => {
                     setIsAddMemberDialogOpen(false);
                 }} />
+            <ChangeStatusDialog
+                open={isChangeStatus}
+                onStatusSuccessDialog={() => {
+                    setisChangeStatus(false)
+                }}
+                onStatusDiscardDialog={() => {
+                    setisChangeStatus(false)
+                }}
+                toEditStatus={isforMenu!}
+            />
+            <ChangePasswordDialog
+                open={isResetPassword}
+                onChangePasswordDiscardDialog={() => {
+                    setisResetPassword(false)
+                }}
+                onChangePasswordSuccessDialog={() => {
+                    setisResetPassword(false)
+                }}
+                toEditChangePasswprd={isforMenu!}
+            />
             <TableContainer sx={{ minWidth: 1000, margin: '1' }} component={Paper} >
                 <Table size="small">
                     <TableHead>
@@ -284,8 +296,18 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
                         setIsAddMemberDialogOpen(true);
                         handleClose();
                     }}>Add Membership</MenuItem>
-                    <MenuItem>Change Status</MenuItem>
-                    <MenuItem>Delete</MenuItem>
+                    <MenuItem onClick={() => {
+                        setisChangeStatus(true)
+                        handleClose()
+                    }}>Change Status</MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            setisResetPassword(true)
+                            handleClose()
+                        }}>
+                        Change Password
+                    </MenuItem>
+
                 </Menu>
             </TableContainer>
         </>)
