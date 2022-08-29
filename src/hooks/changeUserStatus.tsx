@@ -9,7 +9,7 @@ interface IChnageStatus {
 function changeUserStatus(axiosConfig: AxiosRequestConfig) {
     return useQuery<IChnageStatus[]>(
         ["changeUserStatus"],
-        async () => await axios.get(
+        async () => await axios.post(
             "api/User/ChangeStatus",
             axiosConfig
         ).then((res) => res.data),
