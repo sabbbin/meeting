@@ -1,4 +1,4 @@
-import React, { ReactNode, Suspense } from 'react';
+import React, { ReactNode, Suspense, useState } from 'react';
 import { styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
@@ -17,8 +17,12 @@ import { Outlet } from 'react-router-dom';
 import { Roles } from '../roles/roles';
 import Navlist from '../route/NavListItem';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
-import { CalendarMonth } from '@mui/icons-material';
+import { CalendarMonth, } from '@mui/icons-material';
+import GroupsIcon from '@mui/icons-material/Groups';
 import LogoutIcon from '@mui/icons-material/Logout';
+import ChangePasswordDialog from '../dialog/changePasswordDialog copy';
+import { IUser } from '../Tables/userTable';
+import { MenuItem } from '@mui/material';
 
 const drawerWidth = 240;
 
@@ -99,7 +103,10 @@ export default function BaseLayout() {
     localStorage.clear
     navigate('/login')
   };
+  const [isResetPassword, setisResetPassword] = useState(false);
+  const [isforMenu, setisforMenu] = useState<IUser | null>()
 
+  const UserName = sessionStorage.getItem('username');
 
 
   const sidebarItems: INavItemsProps[] = [
@@ -126,7 +133,16 @@ export default function BaseLayout() {
       onClick: () => {
         navigate('./agendaTable');
       },
+    },
+    {
+      label: 'MeetingType',
+      icon: <GroupsIcon />,
+      role: [Roles.ADMIN],
+      onClick: () => {
+        navigate('./MeetingTypeTable');
+      },
     }
+
   ]
 
   return (
@@ -134,6 +150,16 @@ export default function BaseLayout() {
       <CssBaseline />
       <AppBar position="fixed" open={open}>
         <Toolbar >
+          <ChangePasswordDialog
+            open={isResetPassword}
+            onChangePasswordDiscardDialog={() => {
+              setisResetPassword(false)
+            }}
+            onChangePasswordSuccessDialog={() => {
+              setisResetPassword(false)
+            }}
+            toEditChangePasswprd={isforMenu!}
+          />
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -146,9 +172,17 @@ export default function BaseLayout() {
           <Typography variant="h6" noWrap component="div">
             Channakya Meetings
           </Typography>
+          <MenuItem
+            onClick={() => {
+              setisResetPassword(true)
+
+            }}>
+            Change Password
+          </MenuItem>
           <IconButton onClick={handleLogOut} >
             <LogoutIcon />
           </IconButton>
+
         </Toolbar>
       </AppBar>
       <Drawer
