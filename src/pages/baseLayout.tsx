@@ -17,12 +17,12 @@ import { Outlet } from 'react-router-dom';
 import { Roles } from '../roles/roles';
 import Navlist from '../route/NavListItem';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
-import { CalendarMonth, } from '@mui/icons-material';
+import { AccountBalanceOutlined, AccountBox, AccountBoxOutlined, AccountBoxRounded, CalendarMonth, } from '@mui/icons-material';
 import GroupsIcon from '@mui/icons-material/Groups';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ChangePasswordDialog from '../dialog/changePasswordDialog copy';
 import { IUser } from '../Tables/userTable';
-import { MenuItem } from '@mui/material';
+import { Menu, MenuItem } from '@mui/material';
 
 const drawerWidth = 240;
 
@@ -86,6 +86,15 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 
 
 export default function BaseLayout() {
+
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const openUserInfo = Boolean(anchorEl);
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
 
@@ -149,7 +158,7 @@ export default function BaseLayout() {
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
       <AppBar position="fixed" open={open}>
-        <Toolbar >
+        <Toolbar sx={{ justifyContent: 'space-between' }} >
           <ChangePasswordDialog
             open={isResetPassword}
             onChangePasswordDiscardDialog={() => {
@@ -160,29 +169,46 @@ export default function BaseLayout() {
             }}
             toEditChangePasswprd={isforMenu!}
           />
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            onClick={handleDrawerOpen}
-            edge="start"
-            sx={{ mr: 2, ...(open && { display: 'none' }) }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            Channakya Meetings
-          </Typography>
-          <MenuItem
-            onClick={() => {
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              onClick={handleDrawerOpen}
+              edge="start"
+              sx={{ mr: 2, ...(open && { display: 'none' }) }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography variant="h6" noWrap component="div">
+              Channakya Meetings
+            </Typography>
+
+          </Box>
+          <Menu
+            anchorEl={anchorEl}
+            open={openUserInfo}
+            onClose={handleClose}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}>
+            <MenuItem> Username</MenuItem>
+
+            <MenuItem onClick={() => {
               setisResetPassword(true)
 
-            }}>
-            Change Password
-          </MenuItem>
-          <IconButton onClick={handleLogOut} >
-            <LogoutIcon />
+            }}>  Change Password</MenuItem>
+            <Divider />
+            <MenuItem onClick={handleLogOut}>
+              <LogoutIcon />Logout</MenuItem>
+          </Menu>
+          <IconButton onClick={handleClick}>
+            <AccountBox />
           </IconButton>
-
         </Toolbar>
       </AppBar>
       <Drawer
