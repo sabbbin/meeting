@@ -9,6 +9,7 @@ const Dashboard = lazy(() => import('./pages/dashboard'));
 const BaseLayout = lazy(() => import('./pages/baseLayout'));
 const UserTable = lazy(() => import('./Tables/userTable'));
 const AgendaTable = lazy(() => import('./Tables/agendaTable'));
+const MeetingTypeTable = lazy(() => import('./Tables/meetingTypeTable'));
 
 
 
@@ -33,7 +34,10 @@ export const AppRoutes: RouteObject[] = [
             {
                 path: '/agendaTable',
                 element: < AgendaTable />
-            },
+            }, {
+                path: '/MeetingTypeTable',
+                element: <MeetingTypeTable />
+            }
         ]
     },
 
