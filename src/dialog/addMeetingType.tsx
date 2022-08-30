@@ -49,15 +49,6 @@ export default function AddMeetingTypeDialog({ refetch, onAddMeetingTypeSuccessD
         setAnchorEl(null);
     };
 
-
-    // const { data: meetTypeData, refetch } = useMeetingType({
-    //     headers: {
-    //         Authorization: 'Bearer ' + accessToken,
-    //     },
-    // })
-
-
-
     const headers = {
         Authorization: 'Bearer ' + accessToken
     }
@@ -76,6 +67,21 @@ export default function AddMeetingTypeDialog({ refetch, onAddMeetingTypeSuccessD
         },
     })
 
+    const UpdateMeetingMutation = useMutation<unknown, unknown, FormData>(
+        async (data) => await axios.put(
+            "api/MeetingType",
+            data,
+            {
+                headers: headers
+            }
+        ).then((res) => res.data), {
+        onSuccess() {
+            refetch()
+            onAddMeetingTypeSuccessDialog()
+        },
+    }
+    )
+
     const formik = useFormik<FormData>({
         initialValues: {
             typeName: '',
@@ -85,7 +91,8 @@ export default function AddMeetingTypeDialog({ refetch, onAddMeetingTypeSuccessD
         },
         validationSchema: validationSchema,
         onSubmit: (values) => {
-            CreateMeetingTypeMutation.mutate(values);
+            if (toEdit) UpdateMeetingMutation.mutate(values)
+            else CreateMeetingTypeMutation.mutate(values);
         }
     })
 
@@ -108,7 +115,7 @@ export default function AddMeetingTypeDialog({ refetch, onAddMeetingTypeSuccessD
         <Dialog PaperComponent={FormDialogPaper as never} PaperProps={{
             onSubmit: formik.handleSubmit as never
         }} open={open} onClose={handleClose}>
-            <DialogTitle>Change Password</DialogTitle>
+            <DialogTitle>{!!toEdit ? 'Update' : 'Add'} Meeting Type</DialogTitle>
             <DialogContent>
                 <TextField
                     label='Meeting Type'

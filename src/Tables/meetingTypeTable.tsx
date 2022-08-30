@@ -55,7 +55,17 @@ export default function MeetingTypeTable() {
 
     const [isforMenu, setisforMenu] = useState<IMeetingType | null>()
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [open, setOpen] = useState(false);
+    const handleClickColumn = (event: MouseEvent<HTMLButtonElement>, MeetType: IMeetingType) => {
+        setAnchorEl(event.currentTarget);
+        setisforMenu(MeetType);
+    };
+    const openMenu = Boolean(anchorEl);
+
+    const handleCloseMenu = () => {
+        setAnchorEl(null);
+    };
 
     const handleClose = () => {
         setOpen(false);
@@ -83,13 +93,13 @@ export default function MeetingTypeTable() {
                 cell: info => info.getValue() ? 'Enable' : 'Disable',
                 footer: info => info.column.id,
             }),
-            // columnHelper.accessor(row => row, {
-            //     header: 'Actions',
-            //     cell: (info) => <IconButton
-            //         onClick={(e) => handleClickColumn(e, info.getValue())}>
-            //         <MoreVertIcon />
-            //     </IconButton>,
-            // }),
+            columnHelper.accessor(row => row, {
+                header: 'Actions',
+                cell: (info) => <IconButton
+                    onClick={(e) => handleClickColumn(e, info.getValue())}>
+                    <MoreVertIcon />
+                </IconButton>,
+            }),
         ],
         ([]))
 
@@ -174,7 +184,13 @@ export default function MeetingTypeTable() {
                     rowsPerPage={pagination.pageSize}
                     onRowsPerPageChange={(e) => handlePageSizeChange(+e.currentTarget.value)}
                 /> */}
-
+                <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu} >
+                    <MenuItem onClick={() => {
+                        setIsDialogOpen(true);
+                        handleClose();
+                    }}>Edit</MenuItem >
+                    <MenuItem onClick={() => { }}>Delete</MenuItem>
+                </Menu>
             </TableContainer>
         </>
     )
