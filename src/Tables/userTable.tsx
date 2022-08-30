@@ -19,7 +19,6 @@ import useRole from "../hooks/useRole";
 import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import axios, { AxiosRequestConfig } from "axios";
-import useCount from "../hooks/useCount";
 import useRoleById from "../hooks/useRoleById";
 import useStatus from "../hooks/useStatus";
 import updateUser from "../hooks/updateUser";
@@ -27,6 +26,7 @@ import UserFormDialog from "../dialog/userFormDialog";
 import AddMemberDialog from "../dialog/addMemberDialog";
 import ChangeStatusDialog, { IChangeStatusDialog } from "../dialog/changeStatusDialog";
 import ChangePasswordDialog from "../dialog/changePasswordDialog copy";
+import useMeetingCount from "../hooks/useMeetingCount";
 
 export interface IUser {
     userId: number,
@@ -45,7 +45,6 @@ export interface IUser {
 };
 
 
-
 interface Role {
     RoleId: number,
     RoleName: string,
@@ -55,11 +54,10 @@ interface Role {
 }
 
 
-
 const columnHelper = createColumnHelper<IUser>()
 
 
-export default function UserTable(axiosConfig: AxiosRequestConfig) {
+export default function UserTable() {
 
     const { pagination, handlePageNumberChange, handlePageSizeChange } =
         usePagination({
@@ -143,7 +141,7 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
             }),
             columnHelper.accessor(row => row.createdOn, {
                 header: "Created On",
-                cell: info => dayjs(info.getValue()).format('DD/MM/YYYY'),
+                cell: info => dayjs(info.getValue()).format('YYYY-MM-DD'),
                 footer: info => info.column.id,
             }),
             columnHelper.accessor(row => row, {
@@ -170,7 +168,7 @@ export default function UserTable(axiosConfig: AxiosRequestConfig) {
         },
     });
 
-    const { data: countData } = useCount({
+    const { data: countData } = useMeetingCount({
         headers: {
             Authorization: 'Bearer ' + accessToken,
         },
