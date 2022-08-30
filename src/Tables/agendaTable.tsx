@@ -1,4 +1,4 @@
-import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Toolbar } from "@mui/material";
+import { Button, IconButton, Menu, MenuItem, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, Toolbar } from "@mui/material";
 import {
     createColumnHelper,
     flexRender,
@@ -6,71 +6,62 @@ import {
     useReactTable,
 } from '@tanstack/react-table';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { ReactNode, useState } from "react";
+import { MouseEvent, ReactNode, useState } from "react";
+import usePagination from "../hooks/usePagination";
+import useAgenda from "../hooks/useAgenda";
+import dayjs from "dayjs";
+import useAgendaCount from "../hooks/useAgendaCount";
 
 export interface IAgenda {
+    agendaId?: string,
     agenda: string,
-    meetType: number,
-    email: string,
+    typeName: number,
+    meetTypeId?: number,
     description: string,
-    postedBy: string,
-    postedOn: string
-
+    statusId?: number,
+    statusName: string,
+    postedBy?: number,
+    postedOn: string,
+    fullName: string,
 };
 
 const columnHelper = createColumnHelper<IAgenda>()
 
-const defaultData: IAgenda[] = [
-    {
-        agenda: 'This is a dummy agenda 0',
-        meetType: 0,
-        email: 'abc@gmail.com',
-        description: 'This is a dummy disc',
-        postedBy: 'Ram',
-        postedOn: '1914/6/9'
-    },
-    {
-        agenda: 'This is a dummy agenda 1',
-        meetType: 1,
-        email: 'abc@gmail.com',
-        description: 'This is a dummy disc',
-        postedBy: 'Shyam',
-        postedOn: '1914/6/8'
-    },
-    {
-        agenda: 'This is a dummy agenda 2',
-        meetType: 2,
-        email: 'abc@gmail.com',
-        description: 'This is a dummy disc',
-        postedBy: 'Hari',
-        postedOn: '1914/6/6'
-    },
-    {
-        agenda: 'This is a dummy agenda 3',
-        meetType: 3,
-        email: 'abc@gmail.com',
-        description: 'This is a dummy disc',
-        postedBy: 'Puri',
-        postedOn: '1914/6/5'
-    },
-]
 
 
 export default function AgendaTable() {
 
+
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    console.log(anchorEl);
+    const [isforAgenda, setisforAgenda] = useState<IAgenda | null>()
+    const openMenu = Boolean(anchorEl);
+
+    const handleCloseMenu = () => {
+        setAnchorEl(null);
+    };
+
+    const handleClickColumn = (event: MouseEvent<HTMLButtonElement>, agenda: IAgenda) => {
+        setAnchorEl(event.currentTarget);
+        setisforAgenda(agenda);
+
+    };
+
+
+    const { pagination, handlePageNumberChange, handlePageSizeChange } =
+        usePagination({
+            pageNumber: 0,
+            pageSize: 10
+        });
+
     const columns = [
+        columnHelper.accessor('typeName', {
+            header: "Type",
+            cell: info => info.getValue(),
+            footer: info => info.column.id,
+        }),
         columnHelper.accessor('agenda', {
             header: "Agenda",
-            cell: info => info.getValue(),
-            footer: info => info.column.id,
-        }),
-        columnHelper.accessor('meetType', {
-            header: "MeetType",
-            cell: info => info.getValue(),
-            footer: info => info.column.id,
-        }),
-        columnHelper.accessor(row => row.email, {
-            header: "Email",
             cell: info => info.getValue(),
             footer: info => info.column.id,
         }),
@@ -79,32 +70,66 @@ export default function AgendaTable() {
             cell: info => info.getValue(),
             footer: info => info.column.id,
         }),
-        columnHelper.accessor(row => row.postedBy, {
+        columnHelper.accessor('statusName', {
+            header: "Status",
+            cell: info => info.getValue(),
+            footer: info => info.column.id,
+        }),
+        columnHelper.accessor('fullName', {
             header: "Posted By",
             cell: info => info.getValue(),
             footer: info => info.column.id,
         }),
         columnHelper.accessor(row => row.postedOn, {
             header: "Posted On",
-            cell: info => info.getValue(),
+            cell: info => dayjs(info.getValue()).format('YYYY-MM-DD'),
             footer: info => info.column.id,
         }),
-        // columnHelper.display({
-        //     header: 'Actions',
-        //     cell: () => <MoreVertIcon />,
-        // }),
+
+        columnHelper.accessor(row => row, {
+            header: 'Actions',
+            cell: (info) => <IconButton
+                onClick={(e) => handleClickColumn(e, info.getValue())}>
+                <MoreVertIcon />
+            </IconButton>,
+        }),
     ]
 
+    let accessToken = localStorage.getItem('access_token');
+
+    let userId = localStorage.getItem('userId');
+
+    const { data: meetingAgendaData, refetch } = useAgenda(pagination.pageSize, pagination.pageNumber + 1, userId, {
+        params: {
+            pageSize: pagination.pageSize,
+            pageNo: pagination.pageNumber + 1,
+            userId: userId
+        },
+        headers: {
+            Authorization: 'Bearer ' + accessToken,
+        },
+    })
+
+    const { data: meetingCount } = useAgendaCount(userId, {
+        params: {
+            userId: userId
+        },
+        headers: {
+            Authorization: 'Bearer ' + accessToken,
+        },
+    })
 
     const table = useReactTable({
-        data: defaultData,
+        data: meetingAgendaData,
         columns,
-        getCoreRowModel: getCoreRowModel()
+        getCoreRowModel: getCoreRowModel(),
+
     });
 
     return (
         <>
             <Toolbar />
+            <Button sx={{ m: 1 }} variant="contained">Add Agenda</Button>
             <TableContainer sx={{ minWidth: 1000 }} component={Paper} >
                 <Table>
                     <TableHead>
@@ -125,7 +150,7 @@ export default function AgendaTable() {
                             </TableRow>
                         ))}
                     </TableHead>
-                    <TableBody>
+                    <TableBody sx={{ textOverflow: "ellipsis" }}>
                         {table.getRowModel().rows.map(row => (
                             <TableRow key={row.id}>
                                 {row.getVisibleCells().map(cell => (
@@ -137,6 +162,19 @@ export default function AgendaTable() {
                         ))}
                     </TableBody>
                 </Table>
+                <TablePagination
+                    width="140px"
+                    component="div"
+                    count={meetingCount.TotalCount}
+                    page={pagination.pageNumber}
+                    onPageChange={(e, page) => handlePageNumberChange(page)}
+                    rowsPerPage={pagination.pageSize}
+                    onRowsPerPageChange={(e) => handlePageSizeChange(+e.currentTarget.value)}
+                />
+                <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
+                    <MenuItem>Edit</MenuItem>
+                    <MenuItem>Delete</MenuItem>
+                </Menu>
             </TableContainer>
         </>
     )
