@@ -1,28 +1,34 @@
-import React, { ReactNode, Suspense, useState } from 'react';
-import { styled, useTheme } from '@mui/material/styles';
-import Box from '@mui/material/Box';
-import Drawer from '@mui/material/Drawer';
-import CssBaseline from '@mui/material/CssBaseline';
-import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Divider from '@mui/material/Divider';
-import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import GroupIcon from '@mui/icons-material/Group';
+import React, { ReactNode, Suspense, useState } from "react";
+import { styled, useTheme } from "@mui/material/styles";
+import Box from "@mui/material/Box";
+import Drawer from "@mui/material/Drawer";
+import CssBaseline from "@mui/material/CssBaseline";
+import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
+import Toolbar from "@mui/material/Toolbar";
+import Typography from "@mui/material/Typography";
+import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import MenuIcon from "@mui/icons-material/Menu";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import GroupIcon from "@mui/icons-material/Group";
 import { useNavigate } from "react-router-dom";
-import { Outlet } from 'react-router-dom';
-import { Roles } from '../roles/roles';
-import Navlist from '../route/NavListItem';
-import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
-import { AccountBalanceOutlined, AccountBox, AccountBoxOutlined, AccountBoxRounded, CalendarMonth, } from '@mui/icons-material';
-import GroupsIcon from '@mui/icons-material/Groups';
-import LogoutIcon from '@mui/icons-material/Logout';
-import ChangePasswordDialog from '../dialog/changePasswordDialog copy';
-import { IUser } from '../Tables/userTable';
-import { Menu, MenuItem } from '@mui/material';
+import { Outlet } from "react-router-dom";
+import { Roles } from "../roles/roles";
+import Navlist from "../route/NavListItem";
+import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
+import {
+  AccountBalanceOutlined,
+  AccountBox,
+  AccountBoxOutlined,
+  AccountBoxRounded,
+  CalendarMonth,
+} from "@mui/icons-material";
+import GroupsIcon from "@mui/icons-material/Groups";
+import LogoutIcon from "@mui/icons-material/Logout";
+import ChangePasswordDialog from "../dialog/changePasswordDialog copy";
+import { IUser } from "../Tables/userTable";
+import { Menu, MenuItem } from "@mui/material";
 
 const drawerWidth = 240;
 
@@ -34,18 +40,18 @@ export interface INavItemsProps {
   items?: INavItemsProps[];
 }
 
-const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
+const Main = styled("main", { shouldForwardProp: (prop) => prop !== "open" })<{
   open?: boolean;
 }>(({ theme, open }) => ({
   flexGrow: 1,
   padding: theme.spacing(3),
-  transition: theme.transitions.create('margin', {
+  transition: theme.transitions.create("margin", {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
   marginLeft: `-${drawerWidth}px`,
   ...(open && {
-    transition: theme.transitions.create('margin', {
+    transition: theme.transitions.create("margin", {
       easing: theme.transitions.easing.easeOut,
       duration: theme.transitions.duration.enteringScreen,
     }),
@@ -58,35 +64,32 @@ interface AppBarProps extends MuiAppBarProps {
 }
 
 const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: (prop) => prop !== 'open',
+  shouldForwardProp: (prop) => prop !== "open",
 })<AppBarProps>(({ theme, open }) => ({
-  transition: theme.transitions.create(['margin', 'width'], {
+  transition: theme.transitions.create(["margin", "width"], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
   ...(open && {
     width: `calc(100% - ${drawerWidth}px)`,
     marginLeft: `${drawerWidth}px`,
-    transition: theme.transitions.create(['margin', 'width'], {
+    transition: theme.transitions.create(["margin", "width"], {
       easing: theme.transitions.easing.easeOut,
       duration: theme.transitions.duration.enteringScreen,
     }),
   }),
 }));
 
-const DrawerHeader = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
+const DrawerHeader = styled("div")(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
   padding: theme.spacing(0, 1),
   // necessary for content to be below app bar
   ...theme.mixins.toolbar,
-  justifyContent: 'flex-end',
+  justifyContent: "flex-end",
 }));
 
-
-
 export default function BaseLayout() {
-
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const openUserInfo = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -109,102 +112,106 @@ export default function BaseLayout() {
   let navigate = useNavigate();
 
   const handleLogOut = () => {
-    localStorage.clear
-    navigate('/login')
+    localStorage.clear;
+    navigate("/login");
   };
   const [isResetPassword, setisResetPassword] = useState(false);
-  const [isforMenu, setisforMenu] = useState<IUser | null>()
+  const [isforMenu, setisforMenu] = useState<IUser | null>();
 
-  const UserName = sessionStorage.getItem('username');
-
+  const UserName = sessionStorage.getItem("username");
 
   const sidebarItems: INavItemsProps[] = [
     {
-      label: 'Users',
+      label: "Users",
       icon: <GroupIcon />,
       role: [Roles.ADMIN],
       onClick: () => {
-        navigate('./userTable');
+        navigate("./userTable");
       },
     },
     {
-      label: 'Meetings',
+      label: "Meetings",
       icon: <MeetingRoomIcon />,
       role: [Roles.ADMIN],
-      // onClick: () => {
-      //   navigate('./user');
-      // },
+      onClick: () => {
+        navigate("./meeting");
+      },
     },
     {
-      label: 'Agenda',
+      label: "Agenda",
       icon: <CalendarMonth />,
       role: [Roles.ADMIN],
       onClick: () => {
-        navigate('./agendaTable');
+        navigate("./agendaTable");
       },
     },
     {
-      label: 'MeetingType',
+      label: "MeetingType",
       icon: <GroupsIcon />,
       role: [Roles.ADMIN],
       onClick: () => {
-        navigate('./MeetingTypeTable');
+        navigate("./MeetingTypeTable");
       },
-    }
-
-  ]
+    },
+  ];
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: "flex" }}>
       <CssBaseline />
       <AppBar position="fixed" open={open}>
-        <Toolbar sx={{ justifyContent: 'space-between' }} >
+        <Toolbar sx={{ justifyContent: "space-between" }}>
           <ChangePasswordDialog
             open={isResetPassword}
             onChangePasswordDiscardDialog={() => {
-              setisResetPassword(false)
+              setisResetPassword(false);
             }}
             onChangePasswordSuccessDialog={() => {
-              setisResetPassword(false)
+              setisResetPassword(false);
             }}
             toEditChangePasswprd={isforMenu!}
           />
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ display: "flex", alignItems: "center" }}>
             <IconButton
               color="inherit"
               aria-label="open drawer"
               onClick={handleDrawerOpen}
               edge="start"
-              sx={{ mr: 2, ...(open && { display: 'none' }) }}
+              sx={{ mr: 2, ...(open && { display: "none" }) }}
             >
               <MenuIcon />
             </IconButton>
             <Typography variant="h6" noWrap component="div">
               Channakya Meetings
             </Typography>
-
           </Box>
           <Menu
             anchorEl={anchorEl}
             open={openUserInfo}
             onClose={handleClose}
             anchorOrigin={{
-              vertical: 'top',
-              horizontal: 'left',
+              vertical: "top",
+              horizontal: "left",
             }}
             transformOrigin={{
-              vertical: 'top',
-              horizontal: 'left',
-            }}>
+              vertical: "top",
+              horizontal: "left",
+            }}
+          >
             <MenuItem> Username</MenuItem>
 
-            <MenuItem onClick={() => {
-              setisResetPassword(true)
-
-            }}>  Change Password</MenuItem>
+            <MenuItem
+              onClick={() => {
+                setisResetPassword(true);
+              }}
+            >
+              {" "}
+              Change Password
+            </MenuItem>
             <Divider />
             <MenuItem onClick={handleLogOut}>
-              <LogoutIcon />Logout</MenuItem>
+              <LogoutIcon />
+              Logout
+            </MenuItem>
           </Menu>
           <IconButton onClick={handleClick}>
             <AccountBox />
@@ -215,9 +222,9 @@ export default function BaseLayout() {
         sx={{
           width: drawerWidth,
           flexShrink: 0,
-          '& .MuiDrawer-paper': {
+          "& .MuiDrawer-paper": {
             width: drawerWidth,
-            boxSizing: 'border-box',
+            boxSizing: "border-box",
           },
         }}
         variant="persistent"
@@ -226,7 +233,11 @@ export default function BaseLayout() {
       >
         <DrawerHeader>
           <IconButton onClick={handleDrawerClose}>
-            {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+            {theme.direction === "ltr" ? (
+              <ChevronLeftIcon />
+            ) : (
+              <ChevronRightIcon />
+            )}
           </IconButton>
         </DrawerHeader>
         <Divider />
@@ -236,6 +247,5 @@ export default function BaseLayout() {
         <Outlet />
       </Main>
     </Box>
-
   );
 }
