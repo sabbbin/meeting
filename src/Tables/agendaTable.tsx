@@ -1,4 +1,4 @@
-import { Button, IconButton, Menu, MenuItem, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, Toolbar } from "@mui/material";
+import { Button, IconButton, Menu, MenuItem, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, Toolbar, Tooltip, Typography } from "@mui/material";
 import {
     createColumnHelper,
     flexRender,
@@ -11,6 +11,9 @@ import usePagination from "../hooks/usePagination";
 import useAgenda from "../hooks/useAgenda";
 import dayjs from "dayjs";
 import useAgendaCount from "../hooks/useAgendaCount";
+import AddAgendaDialog from "../dialog/addAgenda";
+import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
 
 export interface IAgenda {
     agendaId?: string,
@@ -31,9 +34,8 @@ const columnHelper = createColumnHelper<IAgenda>()
 
 export default function AgendaTable() {
 
-
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    console.log(anchorEl);
     const [isforAgenda, setisforAgenda] = useState<IAgenda | null>()
     const openMenu = Boolean(anchorEl);
 
@@ -62,12 +64,23 @@ export default function AgendaTable() {
         }),
         columnHelper.accessor('agenda', {
             header: "Agenda",
-            cell: info => info.getValue(),
+            cell: info => <Tooltip title={info.getValue()}><Typography sx={{
+                width: '150px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+            }}>{info.getValue()}</Typography></Tooltip>,
             footer: info => info.column.id,
         }),
         columnHelper.accessor(row => row.description, {
             header: "Description",
-            cell: info => info.getValue(),
+            cell: info => <Tooltip title={info.getValue()}><Typography sx={{
+                width: '150px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+            }}>{info.getValue()}</Typography>
+            </Tooltip>,
             footer: info => info.column.id,
         }),
         columnHelper.accessor('statusName', {
@@ -119,6 +132,41 @@ export default function AgendaTable() {
         },
     })
 
+    const deleteId = isforAgenda?.agendaId;
+
+    const { data: deleteMeetingType, mutate: deleteMutatae } = useMutation(
+        (data: any) =>
+            axios.delete(`/api/MeetingAgenda/${deleteId}`,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer ' + accessToken,
+                    },
+                }).then((res) => res.data),
+        {
+            onSuccess: () => {
+                refetch();
+            },
+        },
+    )
+
+    const handleDelete = (value: any) => {
+        const dataAfterDelete = {
+            agendaId: deleteId,
+            agenda: isforAgenda,
+            meetTypeId: isforAgenda?.meetTypeId,
+            typeName: isforAgenda?.typeName,
+            description: isforAgenda?.description,
+            statusId: isforAgenda?.statusId,
+            statusName: isforAgenda?.statusName,
+            postedBy: isforAgenda?.postedBy,
+            fullName: isforAgenda?.fullName,
+            postedOn: isforAgenda?.postedOn,
+        };
+        deleteMutatae(dataAfterDelete);
+    }
+
+
     const table = useReactTable({
         data: meetingAgendaData,
         columns,
@@ -129,7 +177,27 @@ export default function AgendaTable() {
     return (
         <>
             <Toolbar />
-            <Button sx={{ m: 1 }} variant="contained">Add Agenda</Button>
+            <Button sx={{ m: 1 }} variant="contained" onClick={() => {
+                setIsDialogOpen(true);
+                handleCloseMenu();
+            }}>Add Agenda</Button>
+            <AddAgendaDialog
+                refetch={refetch}
+                toEditAddAgenda={isforAgenda!}
+                open={isDialogOpen}
+                onAddAgendaDiscardDialog={() => {
+                    setisforAgenda(null)
+                    setIsDialogOpen(false)
+                }
+
+                }
+                onAddAgendaSuccessDialog={
+                    () => {
+                        setisforAgenda(null)
+                        setIsDialogOpen(false)
+                    }
+                }
+            />
             <TableContainer sx={{ minWidth: 1000 }} component={Paper} >
                 <Table>
                     <TableHead>
@@ -150,11 +218,18 @@ export default function AgendaTable() {
                             </TableRow>
                         ))}
                     </TableHead>
-                    <TableBody sx={{ textOverflow: "ellipsis" }}>
+                    <TableBody >
                         {table.getRowModel().rows.map(row => (
                             <TableRow key={row.id}>
                                 {row.getVisibleCells().map(cell => (
-                                    <TableCell key={cell.id}>
+                                    <TableCell sx={{
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        "&:hover": {
+                                            overflow: 'visible'
+                                        }
+                                    }} key={cell.id}>
                                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                     </TableCell>
                                 ))}
@@ -172,8 +247,14 @@ export default function AgendaTable() {
                     onRowsPerPageChange={(e) => handlePageSizeChange(+e.currentTarget.value)}
                 />
                 <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
-                    <MenuItem>Edit</MenuItem>
-                    <MenuItem>Delete</MenuItem>
+                    <MenuItem onClick={() => {
+                        setIsDialogOpen(true);
+                        handleCloseMenu();
+                    }}>Edit</MenuItem>
+                    <MenuItem onClick={() => {
+                        handleDelete(true)
+                        handleCloseMenu();
+                    }}>Delete</MenuItem>
                 </Menu>
             </TableContainer>
         </>
