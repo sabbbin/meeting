@@ -17,6 +17,8 @@ import { useFormik } from "formik";
 import { MeetingRoomRounded } from "@mui/icons-material";
 import { OverridableComponent } from "@mui/material/OverridableComponent";
 import dayjs from "dayjs";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import axios from "axios";
 
 interface AddMeeting extends DialogProps {
   onAddMeetingDiscardDialog: () => void;
@@ -40,6 +42,7 @@ type FormDate = yup.TypeOf<typeof validationSchema>;
 const FormDialogPaper = (
   props: OverridableComponent<PaperTypeMap<{}, "div">>
 ) => <Paper {...(props as any)} as="form" />;
+
 export default function AddMeetingDialog({
   onAddMeetingSuccessDialog,
   onAddMeetingDiscardDialog,
@@ -47,10 +50,29 @@ export default function AddMeetingDialog({
   open,
 }: AddMeeting) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  let access_token = localStorage.getItem("access_token");
   const handleCloseMenu = () => {
     // onAddMeetingSuccessDialog;
     setAnchorEl(null);
   };
+  let { data: updateMeetingData, mutate: updateMeeting } = useMutation(() =>
+    axios
+      .patch("api/Meeting", {
+        headers: {
+          Authorization: "Bearer " + access_token,
+        },
+      })
+      .then((res) => res.data)
+  );
+  let { data: createMeetingData, mutate: createMeeting } = useMutation((data) =>
+    axios
+      .post("api/Meeting", data, {
+        headers: {
+          Authorization: "Bearer " + access_token,
+        },
+      })
+      .then((res) => res.data)
+  );
   const formik = useFormik<FormDate>({
     initialValues: {
       meetId: 0,
@@ -64,7 +86,8 @@ export default function AddMeetingDialog({
     },
     validationSchema: validationSchema,
     onSubmit: (value) => {
-      console.log(value);
+      if (toEdit) {
+      }
     },
   });
   useEffect(() => {
