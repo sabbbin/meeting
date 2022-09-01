@@ -158,7 +158,7 @@ export default function AddMemberDialog({
     refetch: getData,
   } = useQuery<UserMeetingTypeGet[]>(["getMeetType", toEditMember], () =>
     axios
-      .get(`api/MeetingType/${toEditMember.userId}`, {
+      .get(`api/MeetingType/${toEditMember?.userId}`, {
         headers: {
           Authorization: "Bearer " + access_token,
         },
