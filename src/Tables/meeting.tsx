@@ -14,6 +14,7 @@ import {
   TableRow,
   Toolbar,
 } from "@mui/material";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createColumnHelper,
   flexRender,
@@ -21,8 +22,9 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import dayjs from "dayjs";
-import { MouseEvent, useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import AddMeetingDialog from "../dialog/addMeeting";
+import axios from "axios";
 
 export interface IMeeting {
   meetId: number;
@@ -106,7 +108,15 @@ export default function Meeting() {
   const [page, setPage] = useState(1);
   const [isForMenu, setIsForMenu] = useState<IMeeting | null>();
   const [openMenu, setOpenMenu] = useState(false);
+  let access_token = localStorage.getItem("access_token");
 
+  const { data: datatry } = useQuery(["data"], () =>
+    axios.get("api/Meeting/MeetingCountAll", {
+      headers: {
+        Authorization: "Bearer " + access_token,
+      },
+    })
+  );
   const handleClose = () => {
     setOpenMenu(false);
   };
@@ -114,6 +124,16 @@ export default function Meeting() {
     setAnchorEl(null);
     setOpenMenu(false);
   };
+
+  let { data: deletedata, mutate } = useMutation(() =>
+    axios
+      .delete(`api/Meeting/${isForMenu?.meetId}`, {
+        headers: {
+          Authorization: "Bearer " + access_token,
+        },
+      })
+      .then((res) => res.data)
+  );
 
   const table = useReactTable({
     data,
@@ -204,7 +224,15 @@ export default function Meeting() {
           >
             Edit
           </MenuItem>
-          <MenuItem>Delete</MenuItem>
+          <MenuItem
+            onClick={() => {
+              setIsDialogOpen(true);
+              handleClose();
+              mutate();
+            }}
+          >
+            Delete
+          </MenuItem>
         </Menu>
         <TablePagination
           component="div"
