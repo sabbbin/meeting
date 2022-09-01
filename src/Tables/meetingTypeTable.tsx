@@ -53,10 +53,14 @@ const columnHelper = createColumnHelper<IMeetingType>()
 
 export default function MeetingTypeTable() {
 
+    const { pagination, handlePageNumberChange, handlePageSizeChange } =
+        usePagination({
+            pageNumber: 0,
+            pageSize: 10
+        });
     const [isforMenu, setisforMenu] = useState<IMeetingType | null>()
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [open, setOpen] = useState(false);
     const handleClickColumn = (event: MouseEvent<HTMLButtonElement>, MeetType: IMeetingType) => {
         setAnchorEl(event.currentTarget);
         setisforMenu(MeetType);
@@ -67,9 +71,6 @@ export default function MeetingTypeTable() {
         setAnchorEl(null);
     };
 
-    const handleClose = () => {
-        setOpen(false);
-    };
 
     const columns = useMemo(() =>
         [
@@ -103,13 +104,79 @@ export default function MeetingTypeTable() {
         ],
         ([]))
 
+
+
     let accessToken = localStorage.getItem('access_token')
 
-    const { data: meetTypeData, refetch } = useMeetingType({
+    const { data: meetTypeData, refetch } = useMeetingType(pagination.pageSize, pagination.pageNumber + 1, {
+        params: {
+            pageSize: pagination.pageSize,
+            pageNo: pagination.pageNumber + 1,
+        },
         headers: {
             Authorization: 'Bearer ' + accessToken,
         },
     })
+
+    const { data: updateStatus, mutate } = useMutation(
+        (data: any) =>
+            axios.put(`/api/MeetingType/`,
+                data,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer ' + accessToken,
+                    },
+                }).then((res) => res.data),
+        {
+            onSuccess: () => {
+                refetch();
+            },
+        },
+    )
+
+    const deleteId = isforMenu?.MeetTypeId;
+
+    const { data: deleteMeetingType, mutate: deleteMutatae } = useMutation(
+        (data: any) =>
+            axios.delete(`/api/MeetingType/${deleteId}`,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: 'Bearer ' + accessToken,
+                    },
+                }).then((res) => res.data),
+        {
+            onSuccess: () => {
+                refetch();
+            },
+        },
+    )
+
+    const handleDelete = (value: any) => {
+        const dataAfterDelete = {
+            meetTypeId: deleteId,
+            isEnable: value,
+            typeName: isforMenu?.TypeName,
+            alias: isforMenu?.Alias,
+            orderIdx: isforMenu?.OrderIdx,
+        };
+        deleteMutatae(dataAfterDelete);
+    }
+
+
+
+    const handleStatusChange = (value: any) => {
+        const id = isforMenu?.MeetTypeId
+        const updateData = {
+            meetTypeId: id,
+            isEnable: value,
+            typeName: isforMenu?.TypeName,
+            alias: isforMenu?.Alias,
+            orderIdx: isforMenu?.OrderIdx,
+        };
+        mutate(updateData);
+    }
 
     const table = useReactTable({
         data: meetTypeData,
@@ -118,17 +185,14 @@ export default function MeetingTypeTable() {
 
     });
 
-
-
-
     return (
         <>
             <Toolbar />
             <Button sx={{ m: 1 }} variant="contained" onClick={() => {
                 setIsDialogOpen(true);
-                handleClose();
+                handleCloseMenu();
             }}>
-                Add a new Meeting Type
+                Add Type
             </Button>
             <AddMeetingTypeDialog
                 refetch={refetch}
@@ -187,9 +251,19 @@ export default function MeetingTypeTable() {
                 <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu} >
                     <MenuItem onClick={() => {
                         setIsDialogOpen(true);
-                        handleClose();
+                        handleCloseMenu();
                     }}>Edit</MenuItem >
-                    <MenuItem onClick={() => { }}>Delete</MenuItem>
+                    {isforMenu?.IsEnable == true ? (<MenuItem onClick={() => {
+                        handleStatusChange(false)
+                        handleCloseMenu()
+                    }}>Disable</MenuItem>) : (<MenuItem onClick={() => {
+                        handleStatusChange(true)
+                        handleCloseMenu()
+                    }} >Enable</MenuItem>)}
+                    <MenuItem onClick={() => {
+                        handleDelete(true)
+                        handleCloseMenu();
+                    }}>Delete</MenuItem>
                 </Menu>
             </TableContainer>
         </>

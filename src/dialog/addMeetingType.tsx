@@ -8,6 +8,7 @@ import { IUser } from "../Tables/userTable";
 import * as yup from 'yup';
 import { IMeetingType } from "../Tables/meetingTypeTable";
 import useMeetingType from "../hooks/useMeetingType";
+import useUserMeetingType from "../hooks/useUserMeetingType";
 
 
 
@@ -33,7 +34,10 @@ const validationSchema = yup.object({
     orderIdx: yup
         .number(),
     isEnable: yup
-        .boolean()
+        .boolean(),
+    meetType: yup
+        .number()
+        .required('Please provide a Meeting Type.'),
 
 });
 
@@ -67,7 +71,7 @@ export default function AddMeetingTypeDialog({ refetch, onAddMeetingTypeSuccessD
         },
     })
 
-    const UpdateMeetingMutation = useMutation<unknown, unknown, FormData>(
+    const UpdateMeetingTypeMutation = useMutation<unknown, unknown, FormData>(
         async (data) => await axios.put(
             "api/MeetingType",
             data,
@@ -82,16 +86,43 @@ export default function AddMeetingTypeDialog({ refetch, onAddMeetingTypeSuccessD
     }
     )
 
+    const DeleteMeetingTypeMutation = useMutation<unknown, unknown, IMeetingType>(
+        async (data) => await axios.delete(
+            `api/MeetingType/${data.MeetTypeId}`,
+            {
+                headers: headers
+            }
+        ).then((res) => res.data), {
+        onSuccess() {
+            refetch()
+            onAddMeetingTypeSuccessDialog()
+        },
+    }
+    )
+    let userId = localStorage.getItem('userId');
+
+    const { data: userMeetingtypeData } = useUserMeetingType(userId, {
+        params: {
+            userId: userId
+        },
+        headers: {
+            Authorization: 'Bearer ' + accessToken,
+        },
+    })
+
+
+
     const formik = useFormik<FormData>({
         initialValues: {
             typeName: '',
             alias: '',
             isEnable: true,
             orderIdx: 0,
+            meetType: 1,
         },
         validationSchema: validationSchema,
         onSubmit: (values) => {
-            if (toEdit) UpdateMeetingMutation.mutate(values)
+            if (toEdit) UpdateMeetingTypeMutation.mutate(values)
             else CreateMeetingTypeMutation.mutate(values);
         }
     })
@@ -104,6 +135,7 @@ export default function AddMeetingTypeDialog({ refetch, onAddMeetingTypeSuccessD
                 alias: toEdit?.Alias,
                 orderIdx: toEdit?.OrderIdx,
                 isEnable: toEdit?.IsEnable,
+                meetType: toEdit.MeetTypeId,
             });
     }, [toEdit])
 
@@ -157,6 +189,22 @@ export default function AddMeetingTypeDialog({ refetch, onAddMeetingTypeSuccessD
                     type="orderIdx"
                     fullWidth
                     variant="standard" />
+                {/* <TextField
+                    select
+                    fullWidth
+                    name="meetType"
+                    id="meetType"
+                    margin="dense"
+                    label="Meet Type"
+                    variant="standard"
+                    SelectProps={{
+                        value: formik.values.meetType,
+                        onChange: formik.handleChange
+                    }}>
+                    {userMeetingtypeData.map((meetType: any, index: number) => (
+                        <MenuItem key={index} value={meetType.MeetTypeId}>{meetType.TypeName}</MenuItem>
+                    ))}
+                </TextField> */}
             </DialogContent>
             <DialogActions>
                 <Button onClick={onAddMeetingTypeDiscardDialog}>Cancel</Button>
