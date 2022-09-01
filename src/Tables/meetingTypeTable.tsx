@@ -1,17 +1,41 @@
-import { Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Fab, IconButton, Menu, MenuItem, MenuList, Paper, PaperTypeMap, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Toolbar } from "@mui/material";
+import {
+    Button,
+    Chip,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
+    Fab,
+    IconButton,
+    Menu,
+    MenuItem,
+    MenuList,
+    Paper,
+    PaperTypeMap,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TablePagination,
+    TableRow,
+    TextField,
+    Toolbar,
+} from "@mui/material";
 import {
     createColumnHelper,
     flexRender,
     getCoreRowModel,
     useReactTable,
-} from '@tanstack/react-table';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
+} from "@tanstack/react-table";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { memo, MouseEvent, useMemo, useState } from "react";
 import useUsers from "../hooks/useUsers";
 
 import { Add, Info } from "@mui/icons-material";
 import { Field, Form, Formik, FormikHelpers, useFormik } from "formik";
-import * as yup from 'yup';
+import * as yup from "yup";
 import { OverridableComponent } from "@mui/material/OverridableComponent";
 import { useMutation } from "@tanstack/react-query";
 import usePagination from "../hooks/usePagination";
@@ -24,32 +48,30 @@ import useStatus from "../hooks/useStatus";
 import updateUser from "../hooks/updateUser";
 import UserFormDialog from "../dialog/userFormDialog";
 import AddMemberDialog from "../dialog/addMemberDialog";
-import ChangeStatusDialog, { IChangeStatusDialog } from "../dialog/changeStatusDialog";
+import ChangeStatusDialog, {
+    IChangeStatusDialog,
+} from "../dialog/changeStatusDialog";
 import ChangePasswordDialog from "../dialog/changePasswordDialog copy";
 import useMeetingCount from "../hooks/useMeetingCount";
 
-import useMeetingType from "../hooks/useMeetingType"
+import useMeetingType from "../hooks/useMeetingType";
 import AddMeetingTypeDialog from "../dialog/addMeetingType";
 
-
-
 export interface IMeetingType {
-    MeetTypeId?: number,
-    TypeName: string,
-    Alias: string,
-    OrderIdx: number,
-    IsEnable: boolean
+    MeetTypeId?: number;
+    TypeName: string;
+    Alias: string;
+    OrderIdx: number;
+    IsEnable: boolean;
 }
 
-const columnHelper = createColumnHelper<IMeetingType>()
-
+const columnHelper = createColumnHelper<IMeetingType>();
 
 // const { pagination, handlePageNumberChange, handlePageSizeChange } =
 //     usePagination({
 //         pageNumber: 0,
 //         pageSize: 10
 //     });
-
 
 export default function MeetingTypeTable() {
 
