@@ -209,8 +209,13 @@ const UserFormDialog = ({
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
-      if (toEdit) UpdateMutattion.mutate(values);
-      else RegisterMutation.mutate(values);
+      console.log("adsfas");
+      if (toEdit) {
+        console.log("teodaslfj", toEdit);
+        UpdateMutattion.mutate(values);
+      } else {
+        RegisterMutation.mutate(values);
+      }
     },
   });
 
@@ -251,7 +256,6 @@ const UserFormDialog = ({
         onSubmit: formik.handleSubmit as never,
       }}
       open={open}
-      onClose={handleClose}
     >
       <DialogTitle>{!!toEdit ? "Update" : "Add"} User Form</DialogTitle>
       <DialogContent>

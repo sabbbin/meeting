@@ -251,6 +251,7 @@ export default function UserTable() {
         />
       )}
       <AddMemberDialog
+        toEditMember={isforMenu!}
         open={isAddMemberDialogOpen}
         onSuccessAddMemberDialog={() => {
           setIsAddMemberDialogOpen(false);
