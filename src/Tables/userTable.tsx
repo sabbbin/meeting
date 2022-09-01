@@ -82,16 +82,6 @@ export default function UserTable() {
         setAnchorEl(null);
     };
 
-    const [open, setOpen] = useState(false);
-
-    const handleClickOpen = () => {
-        setOpen(true);
-    };
-
-    const handleClose = () => {
-        setOpen(false);
-    };
-
     const getStatusID = (statusId: number) => {
         switch (statusId) {
             case 1:
@@ -200,7 +190,7 @@ export default function UserTable() {
             <Toolbar />
             <Button sx={{ m: 1 }} variant="contained" onClick={() => {
                 setIsDialogOpen(true);
-                handleClose();
+                handleCloseMenu();
             }}>
                 Add User
             </Button>
@@ -217,6 +207,7 @@ export default function UserTable() {
                     setIsDialogOpen(false);
                 }} />
             <AddMemberDialog
+
                 open={isAddMemberDialogOpen}
                 onSuccessAddMemberDialog={() => {
                     setIsAddMemberDialogOpen(false);
@@ -288,20 +279,20 @@ export default function UserTable() {
                 <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
                     <MenuItem onClick={() => {
                         setIsDialogOpen(true);
-                        handleClose();
+                        handleCloseMenu();
                     }}>Edit</MenuItem>
                     <MenuItem onClick={() => {
                         setIsAddMemberDialogOpen(true);
-                        handleClose();
+                        handleCloseMenu();
                     }}>Add Membership</MenuItem>
                     <MenuItem onClick={() => {
                         setisChangeStatus(true)
-                        handleClose()
+                        handleCloseMenu()
                     }}>Change Status</MenuItem>
                     <MenuItem
                         onClick={() => {
                             setisResetPassword(true)
-                            handleClose()
+                            handleCloseMenu()
                         }}>
                         Change Password
                     </MenuItem>
