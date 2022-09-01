@@ -20,6 +20,7 @@ import { IUser } from "../Tables/userTable";
 import * as yup from "yup";
 import { IMeetingType } from "../Tables/meetingTypeTable";
 import useMeetingType from "../hooks/useMeetingType";
+import useUserMeetingType from "../hooks/useUserMeetingType";
 
 interface AddMeetingTypeProps extends DialogProps {
   onAddMeetingTypeDiscardDialog: () => void;
@@ -33,10 +34,21 @@ const FormDialogPaper = (
 ) => <Paper {...(props as any)} as="form" />;
 
 const validationSchema = yup.object({
-  typeName: yup.string().required("Please provide a Meeting name."),
-  alias: yup.string().required("Please provide an Alias."),
-  orderIdx: yup.number(),
-  isEnable: yup.boolean(),
+
+  typeName: yup
+    .string()
+    .required("Please provide a Meeting name."),
+  alias: yup
+    .string()
+    .required('Please provide an Alias.'),
+  orderIdx: yup
+    .number(),
+  isEnable: yup
+    .boolean(),
+  meetType: yup
+    .number()
+    .required('Please provide a Meeting Type.'),
+
 });
 
 type FormData = yup.TypeOf<typeof validationSchema>;
@@ -57,52 +69,79 @@ export default function AddMeetingTypeDialog({
   };
 
   const headers = {
-    Authorization: "Bearer " + accessToken,
-  };
+    Authorization: 'Bearer ' + accessToken
+  }
 
   const CreateMeetingTypeMutation = useMutation<unknown, unknown, FormData>(
-    async (data) =>
-      await axios
-        .post("api/MeetingType", data, {
-          headers: headers,
-        })
-        .then((res) => res.data),
-    {
-      onSuccess() {
-        refetch();
-        onAddMeetingTypeSuccessDialog();
-      },
-    }
-  );
+    async (data) => await axios.post(
+      "api/MeetingType",
+      data,
+      {
+        headers: headers
+      }
+    ).then((res) => res.data), {
+    onSuccess() {
+      refetch()
+      onAddMeetingTypeSuccessDialog()
+    },
+  })
 
-  const UpdateMeetingMutation = useMutation<unknown, unknown, FormData>(
-    async (data) =>
-      await axios
-        .put("api/MeetingType", data, {
-          headers: headers,
-        })
-        .then((res) => res.data),
-    {
-      onSuccess() {
-        refetch();
-        onAddMeetingTypeSuccessDialog();
-      },
-    }
-  );
+  const UpdateMeetingTypeMutation = useMutation<unknown, unknown, FormData>(
+    async (data) => await axios.put(
+      "api/MeetingType",
+      data,
+      {
+        headers: headers
+      }
+    ).then((res) => res.data), {
+    onSuccess() {
+      refetch()
+      onAddMeetingTypeSuccessDialog()
+    },
+  }
+  )
+
+  const DeleteMeetingTypeMutation = useMutation<unknown, unknown, IMeetingType>(
+    async (data) => await axios.delete(
+      `api/MeetingType/${data.MeetTypeId}`,
+      {
+        headers: headers
+      }
+    ).then((res) => res.data), {
+    onSuccess() {
+      refetch()
+      onAddMeetingTypeSuccessDialog()
+    },
+  }
+  )
+  let userId = localStorage.getItem('userId');
+
+  const { data: userMeetingtypeData } = useUserMeetingType(userId, {
+    params: {
+      userId: userId
+    },
+    headers: {
+      Authorization: 'Bearer ' + accessToken,
+    },
+  })
+
+
 
   const formik = useFormik<FormData>({
     initialValues: {
-      typeName: "",
-      alias: "",
+      typeName: '',
+      alias: '',
       isEnable: true,
       orderIdx: 0,
+      meetType: 1,
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
-      if (toEdit) UpdateMeetingMutation.mutate(values);
+      if (toEdit) UpdateMeetingTypeMutation.mutate(values)
       else CreateMeetingTypeMutation.mutate(values);
-    },
-  });
+    }
+  })
+
 
   useEffect(() => {
     if (toEdit)
@@ -111,26 +150,22 @@ export default function AddMeetingTypeDialog({
         alias: toEdit?.Alias,
         orderIdx: toEdit?.OrderIdx,
         isEnable: toEdit?.IsEnable,
+        meetType: toEdit.MeetTypeId,
       });
-  }, [toEdit]);
+  }, [toEdit])
 
   const handleClose = () => {
-    onAddMeetingTypeDiscardDialog();
+    onAddMeetingTypeDiscardDialog()
   };
 
   return (
-    <Dialog
-      PaperComponent={FormDialogPaper as never}
-      PaperProps={{
-        onSubmit: formik.handleSubmit as never,
-      }}
-      open={open}
-      onClose={handleClose}
-    >
-      <DialogTitle>{!!toEdit ? "Update" : "Add"} Meeting Type</DialogTitle>
+    <Dialog PaperComponent={FormDialogPaper as never} PaperProps={{
+      onSubmit: formik.handleSubmit as never
+    }} open={open} onClose={handleClose}>
+      <DialogTitle>{!!toEdit ? 'Update' : 'Add'} Meeting Type</DialogTitle>
       <DialogContent>
         <TextField
-          label="Meeting Type"
+          label='Meeting Type'
           autoFocus
           margin="dense"
           id="alias"
@@ -144,7 +179,7 @@ export default function AddMeetingTypeDialog({
           variant="standard"
         />
         <TextField
-          label="Alias"
+          label='Alias'
           autoFocus
           margin="dense"
           id="alias"
@@ -155,10 +190,9 @@ export default function AddMeetingTypeDialog({
           helperText={formik.touched.alias && formik.errors.alias}
           type="alias"
           fullWidth
-          variant="standard"
-        />
+          variant="standard" />
         <TextField
-          label="Order Index"
+          label='Order Index'
           autoFocus
           margin="dense"
           id="orderIdx"
@@ -169,13 +203,27 @@ export default function AddMeetingTypeDialog({
           helperText={formik.touched.orderIdx && formik.errors.orderIdx}
           type="orderIdx"
           fullWidth
-          variant="standard"
-        />
+          variant="standard" />
+        {/* <TextField
+                    select
+                    fullWidth
+                    name="meetType"
+                    id="meetType"
+                    margin="dense"
+                    label="Meet Type"
+                    variant="standard"
+                    SelectProps={{
+                        value: formik.values.meetType,
+                        onChange: formik.handleChange
+                    }}>
+                    {userMeetingtypeData.map((meetType: any, index: number) => (
+                        <MenuItem key={index} value={meetType.MeetTypeId}>{meetType.TypeName}</MenuItem>
+                    ))}
+                </TextField> */}
       </DialogContent>
       <DialogActions>
         <Button onClick={onAddMeetingTypeDiscardDialog}>Cancel</Button>
-        <Button type="submit">Submit</Button>
-      </DialogActions>
+        <Button type="submit">Submit</Button></DialogActions>
     </Dialog>
-  );
+  )
 }

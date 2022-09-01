@@ -2,15 +2,15 @@ import { useQuery } from "@tanstack/react-query";
 import axios, { AxiosRequestConfig } from "axios";
 
 
-function useMeetingType(pageSize: number, pageNumber: number, axiosConfig: AxiosRequestConfig) {
+function useUserMeetingType(userId: string | null, axiosConfig: AxiosRequestConfig) {
     return useQuery(
-        ["meetType", pageSize, pageNumber],
+        ["userMeetType", userId],
         async () => await axios.get(
-            `api/MeetingType`,
+            `api/MeetingType/${userId}`,
             axiosConfig
         ).then((res) => res.data)
         , { initialData: [] }
     )
 }
 
-export default useMeetingType;
+export default useUserMeetingType;
