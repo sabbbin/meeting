@@ -79,6 +79,7 @@ export default function AddMemberDialog({
     );
   };
 
+  //load all meeting types
   const { data: dataTypeForUser } = useQuery(
     ["getTypeForUser"],
     () =>
@@ -95,7 +96,7 @@ export default function AddMemberDialog({
       },
     }
   );
-
+  //keeeping user in dictionary
   if (dataTypeForUser.length > 0) {
     var dataMeeting = dataTypeForUser.reduce((initial: any, info: any) => {
       let { MeetTypeId, TypeName } = info;
@@ -117,6 +118,7 @@ export default function AddMemberDialog({
     meetTypeId: number;
   }
 
+  ///adding user in meeting types fields
   let { data: successData, mutate } = useMutation<
     UserMeetingType[],
     unknown,
@@ -134,6 +136,8 @@ export default function AddMemberDialog({
       onSuccess: () => onSuccessAddMemberDialog(),
     }
   );
+
+  //preprocessing data before send for updating  data
   const UpdateMember = (e: any) => {
     e.preventDefault();
 
@@ -152,6 +156,8 @@ export default function AddMemberDialog({
     userId: number;
     MeetTypeId: number;
   }
+
+  //get the userMeeting types for user
   const {
     data: getMeetTypeSelected,
     isSuccess,
