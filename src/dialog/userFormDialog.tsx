@@ -94,7 +94,12 @@ const validationSchema = yup.object({
   fullName: yup
     .string()
     .required("Please enter your Full Name")
-    .typeError("Fullname  must be a string"),
+    .typeError("Fullname name must be a string"),
+
+  roleId: yup.number().required().typeError("Select the Role"),
+});
+
+const submitFormValidation = validationSchema.shape({
   password: yup
     .string()
     .required()
@@ -109,7 +114,6 @@ const validationSchema = yup.object({
     )
     .min(8, "Password should be of minimum 8 characters length")
     .typeError("Password and confirm password should match"),
-  roleId: yup.number(),
 });
 
 const UserFormDialog = ({
@@ -194,10 +198,14 @@ const UserFormDialog = ({
       createdBy: localStorage.getItem("userId"),
       statusId: 1,
     },
-    validationSchema: validationSchema,
+    validationSchema: toEdit ? validationSchema : submitFormValidation,
     onSubmit: (values) => {
-      if (toEdit) UpdateMutattion.mutate(values);
-      else RegisterMutation.mutate(values);
+      if (toEdit) {
+        console.log("teodaslfj", toEdit);
+        UpdateMutattion.mutate(values);
+      } else {
+        RegisterMutation.mutate(values);
+      }
     },
   });
 
@@ -226,7 +234,6 @@ const UserFormDialog = ({
         onSubmit: formik.handleSubmit as never,
       }}
       open={open}
-      onClose={handleClose}
     >
       <DialogTitle>{!!toEdit ? "Update" : "Add"} User Form</DialogTitle>
       <DialogContent>
