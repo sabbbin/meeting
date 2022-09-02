@@ -1,4 +1,4 @@
-import React, { ReactNode, Suspense, useState } from "react";
+import React, { ReactNode, Suspense, useEffect, useState } from "react";
 import { styled, useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
@@ -89,6 +89,14 @@ export default function BaseLayout() {
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
+  let [fullname, setFullname] = useState<string>();
+  let data = localStorage.getItem("fullname") || "no name";
+  let id = localStorage.getItem("userId");
+  useEffect(() => {
+    if (data) {
+      setFullname(data);
+    }
+  }, []);
   const handleClose = () => {
     setAnchorEl(null);
   };
@@ -106,7 +114,7 @@ export default function BaseLayout() {
   let navigate = useNavigate();
 
   const handleLogOut = () => {
-    localStorage.clear;
+    localStorage.clear();
     navigate("/login");
   };
   const [isResetPassword, setisResetPassword] = useState(false);
@@ -162,7 +170,7 @@ export default function BaseLayout() {
             onChangePasswordSuccessDialog={() => {
               setisResetPassword(false);
             }}
-            toEditChangePasswprd={isforMenu!}
+            toEditChangePasswprd={Number(id)}
           />
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <IconButton
@@ -191,14 +199,13 @@ export default function BaseLayout() {
               horizontal: "left",
             }}
           >
-            <MenuItem> Username</MenuItem>
+            <MenuItem> {fullname}</MenuItem>
 
             <MenuItem
               onClick={() => {
                 setisResetPassword(true);
               }}
             >
-              {" "}
               Change Password
             </MenuItem>
             <Divider />

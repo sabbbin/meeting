@@ -54,7 +54,6 @@ import ChangeStatusDialog, {
 import ChangePasswordDialog from "../dialog/changePasswordDialog copy";
 import useUserCount from "../hooks/useUserCount";
 
-
 export interface IUser {
   userId: number;
   username: string;
@@ -284,7 +283,7 @@ export default function UserTable() {
           onChangePasswordSuccessDialog={() => {
             setisResetPassword(false);
           }}
-          toEditChangePasswprd={isforMenu!}
+          toEditChangePasswprd={Number(isforMenu?.userId)}
         />
       )}
       <TableContainer sx={{ minWidth: 1000, margin: "1" }} component={Paper}>
@@ -303,9 +302,9 @@ export default function UserTable() {
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                   </TableCell>
                 ))}
               </TableRow>

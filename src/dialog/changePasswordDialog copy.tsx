@@ -30,7 +30,7 @@ export interface IChangePasswordDialog {
 interface ChangePasswordProps extends DialogProps {
   onChangePasswordDiscardDialog: () => void;
   onChangePasswordSuccessDialog: () => void;
-  toEditChangePasswprd: IUser;
+  toEditChangePasswprd: number;
 }
 
 const FormDialogPaper = (
@@ -92,7 +92,7 @@ export default function ChangePasswordDialog({
 
   const formik = useFormik<IChangePasswordDialog>({
     initialValues: {
-      userId: 1,
+      userId: toEdit,
       password: "",
       confirmPassword: "",
     },
@@ -101,14 +101,6 @@ export default function ChangePasswordDialog({
       if (toEdit) ChangeStatusMutation.mutate(values);
     },
   });
-
-  useEffect(() => {
-    formik.setValues({
-      userId: toEdit?.userId,
-      password: toEdit?.password!,
-      confirmPassword: toEdit?.confirmPassword!,
-    });
-  }, [toEdit]);
 
   const handleClose = () => {
     onChangePasswordDiscardDialog();

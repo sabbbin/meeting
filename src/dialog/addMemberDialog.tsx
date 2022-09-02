@@ -185,14 +185,21 @@ export default function AddMemberDialog({
         },
         [toEditMember]
       );
-
-      setPersonName(data);
+      let abc = data.shift();
+      console.log("abc", abc);
+      let temp = data.reduce((init: any, dat: any) => {
+        return [...data];
+      }, []);
+      console.log("dafas", temp);
+      if (temp.length > 0) {
+        setPersonName(temp);
+      }
     } else {
       setPersonName([]);
     }
   }, [toEditMember]);
 
-  console.log(personName);
+  console.log(personName, toEditMember.userId);
   return (
     <>
       <Dialog
