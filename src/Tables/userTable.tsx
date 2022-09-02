@@ -52,7 +52,8 @@ import ChangeStatusDialog, {
   IChangeStatusDialog,
 } from "../dialog/changeStatusDialog";
 import ChangePasswordDialog from "../dialog/changePasswordDialog copy";
-import useMeetingCount from "../hooks/useMeetingCount";
+import useUserCount from "../hooks/useUserCount";
+
 
 export interface IUser {
   userId: number;
@@ -198,7 +199,7 @@ export default function UserTable() {
     }
   );
 
-  const { data: countData } = useMeetingCount({
+  const { data: countData } = useUserCount({
     headers: {
       Authorization: "Bearer " + accessToken,
     },
