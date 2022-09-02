@@ -6,7 +6,7 @@ import {
     useReactTable,
 } from '@tanstack/react-table';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { MouseEvent, ReactNode, useState } from "react";
+import { MouseEvent, ReactNode, useMemo, useState } from "react";
 import usePagination from "../hooks/usePagination";
 import useAgenda from "../hooks/useAgenda";
 import dayjs from "dayjs";
@@ -18,14 +18,14 @@ import axios from "axios";
 export interface IAgenda {
     agendaId?: string,
     agenda: string,
-    typeName: number,
+    typeName?: number,
     meetTypeId?: number,
     description: string,
     statusId?: number,
-    statusName: string,
+    statusName?: string,
     postedBy?: number,
     postedOn: string,
-    fullName: string,
+    fullName?: string,
 };
 
 const columnHelper = createColumnHelper<IAgenda>()
@@ -56,57 +56,57 @@ export default function AgendaTable() {
             pageSize: 10
         });
 
-    const columns = [
-        columnHelper.accessor('typeName', {
-            header: "Type",
-            cell: info => info.getValue(),
-            footer: info => info.column.id,
-        }),
-        columnHelper.accessor('agenda', {
-            header: "Agenda",
-            cell: info => <Tooltip title={info.getValue()}><Typography sx={{
-                width: '150px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap'
-            }}>{info.getValue()}</Typography></Tooltip>,
-            footer: info => info.column.id,
-        }),
-        columnHelper.accessor(row => row.description, {
-            header: "Description",
-            cell: info => <Tooltip title={info.getValue()}><Typography sx={{
-                width: '150px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap'
-            }}>{info.getValue()}</Typography>
-            </Tooltip>,
-            footer: info => info.column.id,
-        }),
-        columnHelper.accessor('statusName', {
-            header: "Status",
-            cell: info => info.getValue(),
-            footer: info => info.column.id,
-        }),
-        columnHelper.accessor('fullName', {
-            header: "Posted By",
-            cell: info => info.getValue(),
-            footer: info => info.column.id,
-        }),
-        columnHelper.accessor(row => row.postedOn, {
-            header: "Posted On",
-            cell: info => dayjs(info.getValue()).format('YYYY-MM-DD'),
-            footer: info => info.column.id,
-        }),
-
-        columnHelper.accessor(row => row, {
-            header: 'Actions',
-            cell: (info) => <IconButton
-                onClick={(e) => handleClickColumn(e, info.getValue())}>
-                <MoreVertIcon />
-            </IconButton>,
-        }),
-    ]
+    const columns = useMemo(() =>
+        [
+            columnHelper.accessor('typeName', {
+                header: "Type",
+                cell: info => info.getValue(),
+                footer: info => info.column.id,
+            }),
+            columnHelper.accessor('agenda', {
+                header: "Agenda",
+                cell: info => <Tooltip title={info.getValue()}><Typography sx={{
+                    width: '150px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                }}>{info.getValue()}</Typography></Tooltip>,
+                footer: info => info.column.id,
+            }),
+            columnHelper.accessor(row => row.description, {
+                header: "Description",
+                cell: info => <Tooltip title={info.getValue()}><Typography sx={{
+                    width: '150px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                }}>{info.getValue()}</Typography>
+                </Tooltip>,
+                footer: info => info.column.id,
+            }),
+            columnHelper.accessor('statusName', {
+                header: "Status",
+                cell: info => info.getValue(),
+                footer: info => info.column.id,
+            }),
+            columnHelper.accessor('fullName', {
+                header: "Posted By",
+                cell: info => info.getValue(),
+                footer: info => info.column.id,
+            }),
+            columnHelper.accessor(row => row.postedOn, {
+                header: "Posted On",
+                cell: info => dayjs(info.getValue()).format('YYYY-MM-DD'),
+                footer: info => info.column.id,
+            }),
+            columnHelper.accessor(row => row, {
+                header: 'Actions',
+                cell: (info) => <IconButton
+                    onClick={(e) => handleClickColumn(e, info.getValue())}>
+                    <MoreVertIcon />
+                </IconButton>,
+            }),
+        ], ([]))
 
     let accessToken = localStorage.getItem('access_token');
 

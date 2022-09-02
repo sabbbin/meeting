@@ -52,10 +52,11 @@ import ChangeStatusDialog, {
     IChangeStatusDialog,
 } from "../dialog/changeStatusDialog";
 import ChangePasswordDialog from "../dialog/changePasswordDialog copy";
-import useMeetingCount from "../hooks/useMeetingCount";
+import useUserCount from "../hooks/useUserCount";
 
 import useMeetingType from "../hooks/useMeetingType";
 import AddMeetingTypeDialog from "../dialog/addMeetingType";
+import useMeetingTypeCount from "../hooks/useMeetingTypeCount";
 
 export interface IMeetingType {
     MeetTypeId?: number;
@@ -67,11 +68,7 @@ export interface IMeetingType {
 
 const columnHelper = createColumnHelper<IMeetingType>();
 
-// const { pagination, handlePageNumberChange, handlePageSizeChange } =
-//     usePagination({
-//         pageNumber: 0,
-//         pageSize: 10
-//     });
+
 
 export default function MeetingTypeTable() {
 
@@ -128,7 +125,9 @@ export default function MeetingTypeTable() {
 
 
 
-    let accessToken = localStorage.getItem('access_token')
+    let accessToken = localStorage.getItem('access_token');
+
+    let userIdLocal = localStorage.getItem('userId');
 
     const { data: meetTypeData, refetch } = useMeetingType(pagination.pageSize, pagination.pageNumber + 1, {
         params: {
@@ -174,6 +173,15 @@ export default function MeetingTypeTable() {
             },
         },
     )
+
+    const { data: meetingTypeCount } = useMeetingTypeCount(userIdLocal, {
+        params: {
+            userId: userIdLocal
+        },
+        headers: {
+            Authorization: 'Bearer ' + accessToken,
+        },
+    })
 
     const handleDelete = (value: any) => {
         const dataAfterDelete = {
@@ -261,15 +269,15 @@ export default function MeetingTypeTable() {
                         ))}
                     </TableBody>
                 </Table>
-                {/* <TablePagination
+                <TablePagination
                     width="140px"
                     component="div"
-                    count={countData.TotalCount}
+                    count={meetingTypeCount.TotalCount}
                     page={pagination.pageNumber}
                     onPageChange={(e, page) => handlePageNumberChange(page)}
                     rowsPerPage={pagination.pageSize}
                     onRowsPerPageChange={(e) => handlePageSizeChange(+e.currentTarget.value)}
-                /> */}
+                />
                 <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu} >
                     <MenuItem onClick={() => {
                         setIsDialogOpen(true);

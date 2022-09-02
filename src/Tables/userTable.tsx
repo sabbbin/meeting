@@ -52,7 +52,7 @@ import ChangeStatusDialog, {
     IChangeStatusDialog,
 } from "../dialog/changeStatusDialog";
 import ChangePasswordDialog from "../dialog/changePasswordDialog copy";
-import useMeetingCount from "../hooks/useMeetingCount";
+import useUserCount from "../hooks/useUserCount";
 
 export interface IUser {
     userId: number;
@@ -70,13 +70,6 @@ export interface IUser {
     confirmPassword?: string;
 }
 
-interface Role {
-    RoleId: number;
-    RoleName: string;
-    Alias: string;
-    OrderIdx: number;
-    IsEnable: boolean;
-}
 
 const columnHelper = createColumnHelper<IUser>();
 
@@ -93,8 +86,8 @@ export default function UserTable() {
     const [isChangeStatus, setisChangeStatus] = useState(false);
     const [isResetPassword, setisResetPassword] = useState(false);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const openMenu = Boolean(anchorEl);
 
-    const [openMenu, setOpenMenu] = useState(false);
 
     const handleClickColumn = (
         event: MouseEvent<HTMLButtonElement>,
@@ -102,22 +95,14 @@ export default function UserTable() {
     ) => {
         setAnchorEl(event.currentTarget);
         setisforMenu(user);
-        setOpenMenu(true);
+
     };
 
     const handleCloseMenu = () => {
         setAnchorEl(null);
     };
 
-    const [open, setOpen] = useState(false);
 
-    const handleClickOpen = () => {
-        setOpen(true);
-    };
-
-    const handleClose = () => {
-        setOpen(false);
-    };
 
     const getStatusID = (statusId: number) => {
         switch (statusId) {
@@ -195,25 +180,23 @@ export default function UserTable() {
         },
     });
 
-    const { data: countData } = useMeetingCount({
+    const { data: countData } = useUserCount({
         headers: {
             Authorization: 'Bearer ' + accessToken,
         },
     })
 
+    // const { data: roleData, refetch: refetchRoleData } = useRole({
+    //     headers: {
+    //         Authorization: 'Bearer ' + accessToken,
+    //     },
+    // });
 
-
-    const { data: roleData, refetch: refetchRoleData } = useRole({
-        headers: {
-            Authorization: 'Bearer ' + accessToken,
-        },
-    });
-
-    const { data: userStatusData, refetch: refetchStatus } = useStatus({
-        headers: {
-            Authorization: 'Bearer ' + accessToken,
-        },
-    });
+    // const { data: userStatusData, refetch: refetchStatus } = useStatus({
+    //     headers: {
+    //         Authorization: 'Bearer ' + accessToken,
+    //     },
+    // });
 
     const table = useReactTable({
         data: userData,

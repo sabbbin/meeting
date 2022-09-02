@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import axios, { AxiosRequestConfig } from "axios";
 
-function useMeetingCount(axiosConfig: AxiosRequestConfig) {
+function useMeetingTypeCount(userId: string | null, axiosConfig: AxiosRequestConfig) {
     return useQuery(
-        ["userCount"],
+        ["meetingTypeCount", userId],
         async () => await axios.get(
-            "api/User/CountUser",
+            "api/MeetingType/CountMeetingType",
             axiosConfig
         ).then((res) => res.data),
         { initialData: { "TotalCount": 0 } }
@@ -13,4 +13,4 @@ function useMeetingCount(axiosConfig: AxiosRequestConfig) {
     )
 }
 
-export default useMeetingCount;
+export default useMeetingTypeCount;

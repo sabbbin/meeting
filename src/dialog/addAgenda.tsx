@@ -31,28 +31,30 @@ const validationSchema = yup.object({
     description: yup
         .string()
         .required('Please provide an Alias.'),
-    meetType: yup
+    meetTypeId: yup
         .number()
         .required('Please provide a Meeting Type.'),
+    postedOn: yup.string(),
+    fullName: yup.string(),
+    postedBy: yup.number(),
+    statusName: yup.string(),
+    typeName: yup.number(),
+    agendaId: yup.string(),
+    statusId: yup.number(),
 });
 
-type FormData = yup.TypeOf<typeof validationSchema>
+
 
 
 export default function AddAgendaDialog({ refetch, onAddAgendaSuccessDialog, onAddAgendaDiscardDialog, toEditAddAgenda: toEdit, open }: AddAgendaProps) {
     let accessToken = localStorage.getItem('access_token');
 
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-    const handleCloseMenu = () => {
-        setAnchorEl(null);
-    };
 
     const headers = {
         Authorization: 'Bearer ' + accessToken
     }
 
-    const CreateMeetingTypeMutation = useMutation<unknown, unknown, FormData>(
+    const CreateMeetingTypeMutation = useMutation<unknown, unknown, IAgenda>(
         async (data) => await axios.post(
             "api/MeetingAgenda",
             data,
@@ -66,7 +68,7 @@ export default function AddAgendaDialog({ refetch, onAddAgendaSuccessDialog, onA
         },
     })
 
-    const UpdateMeetingTypeMutation = useMutation<unknown, unknown, FormData>(
+    const UpdateMeetingTypeMutation = useMutation<unknown, unknown, IAgenda>(
         async (data) => await axios.put(
             "api/MeetingAgenda",
             data,
@@ -97,6 +99,8 @@ export default function AddAgendaDialog({ refetch, onAddAgendaSuccessDialog, onA
 
     let userId = localStorage.getItem('userId');
 
+
+
     const { data: userMeetingtypeData } = useUserMeetingType(userId, {
         params: {
             userId: userId
@@ -107,11 +111,19 @@ export default function AddAgendaDialog({ refetch, onAddAgendaSuccessDialog, onA
     })
 
 
-    const formik = useFormik<FormData>({
+
+    const formik = useFormik<IAgenda>({
         initialValues: {
             agenda: '',
             description: '',
-            meetType: 1,
+            meetTypeId: 1,
+            postedOn: '',
+            fullName: '',
+            postedBy: 1,
+            statusName: '',
+            typeName: 1,
+            agendaId: '',
+            statusId: 1,
         },
         validationSchema: validationSchema,
         onSubmit: (values) => {
@@ -126,7 +138,14 @@ export default function AddAgendaDialog({ refetch, onAddAgendaSuccessDialog, onA
             formik.setValues({
                 agenda: toEdit.agenda,
                 description: toEdit.description,
-                meetType: toEdit.meetTypeId,
+                meetTypeId: toEdit.meetTypeId,
+                postedOn: toEdit.postedOn,
+                fullName: toEdit.fullName,
+                postedBy: toEdit.postedBy,
+                statusName: toEdit.statusName,
+                typeName: toEdit.typeName,
+                agendaId: toEdit.agendaId,
+                statusId: toEdit.statusId,
             });
     }, [toEdit])
 
@@ -176,12 +195,15 @@ export default function AddAgendaDialog({ refetch, onAddAgendaSuccessDialog, onA
                     margin="dense"
                     label="Meet Type"
                     variant="standard"
+                    value={formik.values.meetTypeId}
                     SelectProps={{
-                        value: formik.values.meetType,
+                        value: formik.values.meetTypeId,
                         onChange: formik.handleChange
                     }}>
                     {userMeetingtypeData.map((meetType: any, index: number) => (
-                        <MenuItem key={index} value={meetType.MeetTypeId}>{meetType.TypeName}</MenuItem>
+                        <MenuItem key={index} value={meetType.MeetTypeId}>
+                            {meetType.TypeName}
+                        </MenuItem>
                     ))}
                 </TextField>
             </DialogContent>

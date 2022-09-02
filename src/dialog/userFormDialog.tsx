@@ -85,7 +85,7 @@ const validationSchema = yup.object({
   username: yup
     .string()
     .required("Username is required")
-    .typeError("Username name must be a string"),
+    .typeError("Username  must be a string"),
   email: yup
     .string()
     .email("Enter a valid email")
@@ -94,13 +94,12 @@ const validationSchema = yup.object({
   fullName: yup
     .string()
     .required("Please enter your Full Name")
-    .typeError("Fullname name must be a string"),
+    .typeError("Fullname  must be a string"),
   password: yup
     .string()
     .required()
     .min(8, "Password should be of minimum 8 characters length")
-
-    .typeError("Password name must be a string"),
+    .typeError("Password  must be a string"),
   confirmPassword: yup
     .string()
     .required()
@@ -109,9 +108,8 @@ const validationSchema = yup.object({
       "Password and confirm password should match"
     )
     .min(8, "Password should be of minimum 8 characters length")
-
     .typeError("Password and confirm password should match"),
-  roleId: yup.number().required().typeError("Select the Role"),
+  roleId: yup.number(),
 });
 
 const UserFormDialog = ({
@@ -120,22 +118,11 @@ const UserFormDialog = ({
   toEdit,
   open,
 }: UserDialogProps) => {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const handleCloseMenu = () => {
-    setAnchorEl(null);
-  };
-  const handleCloseSnackbar = (
-    event: React.SyntheticEvent | Event,
-    reason?: string
-  ) => {
-    if (reason === "clickaway") {
-      return;
-    }
-    onDiscardDialog();
-  };
+
+
   let accessToken = localStorage.getItem("access_token");
 
-  const { pagination, handlePageNumberChange, handlePageSizeChange } =
+  const { pagination } =
     usePagination({
       pageNumber: 0,
       pageSize: 10,
@@ -231,18 +218,6 @@ const UserFormDialog = ({
     onDiscardDialog();
   };
 
-  const action = (
-    <Fragment>
-      <IconButton
-        size="small"
-        aria-label="close"
-        color="inherit"
-        onClick={handleClose}
-      >
-        <CloseIcon fontSize="small" />
-      </IconButton>
-    </Fragment>
-  );
 
   return (
     <Dialog
