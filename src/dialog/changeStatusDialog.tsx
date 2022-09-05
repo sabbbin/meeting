@@ -29,6 +29,7 @@ interface ChangeStatusProps extends DialogProps {
   onStatusDiscardDialog: () => void;
   onStatusSuccessDialog: () => void;
   toEditStatus: IUser;
+  refetch: () => void;
 }
 
 const FormDialogPaper = (
@@ -39,17 +40,12 @@ export default function ChangeStatusDialog({
   onStatusDiscardDialog,
   onStatusSuccessDialog,
   open,
+  refetch,
   toEditStatus: toEdit,
 }: ChangeStatusProps) {
   let accessToken = localStorage.getItem("access_token");
 
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-  const handleCloseMenu = () => {
-    setAnchorEl(null);
-  };
-
-  const { data: statusData, refetch } = useStatus({
+  const { data: statusData } = useStatus({
     headers: {
       Authorization: "Bearer " + accessToken,
     },
@@ -84,15 +80,16 @@ export default function ChangeStatusDialog({
       statusId: 1,
     },
     onSubmit: (values) => {
-      if (toEdit) ChangeStatusMutation.mutate(values);
+      ChangeStatusMutation.mutate(values);
     },
   });
 
   useEffect(() => {
-    formik.setValues({
-      userId: toEdit?.userId,
-      statusId: toEdit?.statusId,
-    });
+    if (toEdit)
+      formik.setValues({
+        userId: toEdit?.userId,
+        statusId: toEdit?.statusId,
+      });
   }, [toEdit]);
 
   const handleClose = () => {

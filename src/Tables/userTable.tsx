@@ -105,11 +105,6 @@ export default function UserTable() {
     setOpenMenu(true);
   };
 
-  const handleCloseMenu = () => {
-    setAnchorEl(null);
-    setOpenMenu(false);
-  };
-
   const handleClose = () => {
     setOpenMenu(false);
   };
@@ -204,18 +199,6 @@ export default function UserTable() {
     },
   });
 
-  const { data: roleData, refetch: refetchRoleData } = useRole({
-    headers: {
-      Authorization: "Bearer " + accessToken,
-    },
-  });
-
-  const { data: userStatusData, refetch: refetchStatus } = useStatus({
-    headers: {
-      Authorization: "Bearer " + accessToken,
-    },
-  });
-
   const table = useReactTable({
     data: userData,
     columns,
@@ -238,6 +221,7 @@ export default function UserTable() {
 
       {isDialogOpen && (
         <UserFormDialog
+          refetch={refetch}
           toEdit={isforMenu}
           open={isDialogOpen}
           onSuccessDialog={() => {
@@ -264,6 +248,7 @@ export default function UserTable() {
       )}
       {isChangeStatus && (
         <ChangeStatusDialog
+          refetch={refetch}
           open={isChangeStatus}
           onStatusSuccessDialog={() => {
             setisChangeStatus(false);

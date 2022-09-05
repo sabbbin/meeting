@@ -79,6 +79,7 @@ interface UserDialogProps extends DialogProps {
   onDiscardDialog: () => void;
   onSuccessDialog: () => void;
   toEdit?: IUser | null;
+  refetch: () => void;
 }
 
 const validationSchema = yup.object({
@@ -121,30 +122,14 @@ const UserFormDialog = ({
   onSuccessDialog,
   toEdit,
   open,
+  refetch,
 }: UserDialogProps) => {
-
-
   let accessToken = localStorage.getItem("access_token");
 
-  const { pagination } =
-    usePagination({
-      pageNumber: 0,
-      pageSize: 10,
-    });
-
-  const { data: userData, refetch } = useUsers(
-    pagination.pageSize,
-    pagination.pageNumber + 1,
-    {
-      params: {
-        size: pagination.pageSize,
-        page: pagination.pageNumber + 1,
-      },
-      headers: {
-        Authorization: "Bearer " + accessToken,
-      },
-    }
-  );
+  const { pagination } = usePagination({
+    pageNumber: 0,
+    pageSize: 10,
+  });
 
   const { data: roleData, refetch: refetchRoleData } = useRole({
     headers: {
@@ -217,15 +202,10 @@ const UserFormDialog = ({
         email: toEdit.email,
         fullName: toEdit.fullName,
         roleId: toEdit.roleId,
-        statusId: 1,
+        statusId: toEdit.statusId,
       });
     }
   }, [toEdit]);
-
-  const handleClose = () => {
-    onDiscardDialog();
-  };
-
 
   return (
     <Dialog

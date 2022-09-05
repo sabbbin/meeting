@@ -96,6 +96,7 @@ export default function AddMemberDialog({
       },
     }
   );
+
   //keeeping user in dictionary
   if (dataTypeForUser.length > 0) {
     var dataMeeting = dataTypeForUser.reduce((initial: any, info: any) => {
@@ -162,41 +163,44 @@ export default function AddMemberDialog({
     data: getMeetTypeSelected,
     isSuccess,
     refetch: getData,
-  } = useQuery<UserMeetingTypeGet[]>(["getMeetType", toEditMember], () =>
-    axios
-      .get(`api/MeetingType/${toEditMember?.userId}`, {
-        headers: {
-          Authorization: "Bearer " + access_token,
-        },
-      })
-      .then((res) => res.data)
+  } = useQuery<UserMeetingTypeGet[]>(
+    ["getMeetType", toEditMember],
+    () =>
+      axios
+        .get(`api/MeetingType/${toEditMember?.userId}`, {
+          headers: {
+            Authorization: "Bearer " + access_token,
+          },
+        })
+        .then((res) => res.data),
+    {
+      onSuccess: (getMeetTypeSelected) => {
+        let data = getMeetTypeSelected.reduce(
+          (a: any, b) => {
+            let { MeetTypeId } = b;
+
+            return [...a, MeetTypeId];
+          },
+          [toEditMember]
+        );
+        let abc = data.shift();
+        console.log("abc", abc);
+        let temp = data.reduce((init: any, dat: any) => {
+          return [...data];
+        }, []);
+        console.log("dafas", temp);
+        if (temp.length > 0) {
+          setPersonName(temp);
+        }
+      },
+    }
   );
+
+  console.log("jalsdfjlasdjfl", getMeetTypeSelected, toEditMember);
+  console.log("toedit member", toEditMember);
 
   React.useEffect(() => {
     getData();
-    console.log("asdfasd", isSuccess);
-    if (isSuccess) {
-      console.log("hdasflas", getMeetTypeSelected);
-      let data = getMeetTypeSelected.reduce(
-        (a: any, b) => {
-          let { MeetTypeId } = b;
-
-          return [...a, MeetTypeId];
-        },
-        [toEditMember]
-      );
-      let abc = data.shift();
-      console.log("abc", abc);
-      let temp = data.reduce((init: any, dat: any) => {
-        return [...data];
-      }, []);
-      console.log("dafas", temp);
-      if (temp.length > 0) {
-        setPersonName(temp);
-      }
-    } else {
-      setPersonName([]);
-    }
   }, [toEditMember]);
 
   console.log(personName, toEditMember.userId);
