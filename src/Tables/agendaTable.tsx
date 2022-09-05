@@ -239,9 +239,9 @@ export default function AgendaTable() {
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </TableCell>
                 ))}
               </TableRow>
@@ -280,24 +280,25 @@ export default function AgendaTable() {
             handlePageSizeChange(+e.currentTarget.value)
           }
         />
-        <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
-          <MenuItem
-            onClick={() => {
-              setIsDialogOpen(true);
-              handleCloseMenu();
-            }}
-          >
-            Edit
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              handleDelete();
-              handleCloseMenu();
-            }}
-          >
-            Delete
-          </MenuItem>
-        </Menu>
+        {isforAgenda?.statusId === 6 &&
+          <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
+            <MenuItem
+              onClick={() => {
+                setIsDialogOpen(true);
+                handleCloseMenu();
+              }}
+            >
+              Edit
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleDelete();
+                handleCloseMenu();
+              }}
+            >
+              Delete
+            </MenuItem>
+          </Menu>}
       </TableContainer>
     </>
   );
