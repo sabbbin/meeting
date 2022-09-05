@@ -186,9 +186,6 @@ export default function AddMeetingTypeDialog({
           helperText={formik.touched.orderIdx && formik.errors.orderIdx}
           type="orderIdx"
           fullWidth
-<<<<<<< HEAD
-          variant="standard" />
-=======
           variant="standard"
         />
         {/* <TextField
@@ -207,7 +204,6 @@ export default function AddMeetingTypeDialog({
                         <MenuItem key={index} value={meetType.MeetTypeId}>{meetType.TypeName}</MenuItem>
                     ))}
                 </TextField> */}
->>>>>>> 19f82fc2999405773180c95eb617e7804f230d78
       </DialogContent>
       <DialogActions>
         <Button onClick={onAddMeetingTypeDiscardDialog}>Cancel</Button>
