@@ -132,7 +132,7 @@ export default function AgendaTable() {
       }),
       columnHelper.accessor((row) => row, {
         header: "Actions",
-        cell: (info) => (
+        cell: (info) => (info.getValue().statusId === 6 &&
           <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
             <MoreVertIcon />
           </IconButton>
@@ -244,9 +244,9 @@ export default function AgendaTable() {
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </TableCell>
                 ))}
               </TableRow>
@@ -285,6 +285,7 @@ export default function AgendaTable() {
             handlePageSizeChange(+e.currentTarget.value)
           }
         />
+
         <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
           <MenuItem
             onClick={() => {
@@ -303,6 +304,7 @@ export default function AgendaTable() {
             Delete
           </MenuItem>
         </Menu>
+
       </TableContainer>
     </>
   );
