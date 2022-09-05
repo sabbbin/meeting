@@ -104,7 +104,7 @@ export default function AddAgendaDialog({
     initialValues: {
       agenda: "",
       description: "",
-      meetTypeId: userMeetingtypeData[0]?.MeetTypeId || 0,
+      meetTypeId: userMeetingtypeData[0].MeetTypeId!,
       postedBy: postedBy,
     },
     validationSchema: validationSchema,
