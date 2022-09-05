@@ -45,7 +45,7 @@ const validationSchema = yup.object({
     .number(),
   isEnable: yup
     .boolean(),
-  meetType: yup
+  meetTypeId: yup
     .number()
     .required('Please provide a Meeting Type.'),
 
@@ -133,7 +133,7 @@ export default function AddMeetingTypeDialog({
       alias: '',
       isEnable: true,
       orderIdx: 0,
-      meetType: 1,
+      meetTypeId: 1,
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
@@ -150,7 +150,7 @@ export default function AddMeetingTypeDialog({
         alias: toEdit?.Alias,
         orderIdx: toEdit?.OrderIdx,
         isEnable: toEdit?.IsEnable,
-        meetType: toEdit.MeetTypeId,
+        meetTypeId: toEdit.MeetTypeId,
       });
   }, [toEdit])
 
@@ -204,22 +204,6 @@ export default function AddMeetingTypeDialog({
           type="orderIdx"
           fullWidth
           variant="standard" />
-        {/* <TextField
-                    select
-                    fullWidth
-                    name="meetType"
-                    id="meetType"
-                    margin="dense"
-                    label="Meet Type"
-                    variant="standard"
-                    SelectProps={{
-                        value: formik.values.meetType,
-                        onChange: formik.handleChange
-                    }}>
-                    {userMeetingtypeData.map((meetType: any, index: number) => (
-                        <MenuItem key={index} value={meetType.MeetTypeId}>{meetType.TypeName}</MenuItem>
-                    ))}
-                </TextField> */}
       </DialogContent>
       <DialogActions>
         <Button onClick={onAddMeetingTypeDiscardDialog}>Cancel</Button>
