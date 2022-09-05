@@ -126,11 +126,6 @@ const UserFormDialog = ({
 }: UserDialogProps) => {
   let accessToken = localStorage.getItem("access_token");
 
-  const { pagination } = usePagination({
-    pageNumber: 0,
-    pageSize: 10,
-  });
-
   const { data: roleData, refetch: refetchRoleData } = useRole({
     headers: {
       Authorization: "Bearer " + accessToken,

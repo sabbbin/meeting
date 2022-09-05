@@ -5,7 +5,6 @@ import {
   DialogContent,
   DialogProps,
   DialogTitle,
-  Menu,
   MenuItem,
   Paper,
   PaperTypeMap,
@@ -21,11 +20,12 @@ import * as yup from "yup";
 import useMeetingType from "../hooks/useMeetingType";
 import { IAgenda } from "../Tables/agendaTable";
 import useUserMeetingType from "../hooks/useUserMeetingType";
+import { ContentPasteSearchOutlined } from "@mui/icons-material";
 
 interface AddAgendaProps extends DialogProps {
-  onAddAgendaDiscardDialog: () => void;
-  onAddAgendaSuccessDialog: () => void;
-  toEditAddAgenda: IAgenda;
+  onDiscardDialog: () => void;
+  onSuccessDialog: () => void;
+  toEditAddAgenda?: IAgenda | null;
   refetch: () => void;
 }
 
@@ -41,9 +41,9 @@ const validationSchema = yup.object({
 
 export default function AddAgendaDialog({
   refetch,
-  onAddAgendaSuccessDialog,
-  onAddAgendaDiscardDialog,
+  onSuccessDialog,
   toEditAddAgenda: toEdit,
+
   open,
 }: AddAgendaProps) {
   let accessToken = localStorage.getItem("access_token");
@@ -58,6 +58,18 @@ export default function AddAgendaDialog({
     description: string;
   };
 
+  console.log("toedit", toEdit);
+  useEffect(() => {
+    if (toEdit) {
+      formik.setValues({
+        agenda: toEdit.agenda,
+        description: toEdit.description,
+        meetTypeId: toEdit.meetTypeId,
+        postedBy: toEdit.postedBy,
+      });
+    }
+  }, [toEdit, open]);
+
   const CreateMeetingTypeMutation = useMutation<unknown, unknown, CreateAgenda>(
     async (data) =>
       await axios
@@ -68,7 +80,7 @@ export default function AddAgendaDialog({
     {
       onSuccess() {
         refetch();
-        onAddAgendaSuccessDialog();
+        onSuccessDialog();
       },
     }
   );
@@ -83,7 +95,7 @@ export default function AddAgendaDialog({
     {
       onSuccess() {
         refetch();
-        onAddAgendaSuccessDialog();
+        onSuccessDialog();
       },
     }
   );
@@ -104,33 +116,19 @@ export default function AddAgendaDialog({
     initialValues: {
       agenda: "",
       description: "",
-      meetTypeId: userMeetingtypeData[0].MeetTypeId!,
+      meetTypeId: userMeetingtypeData[0]?.MeetTypeId!,
       postedBy: postedBy,
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
-      console.log("toedit", values);
       if (toEdit) {
         let tempdata = { ...toEdit, ...values };
-        console.log("value", tempdata);
         UpdateMeetingTypeMutation.mutate(tempdata);
-      } else CreateMeetingTypeMutation.mutate(values);
+      } else {
+        CreateMeetingTypeMutation.mutate(values);
+      }
     },
   });
-
-  useEffect(() => {
-    if (toEdit)
-      formik.setValues({
-        agenda: toEdit.agenda,
-        description: toEdit.description,
-        meetTypeId: toEdit.meetTypeId,
-        postedBy: toEdit.postedBy,
-      });
-  }, [toEdit]);
-
-  const handleClose = () => {
-    onAddAgendaDiscardDialog();
-  };
 
   return (
     <Dialog
@@ -139,7 +137,6 @@ export default function AddAgendaDialog({
         onSubmit: formik.handleSubmit as never,
       }}
       open={open}
-      onClose={handleClose}
     >
       <DialogTitle>{!!toEdit ? "Update" : "Add"} Agenda</DialogTitle>
       <DialogContent>
@@ -155,6 +152,7 @@ export default function AddAgendaDialog({
           helperText={formik.touched.agenda && formik.errors.agenda}
           type="typeName"
           fullWidth
+          multiline
           variant="standard"
         />
         <TextField
@@ -162,6 +160,7 @@ export default function AddAgendaDialog({
           margin="dense"
           id="description"
           name="description"
+          multiline
           value={formik.values.description}
           onChange={formik.handleChange}
           error={
@@ -194,7 +193,7 @@ export default function AddAgendaDialog({
         </TextField>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onAddAgendaDiscardDialog}>Cancel</Button>
+        <Button onClick={onSuccessDialog}>Cancel</Button>
         <Button type="submit">Submit</Button>
       </DialogActions>
     </Dialog>
