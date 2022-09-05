@@ -130,7 +130,7 @@ export default function AgendaTable() {
       }),
       columnHelper.accessor((row) => row, {
         header: "Actions",
-        cell: (info) => (
+        cell: (info) => (info.getValue().statusId === 6 &&
           <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
             <MoreVertIcon />
           </IconButton>
@@ -280,25 +280,26 @@ export default function AgendaTable() {
             handlePageSizeChange(+e.currentTarget.value)
           }
         />
-        {isforAgenda?.statusId === 6 &&
-          <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
-            <MenuItem
-              onClick={() => {
-                setIsDialogOpen(true);
-                handleCloseMenu();
-              }}
-            >
-              Edit
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                handleDelete();
-                handleCloseMenu();
-              }}
-            >
-              Delete
-            </MenuItem>
-          </Menu>}
+
+        <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
+          <MenuItem
+            onClick={() => {
+              setIsDialogOpen(true);
+              handleCloseMenu();
+            }}
+          >
+            Edit
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              handleDelete();
+              handleCloseMenu();
+            }}
+          >
+            Delete
+          </MenuItem>
+        </Menu>
+
       </TableContainer>
     </>
   );
