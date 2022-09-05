@@ -58,7 +58,6 @@ export default function AddAgendaDialog({
     description: string;
   };
 
-  console.log("toedit", toEdit);
   useEffect(() => {
     if (toEdit) {
       formik.setValues({
@@ -68,7 +67,7 @@ export default function AddAgendaDialog({
         postedBy: toEdit.postedBy,
       });
     }
-  }, [toEdit, open]);
+  }, [toEdit]);
 
   const CreateMeetingTypeMutation = useMutation<unknown, unknown, CreateAgenda>(
     async (data) =>
@@ -110,7 +109,6 @@ export default function AddAgendaDialog({
       Authorization: "Bearer " + accessToken,
     },
   });
-
 
   let postedBy = Number(localStorage.getItem("userId"))!;
   const formik = useFormik({
