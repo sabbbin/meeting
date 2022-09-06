@@ -129,6 +129,8 @@ export default function MeetingTypeTable() {
 
   let userIdLocal = localStorage.getItem("userId");
 
+  var meetTypeId = isforMenu?.MeetTypeId;
+
   const { data: meetTypeData, refetch } = useMeetingType(
     pagination.pageSize,
     pagination.pageNumber + 1,
@@ -143,16 +145,20 @@ export default function MeetingTypeTable() {
     }
   );
 
-  const { data: updateStatus, mutate } = useMutation(
-    (data: any) =>
-      axios
-        .put(`/api/MeetingType/`, data, {
+
+
+  const { data: updateStatus, mutate: updateMutate } = useMutation(
+    (data: any) => {
+      return axios
+        .put('/api/MeetingType', data, {
+          params: { meetTypeId },
           headers: {
             "Content-Type": "application/json",
             Authorization: "Bearer " + accessToken,
           },
         })
-        .then((res) => res.data),
+        .then((res) => res.data)
+    },
     {
       onSuccess: () => {
         refetch();
@@ -199,13 +205,14 @@ export default function MeetingTypeTable() {
   const handleStatusChange = (value: any) => {
     const id = isforMenu?.MeetTypeId;
     const updateData = {
-      meetTypeId: id,
+
       isEnable: value,
       typeName: isforMenu?.TypeName,
       alias: isforMenu?.Alias,
       orderIdx: isforMenu?.OrderIdx,
     };
-    mutate(updateData);
+
+    updateMutate(updateData);
   };
 
   const table = useReactTable({
@@ -256,9 +263,9 @@ export default function MeetingTypeTable() {
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </TableCell>
                 ))}
               </TableRow>

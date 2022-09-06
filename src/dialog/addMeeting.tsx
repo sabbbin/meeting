@@ -55,7 +55,7 @@ export default function AddMeetingDialog({
     // onAddMeetingSuccessDialog;
     setAnchorEl(null);
   };
-  let { data: updateMeetingData, mutate: updateMeeting } = useMutation(() =>
+  let { data: updateMeetingData } = useMutation(() =>
     axios
       .patch("api/Meeting", {
         headers: {
@@ -64,7 +64,7 @@ export default function AddMeetingDialog({
       })
       .then((res) => res.data)
   );
-  let { data: createMeetingData, mutate: createMeeting } = useMutation((data) =>
+  let { data: createMeetingData } = useMutation((data) =>
     axios
       .post("api/Meeting", data, {
         headers: {
@@ -85,9 +85,11 @@ export default function AddMeetingDialog({
       statusId: 0,
     },
     validationSchema: validationSchema,
-    onSubmit: (value) => {
+    onSubmit: (values) => {
       if (toEdit) {
+        updateMeetingData.mutate(values)
       }
+      createMeetingData.mutate(values)
     },
   });
   useEffect(() => {
