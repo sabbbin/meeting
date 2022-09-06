@@ -50,10 +50,10 @@ export default function AgendaTable() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isforAgenda, setisforAgenda] = useState<IAgenda | null>();
-  const openMenu = Boolean(anchorEl);
+  const [openMenu, setOpenMenu] = useState(false);
 
   const handleCloseMenu = () => {
-    setAnchorEl(null);
+    setOpenMenu(false);
   };
 
   const handleClickColumn = (
@@ -61,7 +61,9 @@ export default function AgendaTable() {
     agenda: IAgenda
   ) => {
     setAnchorEl(event.currentTarget);
+
     setisforAgenda(agenda);
+    setOpenMenu(true);
   };
 
   const { pagination, handlePageNumberChange, handlePageSizeChange } =
@@ -199,6 +201,7 @@ export default function AgendaTable() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  console.log("adfasdf ", isforAgenda);
   return (
     <>
       <Toolbar />
@@ -212,19 +215,21 @@ export default function AgendaTable() {
       >
         Add Agenda
       </Button>
-      <AddAgendaDialog
-        refetch={refetch}
-        toEditAddAgenda={isforAgenda!}
-        open={isDialogOpen}
-        onAddAgendaDiscardDialog={() => {
-          setisforAgenda(null);
-          setIsDialogOpen(false);
-        }}
-        onAddAgendaSuccessDialog={() => {
-          setisforAgenda(null);
-          setIsDialogOpen(false);
-        }}
-      />
+      {isDialogOpen && (
+        <AddAgendaDialog
+          refetch={refetch}
+          toEditAddAgenda={isforAgenda}
+          open={isDialogOpen}
+          onSuccessDialog={() => {
+            setisforAgenda(null);
+            setIsDialogOpen(false);
+          }}
+          onDiscardDialog={() => {
+            setisforAgenda(null);
+            setIsDialogOpen(false);
+          }}
+        />
+      )}
       <TableContainer sx={{ minWidth: 1000 }} component={Paper}>
         <Table>
           <TableHead>
