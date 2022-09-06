@@ -117,7 +117,6 @@ export default function AddAgendaDialog({
       console.log("toedit", values);
       if (toEdit) {
         let tempdata = { ...toEdit, ...values };
-        console.log("value", tempdata);
         UpdateMeetingTypeMutation.mutate(tempdata);
       } else CreateMeetingTypeMutation.mutate(values);
     },

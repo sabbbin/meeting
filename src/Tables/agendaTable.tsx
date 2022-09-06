@@ -173,7 +173,8 @@ export default function AgendaTable() {
   const { mutate: deleteMutatae } = useMutation<unknown, unknown, deleteId>(
     (deleteId) =>
       axios
-        .delete(`/api/MeetingAgenda/${deleteId}`, {
+        .delete('/api/MeetingAgenda/', {
+          params: { agendaId: isforAgenda?.agendaId },
           headers: {
             "Content-Type": "application/json",
             Authorization: "Bearer " + accessToken,
