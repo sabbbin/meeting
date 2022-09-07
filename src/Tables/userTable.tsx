@@ -1,18 +1,13 @@
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import {
+  Box,
   Button,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Fab,
   IconButton,
   Menu,
   MenuItem,
-  MenuList,
   Paper,
-  PaperTypeMap,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -29,31 +24,27 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { memo, MouseEvent, useMemo, useState } from "react";
+import { MouseEvent, useMemo, useState } from "react";
 import useUsers from "../hooks/useUsers";
 
-import { Add, Info } from "@mui/icons-material";
-import { Field, Form, Formik, FormikHelpers, useFormik } from "formik";
-import * as yup from "yup";
-import { OverridableComponent } from "@mui/material/OverridableComponent";
-import { useMutation } from "@tanstack/react-query";
-import usePagination from "../hooks/usePagination";
-import useRole from "../hooks/useRole";
+import { useInputState } from "@mantine/hooks";
 import dayjs from "dayjs";
-import { useQuery } from "@tanstack/react-query";
-import axios, { AxiosRequestConfig } from "axios";
-import useRoleById from "../hooks/useRoleById";
-import useStatus from "../hooks/useStatus";
-import updateUser from "../hooks/updateUser";
-import UserFormDialog from "../dialog/userFormDialog";
+import { ValuesType } from "utility-types";
 import AddMemberDialog from "../dialog/addMemberDialog";
-import ChangeStatusDialog, {
-  IChangeStatusDialog,
-} from "../dialog/changeStatusDialog";
 import ChangePasswordDialog from "../dialog/changePasswordDialog copy";
+import ChangeStatusDialog from "../dialog/changeStatusDialog";
+import UserFormDialog from "../dialog/userFormDialog";
+import { FilterType } from "../filter";
+import usePagination from "../hooks/usePagination";
 import useUserCount from "../hooks/useUserCount";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import useStatus from "../hooks/useStatus";
+import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
 
+console.log(FilterType);
 export interface IUser {
   userId: number;
   username: string;
@@ -84,7 +75,7 @@ export default function UserTable() {
   const { pagination, handlePageNumberChange, handlePageSizeChange } =
     usePagination({
       pageNumber: 0,
-      pageSize: 10,
+      pageSize: 25,
     });
 
   const [isforMenu, setisforMenu] = useState<IUser | null>();
@@ -176,21 +167,91 @@ export default function UserTable() {
     ],
     []
   );
+  const filterOptions = [
+    {
+      field: "Username",
+      options: FilterType.StringFilterType,
+    },
+    {
+      field: "Full Name",
+      options: FilterType.StringFilterType,
+    },
+    {
+      field: "Email",
+      options: FilterType.StringFilterType,
+    },
+    {
+      field: "Role",
+      options: FilterType.StringFilterType,
+    },
+    {
+      field: "Status",
+      options: FilterType.StringFilterType,
+    },
 
+    {
+      field: "Created By",
+      options: FilterType.StringFilterType,
+    },
+    {
+      field: "Created On",
+      options: FilterType.DateFilterType,
+    },
+  ] as const;
+  const [filterField, setFilterField] =
+    useState<ValuesType<typeof filterOptions>["field"]>("Username");
+
+  const [filterOperator, setFilterOperator] = useState<
+    ValuesType<ValuesType<typeof filterOptions>["options"]>
+  >(filterOptions.find((op) => op.field === filterField)?.options[0]!);
+
+  const [searchValue, setsearchValue] = useState<any>();
+
+  const [sortCol, setSortCol] = useState();
+  const [sortOrder, setSortOrder] = useState();
   let accessToken = localStorage.getItem("access_token");
 
-  const { data: userData, refetch } = useUsers(
-    pagination.pageSize,
-    pagination.pageNumber + 1,
-    {
-      params: {
-        size: pagination.pageSize,
-        page: pagination.pageNumber + 1,
-      },
-      headers: {
-        Authorization: "Bearer " + accessToken,
-      },
-    }
+  interface IaxiosConfig {
+    params: {
+      size: number;
+      page: number;
+      searchCol?: string;
+      searchVal?: string;
+      operators?: string;
+      sortCol?: string;
+      sortOrder?: string;
+    };
+    headers: {
+      Authorization: string;
+    };
+  }
+
+  let axiosConfig: IaxiosConfig = {
+    params: {
+      size: pagination.pageSize,
+      page: pagination.pageNumber + 1,
+    },
+    headers: {
+      Authorization: "Bearer " + accessToken,
+    },
+  };
+  if (filterField) {
+    (axiosConfig.params["searchCol"] = filterField),
+      (axiosConfig.params["searchVal"] = searchValue),
+      (axiosConfig.params["operators"] = filterOperator);
+  }
+  if (sortCol && sortOrder) {
+    (axiosConfig.params["sortCol"] = sortCol),
+      (axiosConfig.params["sortOrder"] = sortOrder);
+  }
+
+  const { data: userData, refetch } = useQuery(
+    ["users", pagination.pageSize, pagination.pageNumber, filterField],
+    () =>
+      axios
+        .get("api/User/GetAllUser", { ...axiosConfig })
+        .then((res) => res.data),
+    { initialData: [] }
   );
 
   const { data: countData } = useUserCount({
@@ -205,19 +266,92 @@ export default function UserTable() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const handleSearch = () => {
+    console.log("dlf", filterOperator);
+    console.log("adf", dayjs(searchValue).format("DD/MM/YYYY"));
+    console.log("adsf", filterField);
+  };
   return (
     <>
       <Toolbar />
-      <Button
-        sx={{ m: 1 }}
-        variant="contained"
-        onClick={() => {
-          setIsDialogOpen(true);
-          handleClose();
-        }}
-      >
-        Add User
-      </Button>
+      <Box>
+        <Button
+          sx={{ m: 1 }}
+          variant="contained"
+          onClick={() => {
+            setIsDialogOpen(true);
+            handleClose();
+          }}
+        >
+          Add User
+        </Button>
+        <Box>
+          <Select
+            id="demo-simple-select"
+            value={filterField}
+            label="Age"
+            sx={{ marginRight: "5px" }}
+            size="small"
+            onChange={(e) => {
+              setFilterField(e.target.value as never);
+              setFilterOperator(
+                filterOptions.find((op) => op.field === e.target.value)
+                  ?.options[0]! as never
+              );
+            }}
+          >
+            {filterOptions.map((col, i) => (
+              <MenuItem value={col.field}>{col.field}</MenuItem>
+            ))}
+          </Select>
+          <Select
+            id="demo-simple-select"
+            value={filterOperator}
+            label="Age"
+            sx={{ marginRight: "5px" }}
+            size="small"
+            onChange={(e) => setFilterOperator(e.target.value as never)}
+          >
+            {(
+              filterOptions.find((op) => op.field === filterField)?.options ??
+              []
+            ).map((col) => (
+              <MenuItem value={col}>{col}</MenuItem>
+            ))}
+          </Select>
+
+          {filterField != "Created On" ? (
+            <TextField
+              size="small"
+              sx={{ marginRight: "5px" }}
+              value={searchValue}
+              onChange={(e) => setsearchValue(e.target.value)}
+            />
+          ) : (
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DesktopDatePicker
+                label="Select Date"
+                inputFormat="MM/DD/YYYY"
+                value={searchValue}
+                onChange={(val: any) => {
+                  setsearchValue(val);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    size="small"
+                    sx={{ marginRight: "5px" }}
+                    {...params}
+                  />
+                )}
+              />
+            </LocalizationProvider>
+          )}
+
+          <Button onClick={handleSearch} variant="contained">
+            Search
+          </Button>
+        </Box>
+      </Box>
 
       {isDialogOpen && (
         <UserFormDialog
@@ -314,9 +448,9 @@ export default function UserTable() {
           page={pagination.pageNumber}
           onPageChange={(e, page) => handlePageNumberChange(page)}
           rowsPerPage={pagination.pageSize}
-          onRowsPerPageChange={(e) =>
-            handlePageSizeChange(+e.currentTarget.value)
-          }
+          onRowsPerPageChange={(e) => {
+            handlePageSizeChange(+e.target.value);
+          }}
         />
         <Menu open={openMenu} anchorEl={anchorEl} onClose={handleClose}>
           <MenuItem
