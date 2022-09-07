@@ -38,7 +38,6 @@ const validationSchema = yup.object({
   alias: yup.string().required("Please provide an Alias."),
   orderIdx: yup.number(),
   isEnable: yup.boolean(),
-  // meetTypeId: yup.number().required("Please provide a Meeting Type."), 
 });
 
 type FormData = yup.TypeOf<typeof validationSchema>;
