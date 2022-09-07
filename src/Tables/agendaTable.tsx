@@ -4,6 +4,7 @@ import {
   Menu,
   MenuItem,
   Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -30,6 +31,7 @@ import useAgendaCount from "../hooks/useAgendaCount";
 import AddAgendaDialog from "../dialog/addAgenda";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
+import { Box } from "@mui/system";
 
 export interface IAgenda {
   agendaId: string;
@@ -142,6 +144,29 @@ export default function AgendaTable() {
     []
   );
 
+  // const filterOptions = [ 
+  //   {
+  //     field: "Type",
+  //     options: FilterType.StringFilterType,
+  //   },
+  //   {
+  //     field: "Agenda",
+  //     options: FilterType.StringFilterType,
+  //   },
+  //   {
+  //     field: "Agenda",
+  //     options: FilterType.StringFilterType,
+  //   },
+  //   {
+  //     field: "Posted By",
+  //     options: FilterType.StringFilterType,
+  //   },
+  //   {
+  //     field: "Posted On",
+  //     options: FilterType.DateFilterType,
+  //   }
+  // ]
+
   let accessToken = localStorage.getItem("access_token");
 
   let userId = localStorage.getItem("userId");
@@ -162,7 +187,7 @@ export default function AgendaTable() {
     }
   );
 
-  const { data: meetingCount } = useAgendaCount(userId, {
+  const { data: meetingTypeCount } = useAgendaCount(userId, {
     params: {
       userId: userId,
     },
@@ -215,6 +240,18 @@ export default function AgendaTable() {
       >
         Add Agenda
       </Button>
+      <Box>
+        <Select
+          id="demo-simple-select"
+          label="Age"
+          sx={{ marginRight: "5px" }}
+          size="small">
+          <MenuItem>Test</MenuItem>
+        </Select>
+        <Select>
+          <MenuItem>Test</MenuItem>
+        </Select>
+      </Box>
       {isDialogOpen && (
         <AddAgendaDialog
           refetch={refetch}
@@ -278,7 +315,7 @@ export default function AgendaTable() {
         <TablePagination
           width="140px"
           component="div"
-          count={meetingCount.TotalCount}
+          count={meetingTypeCount.TotalCount}
           page={pagination.pageNumber}
           onPageChange={(e, page) => handlePageNumberChange(page)}
           rowsPerPage={pagination.pageSize}
