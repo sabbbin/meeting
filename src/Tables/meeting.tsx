@@ -22,7 +22,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import dayjs from "dayjs";
-import { useState } from "react";
+import { MouseEvent, useMemo, useState } from "react";
 import AddMeetingDialog from "../dialog/addMeeting";
 import axios from "axios";
 import useMeeting from "../hooks/useMeeting";
@@ -45,7 +45,11 @@ const columnHelper = createColumnHelper<IMeeting>();
 
 const handleChangePage = () => { };
 const handleChangeRowsPerPage = () => { };
+
+
 export default function Meeting() {
+
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [open, setOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -54,6 +58,16 @@ export default function Meeting() {
   const [isForMenu, setIsForMenu] = useState<IMeeting | null>();
   const [openMenu, setOpenMenu] = useState(false);
   let access_token = localStorage.getItem("access_token");
+
+  const handleClickColumn = (
+    event: MouseEvent<HTMLButtonElement>,
+    meeting: IMeeting
+  ) => {
+    setAnchorEl(event.currentTarget);
+
+    setIsForMenu(meeting);
+    setOpenMenu(true);
+  };
 
   const { data: datatry } = useQuery(["data"], () =>
     axios.get("api/Meeting/MeetingCountAll", {
@@ -112,32 +126,50 @@ export default function Meeting() {
     },
   })
 
-  const columns = [
+  const columns = useMemo(() => [
     columnHelper.accessor("meetId", {
+      header: 'Meet ID',
       cell: (info) => info.getValue(),
     }),
     columnHelper.accessor("meetDatetime", {
+      header: 'Meet Date',
       cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY"),
     }),
     columnHelper.accessor("meetTypeId", {
+      header: 'Meet Type ID',
       cell: (info) => info.getValue(),
     }),
     columnHelper.accessor("location", {
+      header: 'Location',
       cell: (info) => info.getValue(),
     }),
     columnHelper.accessor("calledBy", {
+      header: 'Called By',
       cell: (info) => info.getValue(),
     }),
     columnHelper.accessor("postedBy", {
+      header: 'Posted By',
       cell: (info) => info.getValue(),
     }),
     columnHelper.accessor("postedOn", {
+      header: 'Posted On',
       cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY"),
     }),
     columnHelper.accessor("statusId", {
+      header: 'Status ID',
       cell: (info) => info.getValue(),
     }),
-  ];
+    columnHelper.accessor((row) => row, {
+      header: "Actions",
+      cell: (info) => (
+        <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
+          <MoreVertIcon />
+        </IconButton>
+      ),
+    }),
+  ],
+    []
+  );
 
   const table = useReactTable({
     data: meetingData,
@@ -178,7 +210,9 @@ export default function Meeting() {
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableCell key={header.id}>
+                  <TableCell sx={{
+                    fontWeight: "600",
+                  }} key={header.id}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -187,7 +221,6 @@ export default function Meeting() {
                       )}
                   </TableCell>
                 ))}
-                <TableCell>Action</TableCell>
               </TableRow>
             ))}
           </TableHead>
@@ -203,7 +236,7 @@ export default function Meeting() {
                       )}
                     </TableCell>
                   ))}
-                  <TableCell>
+                  {/* <TableCell>
                     <IconButton
                       onClick={(e) => {
                         setIsForMenu(row.original);
@@ -213,7 +246,7 @@ export default function Meeting() {
                     >
                       <MoreVertIcon />
                     </IconButton>
-                  </TableCell>
+                  </TableCell> */}
                 </TableRow>
               );
             })}
