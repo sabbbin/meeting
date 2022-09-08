@@ -6,7 +6,7 @@ export const FilterType = {
     "ends With",
     "is empty",
     "is not empty",
-    "is any of ",
+    "is any of",
   ] as const,
   DateFilterType: [
     "is",

@@ -1,11 +1,15 @@
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import {
+  Autocomplete,
   Box,
   Button,
   Chip,
+  FormControl,
   IconButton,
+  Input,
   Menu,
   MenuItem,
+  OutlinedInput,
   Paper,
   Select,
   Table,
@@ -23,6 +27,8 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
+  getSortedRowModel,
+  SortingState,
 } from "@tanstack/react-table";
 import { MouseEvent, useMemo, useState } from "react";
 import useUsers from "../hooks/useUsers";
@@ -43,6 +49,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import useStatus from "../hooks/useStatus";
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
+import { convertLength } from "@mui/material/styles/cssUtils";
 
 console.log(FilterType);
 export interface IUser {
@@ -147,12 +154,12 @@ export default function UserTable() {
         ),
       }),
       columnHelper.accessor((row) => row.createdBy, {
-        header: "Created By",
+        header: "createdBy",
         cell: (info) => info.getValue(),
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.createdOn, {
-        header: "Created On",
+        header: "createdOn",
         cell: (info) => dayjs(info.getValue()).format("YYYY-MM-DD"),
         footer: (info) => info.column.id,
       }),
@@ -207,19 +214,25 @@ export default function UserTable() {
 
   const [searchValue, setsearchValue] = useState<any>();
 
-  const [sortCol, setSortCol] = useState();
-  const [sortOrder, setSortOrder] = useState();
+  const [sortCol, setSortCol] = useState<SortingState>([
+    {
+      id: "createdOn",
+      desc: false,
+    },
+  ]);
+
   let accessToken = localStorage.getItem("access_token");
+  const [multiValue, setMultiValue] = useState<string[]>([]);
 
   interface IaxiosConfig {
     params: {
       size: number;
       page: number;
       searchCol?: string;
-      searchVal?: string;
+      searchVal?: string[];
       operators?: string;
       sortCol?: string;
-      sortOrder?: string;
+      sortOrder?: boolean;
     };
     headers: {
       Authorization: string;
@@ -230,23 +243,22 @@ export default function UserTable() {
     params: {
       size: pagination.pageSize,
       page: pagination.pageNumber + 1,
+      sortCol: sortCol[0]?.id,
+      sortOrder: sortCol[0]?.desc,
     },
     headers: {
       Authorization: "Bearer " + accessToken,
     },
   };
-  if (filterField) {
-    (axiosConfig.params["searchCol"] = filterField),
-      (axiosConfig.params["searchVal"] = searchValue),
-      (axiosConfig.params["operators"] = filterOperator);
-  }
-  if (sortCol && sortOrder) {
-    (axiosConfig.params["sortCol"] = sortCol),
-      (axiosConfig.params["sortOrder"] = sortOrder);
-  }
 
   const { data: userData, refetch } = useQuery(
-    ["users", pagination.pageSize, pagination.pageNumber, filterField],
+    [
+      "users",
+      pagination.pageSize,
+      pagination.pageNumber,
+      sortCol,
+      filterOperator,
+    ],
     () =>
       axios
         .get("api/User/GetAllUser", { ...axiosConfig })
@@ -264,17 +276,44 @@ export default function UserTable() {
     data: userData,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    state: {
+      sorting: sortCol,
+    },
+    onSortingChange: setSortCol,
+    getSortedRowModel: getSortedRowModel(),
+    debugTable: true,
   });
 
   const handleSearch = () => {
-    console.log("dlf", filterOperator);
-    console.log("adf", dayjs(searchValue).format("DD/MM/YYYY"));
-    console.log("adsf", filterField);
+    if (searchValue || multiValue) {
+      let temp = "";
+      if (multiValue) {
+        multiValue.map((mul, id) => {
+          if (id !== multiValue.length - 1) {
+            temp += `'${mul}',`;
+          } else {
+            temp += `'${mul}'`;
+          }
+        });
+      }
+
+      (axiosConfig.params["searchCol"] = filterField),
+        (axiosConfig.params["searchVal"] = searchValue ?? temp),
+        (axiosConfig.params["operators"] = filterOperator);
+      refetch();
+    }
   };
+
   return (
     <>
       <Toolbar />
-      <Box>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <Button
           sx={{ m: 1 }}
           variant="contained"
@@ -285,7 +324,13 @@ export default function UserTable() {
         >
           Add User
         </Button>
-        <Box>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
           <Select
             id="demo-simple-select"
             value={filterField}
@@ -294,6 +339,8 @@ export default function UserTable() {
             size="small"
             onChange={(e) => {
               setFilterField(e.target.value as never);
+              setsearchValue(null);
+              setMultiValue([]);
               setFilterOperator(
                 filterOptions.find((op) => op.field === e.target.value)
                   ?.options[0]! as never
@@ -310,7 +357,11 @@ export default function UserTable() {
             label="Age"
             sx={{ marginRight: "5px" }}
             size="small"
-            onChange={(e) => setFilterOperator(e.target.value as never)}
+            onChange={(e) => {
+              setFilterOperator(e.target.value as never);
+              setsearchValue(null);
+              setMultiValue([]);
+            }}
           >
             {(
               filterOptions.find((op) => op.field === filterField)?.options ??
@@ -320,31 +371,76 @@ export default function UserTable() {
             ))}
           </Select>
 
-          {filterField != "Created On" ? (
-            <TextField
-              size="small"
-              sx={{ marginRight: "5px" }}
-              value={searchValue}
-              onChange={(e) => setsearchValue(e.target.value)}
-            />
-          ) : (
+          {filterField == "Created On" ? (
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DesktopDatePicker
                 label="Select Date"
-                inputFormat="MM/DD/YYYY"
+                inputFormat="YYYY-MM-DD"
                 value={searchValue}
                 onChange={(val: any) => {
-                  setsearchValue(val);
+                  setsearchValue(dayjs(val).format("YYYY-MM-DD"));
                 }}
                 renderInput={(params) => (
                   <TextField
                     size="small"
-                    sx={{ marginRight: "5px" }}
+                    sx={{
+                      marginRight: "5px",
+                      ...(filterOperator == "is empty" ||
+                      filterOperator == "is not empty"
+                        ? { display: "none" }
+                        : { display: "inline-block" }),
+                    }}
                     {...params}
                   />
                 )}
               />
             </LocalizationProvider>
+          ) : filterOperator == "is any of" ? (
+            <Autocomplete
+              multiple
+              size="small"
+              sx={{
+                minWidth: "200px",
+                maxWidth: "300px",
+                maxHeight: "50px",
+
+                marginRight: "5px",
+                zIndex: 100,
+              }}
+              id="tags-filled"
+              options={multiValue!.map((option) => option)}
+              freeSolo
+              renderTags={(value, getTagProps) => {
+                setMultiValue(value);
+                return value.map((option, index) => (
+                  <Chip
+                    variant="outlined"
+                    label={option}
+                    {...getTagProps({ index })}
+                  />
+                ));
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  variant="filled"
+                  label="Enter search value"
+                />
+              )}
+            />
+          ) : (
+            <TextField
+              size="small"
+              sx={{
+                marginRight: "5px",
+                ...(filterOperator == "is empty" ||
+                filterOperator == "is not empty"
+                  ? { display: "none" }
+                  : { display: "inline-block" }),
+              }}
+              value={searchValue}
+              onChange={(e) => setsearchValue(e.target.value)}
+            />
           )}
 
           <Button onClick={handleSearch} variant="contained">
@@ -405,25 +501,44 @@ export default function UserTable() {
           toEditChangePasswprd={Number(isforMenu?.userId)}
         />
       )}
-      <TableContainer sx={{ minWidth: 1000, margin: "1" }} component={Paper}>
+      <TableContainer
+        sx={{
+          minWidth: 1000,
+          margin: "1",
+        }}
+        component={Paper}
+      >
         <Table size="small">
           <TableHead>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableCell
-                    width="140px"
-                    sx={{
-                      fontWeight: "600",
-                    }}
                     key={header.id}
+                    sx={{
+                      whiteSpace: "nowrap",
+                      alignItems: "center",
+                    }}
                   >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
+                    {header.isPlaceholder ? null : (
+                      <div
+                        {...{
+                          className: header.column.getCanSort()
+                            ? "cursor-pointer select-none"
+                            : "",
+                          onClick: header.column.getToggleSortingHandler(),
+                        }}
+                      >
+                        {flexRender(
                           header.column.columnDef.header,
                           header.getContext()
                         )}
+                        {{
+                          asc: " 🔼",
+                          desc: " 🔽",
+                        }[header.column.getIsSorted() as string] ?? null}
+                      </div>
+                    )}
                   </TableCell>
                 ))}
               </TableRow>
