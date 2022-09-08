@@ -37,6 +37,7 @@ import { IUser } from "../Tables/userTable";
 import { useFormik } from "formik";
 import axios from "axios";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { TenMp } from "@mui/icons-material";
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -116,18 +117,21 @@ export default function AddMemberDialog({
 
   interface UserMeetingType {
     userId: number;
-    meetTypeId: number;
+    meetTypeId: number[];
   }
 
   ///adding user in meeting types fields
   let { data: successData, mutate } = useMutation<
-    UserMeetingType[],
+    UserMeetingType,
     unknown,
     unknown
   >(
     (data) =>
       axios
         .post("api/MeetingType/MergeUserMeetingType", data, {
+          params: {
+            userId: toEditMember.userId,
+          },
           headers: {
             Authorization: "Bearer " + access_token,
           },
@@ -141,16 +145,11 @@ export default function AddMemberDialog({
   //preprocessing data before send for updating  data
   const UpdateMember = (e: any) => {
     e.preventDefault();
+    let temp = {
+      meetTypeIds: personName,
+    };
 
-    let dataMeeting = personName.reduce((initial: any, info) => {
-      let temp = {
-        userId: toEditMember.userId,
-        meetTypeId: info,
-      };
-      return [...initial, temp];
-    }, []);
-    console.log(dataMeeting);
-    mutate(dataMeeting);
+    mutate(temp);
   };
 
   interface UserMeetingTypeGet {
