@@ -12,6 +12,7 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  TextField,
   Toolbar,
   Tooltip,
   Typography,
@@ -32,6 +33,10 @@ import AddAgendaDialog from "../dialog/addAgenda";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { Box } from "@mui/system";
+import { FilterType } from "../filter";
+import { ValuesType } from "utility-types";
+import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 export interface IAgenda {
   agendaId: string;
@@ -67,6 +72,10 @@ export default function AgendaTable() {
     setisforAgenda(agenda);
     setOpenMenu(true);
   };
+
+  let accessToken = localStorage.getItem("access_token");
+
+  let userId = localStorage.getItem("userId");
 
   const { pagination, handlePageNumberChange, handlePageSizeChange } =
     usePagination({
@@ -144,32 +153,74 @@ export default function AgendaTable() {
     []
   );
 
-  // const filterOptions = [ 
-  //   {
-  //     field: "Type",
-  //     options: FilterType.StringFilterType,
-  //   },
-  //   {
-  //     field: "Agenda",
-  //     options: FilterType.StringFilterType,
-  //   },
-  //   {
-  //     field: "Agenda",
-  //     options: FilterType.StringFilterType,
-  //   },
-  //   {
-  //     field: "Posted By",
-  //     options: FilterType.StringFilterType,
-  //   },
-  //   {
-  //     field: "Posted On",
-  //     options: FilterType.DateFilterType,
-  //   }
-  // ]
+  //filter options for agenda
 
-  let accessToken = localStorage.getItem("access_token");
+  const filterOptions = [
+    {
+      field: "Type",
+      options: FilterType.StringFilterType,
+    },
+    {
+      field: "Agenda",
+      options: FilterType.StringFilterType,
+    },
+    {
+      field: "Agenda",
+      options: FilterType.StringFilterType,
+    },
+    {
+      field: "Posted By",
+      options: FilterType.StringFilterType,
+    },
+    {
+      field: "Posted On",
+      options: FilterType.DateFilterType,
+    }
+  ] as const;
 
-  let userId = localStorage.getItem("userId");
+  const [filterField, setFilterField] = useState<ValuesType<typeof filterOptions>["field"]>("Type");
+
+  const [searchValue, setsearchValue] = useState<any>();
+
+  const [sortCol, setSortCol] = useState();
+  const [sortOrder, setSortOrder] = useState();
+
+
+
+  interface IaxiosConfig {
+    params: {
+      userId: string | null;
+      pageSize: number;
+      pageNo: number;
+      searchCol?: string;
+      searchVal?: string;
+      sortCol?: string;
+      sortOrder?: string;
+    };
+    headers: {
+      Authorization: string;
+    };
+  }
+  let axiosConfig: IaxiosConfig = {
+    params: {
+      pageSize: pagination.pageSize,
+      pageNo: pagination.pageNumber + 1,
+      userId: userId,
+    },
+    headers: {
+      Authorization: "Bearer " + accessToken,
+    },
+  };
+
+  if (filterField) {
+    (axiosConfig.params["searchCol"] = filterField),
+      (axiosConfig.params["searchVal"] = searchValue);
+  }
+  if (sortCol && sortOrder) {
+    (axiosConfig.params["sortCol"] = sortCol),
+      (axiosConfig.params["sortOrder"] = sortOrder);
+  }
+
 
   const { data: meetingAgendaData, refetch } = useAgenda(
     pagination.pageSize,
@@ -226,7 +277,7 @@ export default function AgendaTable() {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  console.log("adfasdf ", isforAgenda);
+
   return (
     <>
       <Toolbar />
@@ -240,17 +291,47 @@ export default function AgendaTable() {
       >
         Add Agenda
       </Button>
-      <Box>
+      <Box sx={{ m: 1 }}>
         <Select
           id="demo-simple-select"
           label="Age"
           sx={{ marginRight: "5px" }}
-          size="small">
-          <MenuItem>Test</MenuItem>
+          size="small"
+          onChange={(e) => {
+            setFilterField(e.target.value as never);
+          }}
+        >
+          {/* {filterField.getColumn().map((col) => (
+            <MenuItem value={col}>{col}</MenuItem>
+         ))} */}
         </Select>
-        <Select>
-          <MenuItem>Test</MenuItem>
-        </Select>
+        {filterField != "Posted On" ? (<TextField
+          size="small"
+          sx={{ marginRight: "5px" }}
+          value={searchValue}
+          onChange={(e) => setsearchValue(e.target.value)}
+        />) : (<LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DesktopDatePicker
+            label="Select Date"
+            inputFormat="MM/DD/YYYY"
+            value={searchValue}
+            onChange={(val: any) => {
+              setsearchValue(val);
+            }}
+            renderInput={(params) => (
+              <TextField
+                size="small"
+                sx={{ marginRight: "5px" }}
+                {...params}
+              />
+            )}
+          />
+        </LocalizationProvider>)}
+
+        <Button variant="contained">
+          Search
+        </Button>
+
       </Box>
       {isDialogOpen && (
         <AddAgendaDialog
