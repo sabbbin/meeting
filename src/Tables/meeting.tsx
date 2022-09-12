@@ -22,9 +22,14 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import dayjs from "dayjs";
-import { useState } from "react";
-import AddMeetingDialog from "../dialog/addMeeting";
+import { MouseEvent, useMemo, useState } from "react";
+// import AddMeetingDialog from "../dialog/addMeeting";
 import axios from "axios";
+import useMeeting from "../hooks/useMeeting";
+import usePagination from "../hooks/usePagination";
+import useMeetingTypeCount from "../hooks/useMeetingCount";
+import AddMeetingDrawer from "../drawer/addMemberDrawer";
+import AddMeetingDialog from "../dialog/addMeeting";
 
 export interface IMeeting {
   meetId: number;
@@ -32,75 +37,21 @@ export interface IMeeting {
   meetTypeId: number;
   location: string;
   calledBy: string;
-  postedBy: number;
   postedOn: Date;
-  statusId: number;
+  status: string;
+  typeName: string;
 }
 
-const data: IMeeting[] = [
-  {
-    meetId: 0,
-    meetDatetime: new Date("2022-08-31T04:21:27.168Z"),
-    meetTypeId: 0,
-    location: "string",
-    calledBy: "string",
-    postedBy: 0,
-    postedOn: new Date("2022-08-31T04:21:27.168Z"),
-    statusId: 0,
-  },
-  {
-    meetId: 0,
-    meetDatetime: new Date("2022-08-31T04:21:27.168Z"),
-    meetTypeId: 0,
-    location: "string",
-    calledBy: "string",
-    postedBy: 0,
-    postedOn: new Date("2022-08-31T04:21:27.168Z"),
-    statusId: 0,
-  },
-  {
-    meetId: 0,
-    meetDatetime: new Date("2022-08-31T04:21:27.168Z"),
-    meetTypeId: 0,
-    location: "string",
-    calledBy: "string",
-    postedBy: 0,
-    postedOn: new Date("2022-08-31T04:21:27.168Z"),
-    statusId: 0,
-  },
-];
 const columnHelper = createColumnHelper<IMeeting>();
 
-const columns = [
-  columnHelper.accessor("meetId", {
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("meetDatetime", {
-    cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY"),
-  }),
-  columnHelper.accessor("meetTypeId", {
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("location", {
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("calledBy", {
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("postedBy", {
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("postedOn", {
-    cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY"),
-  }),
-  columnHelper.accessor("statusId", {
-    cell: (info) => info.getValue(),
-  }),
-];
 
-const handleChangePage = () => {};
-const handleChangeRowsPerPage = () => {};
+const handleChangePage = () => { };
+const handleChangeRowsPerPage = () => { };
+
+
 export default function Meeting() {
+
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [open, setOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -110,13 +61,23 @@ export default function Meeting() {
   const [openMenu, setOpenMenu] = useState(false);
   let access_token = localStorage.getItem("access_token");
 
-  const { data: datatry } = useQuery(["data"], () =>
-    axios.get("api/Meeting/MeetingCountAll", {
-      headers: {
-        Authorization: "Bearer " + access_token,
-      },
-    })
-  );
+  const handleClickColumn = (
+    event: MouseEvent<HTMLButtonElement>,
+    meeting: IMeeting
+  ) => {
+    setAnchorEl(event.currentTarget);
+
+    setIsForMenu(meeting);
+    setOpenMenu(true);
+  };
+
+  // const { data: datatry } = useQuery(["data"], () =>
+  //   axios.get("api/Meeting/MeetingCountAll", {
+  //     headers: {
+  //       Authorization: "Bearer " + access_token,
+  //     },
+  //   })
+  // );
   const handleClose = () => {
     setOpenMenu(false);
   };
@@ -135,8 +96,77 @@ export default function Meeting() {
       .then((res) => res.data)
   );
 
+
+  let accessToken = localStorage.getItem("access_token");
+
+  let userId = localStorage.getItem("userId");
+
+
+  const { pagination, handlePageNumberChange, handlePageSizeChange } =
+    usePagination({
+      pageNumber: 0,
+      pageSize: 10,
+    });
+
+  const { data: meetingData } = useMeeting(pagination.pageNumber, pagination.pageSize, userId, {
+    params: {
+      pageSize: pagination.pageSize,
+      pageNo: pagination.pageNumber + 1,
+      userId: userId,
+    },
+    headers: {
+      Authorization: "Bearer " + accessToken,
+    },
+  })
+
+  const { data: meetingCountData } = useMeetingTypeCount(userId, {
+    params: {
+      userId: userId,
+    },
+    headers: {
+      Authorization: "Bearer " + accessToken,
+    },
+  })
+
+  const columns = useMemo(() => [
+    // columnHelper.accessor("meetId", {
+    //   header: 'Meet ID',
+    //   cell: (info) => info.getValue(),
+    // }),
+    columnHelper.accessor("meetDatetime", {
+      header: 'Meet Date',
+      cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY"),
+    }),
+    columnHelper.accessor("typeName", {
+      header: 'Meeting Type',
+      cell: (info) => info.getValue(),
+    }),
+    columnHelper.accessor("location", {
+      header: 'Location',
+      cell: (info) => info.getValue(),
+    }),
+    columnHelper.accessor("postedOn", {
+      header: 'Posted On',
+      cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY"),
+    }),
+    columnHelper.accessor("status", {
+      header: 'Status',
+      cell: (info) => info.getValue(),
+    }),
+    columnHelper.accessor((row) => row, {
+      header: "Actions",
+      cell: (info) => (
+        <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
+          <MoreVertIcon />
+        </IconButton>
+      ),
+    }),
+  ],
+    []
+  );
+
   const table = useReactTable({
-    data,
+    data: meetingData,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -144,7 +174,8 @@ export default function Meeting() {
   return (
     <>
       <Toolbar />
-      <Button
+      {!isDialogOpen && (< Button
+        sx={{ m: 1 }}
         variant="contained"
         onClick={() => {
           setIsDialogOpen(true);
@@ -152,9 +183,10 @@ export default function Meeting() {
         }}
       >
         Add New Meeting
-      </Button>
-      {isDialogOpen && (
+      </Button>)}
+      {isDialogOpen ? (
         <AddMeetingDialog
+
           open={isDialogOpen}
           toEditAddMeeting={isForMenu!}
           onAddMeetingDiscardDialog={() => {
@@ -166,24 +198,23 @@ export default function Meeting() {
             setIsDialogOpen(false);
           }}
         />
-      )}
-
-      <TableContainer component={Paper}>
+      ) : (<TableContainer component={Paper}>
         <Table>
           <TableHead>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableCell key={header.id}>
+                  <TableCell sx={{
+                    fontWeight: "600",
+                  }} key={header.id}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </TableCell>
                 ))}
-                <TableCell>Action</TableCell>
               </TableRow>
             ))}
           </TableHead>
@@ -199,7 +230,7 @@ export default function Meeting() {
                       )}
                     </TableCell>
                   ))}
-                  <TableCell>
+                  {/* <TableCell>
                     <IconButton
                       onClick={(e) => {
                         setIsForMenu(row.original);
@@ -209,7 +240,7 @@ export default function Meeting() {
                     >
                       <MoreVertIcon />
                     </IconButton>
-                  </TableCell>
+                  </TableCell> */}
                 </TableRow>
               );
             })}
@@ -235,14 +266,19 @@ export default function Meeting() {
           </MenuItem>
         </Menu>
         <TablePagination
+          width="140px"
           component="div"
-          count={10}
-          page={page}
-          onPageChange={handleChangePage}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
+          count={meetingCountData.TotalCount}
+          page={pagination.pageNumber}
+          onPageChange={(e, page) => handlePageNumberChange(page)}
+          rowsPerPage={pagination.pageSize}
+          onRowsPerPageChange={(e) =>
+            handlePageSizeChange(+e.currentTarget.value)
+          }
         />
-      </TableContainer>
+      </TableContainer>)}
+
+
     </>
   );
 }

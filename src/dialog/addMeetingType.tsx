@@ -38,7 +38,6 @@ const validationSchema = yup.object({
   alias: yup.string().required("Please provide an Alias."),
   orderIdx: yup.number(),
   isEnable: yup.boolean(),
-  meetTypeId: yup.number().required("Please provide a Meeting Type."),
 });
 
 type FormData = yup.TypeOf<typeof validationSchema>;
@@ -62,6 +61,8 @@ export default function AddMeetingTypeDialog({
     Authorization: "Bearer " + accessToken,
   };
 
+
+
   const CreateMeetingTypeMutation = useMutation<unknown, unknown, FormData>(
     async (data) =>
       await axios
@@ -77,12 +78,20 @@ export default function AddMeetingTypeDialog({
     }
   );
 
+
   const UpdateMeetingTypeMutation = useMutation<unknown, unknown, FormData>(
-    async (data) =>
+    async (data: any) =>
       await axios
-        .put("api/MeetingType", data, {
-          headers: headers,
-        })
+        .put("api/MeetingType", data,
+          {
+            params: { meetTypeId: toEdit.MeetTypeId },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + accessToken,
+            },
+          }
+
+        )
         .then((res) => res.data),
     {
       onSuccess() {
@@ -109,12 +118,12 @@ export default function AddMeetingTypeDialog({
       alias: "",
       isEnable: true,
       orderIdx: 0,
-      meetTypeId: 1,
+
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
       if (toEdit) {
-        console.log("adsfal", values);
+
         UpdateMeetingTypeMutation.mutate(values);
       } else CreateMeetingTypeMutation.mutate(values);
     },
@@ -127,7 +136,7 @@ export default function AddMeetingTypeDialog({
         alias: toEdit?.Alias,
         orderIdx: toEdit?.OrderIdx,
         isEnable: toEdit?.IsEnable,
-        meetTypeId: toEdit.MeetTypeId,
+
       });
   }, [toEdit]);
 

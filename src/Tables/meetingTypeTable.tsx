@@ -1,9 +1,13 @@
 import {
+  Autocomplete,
+  Box,
   Button,
   IconButton,
   Menu,
   MenuItem,
   Paper,
+  PaperTypeMap,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -48,7 +52,10 @@ import useMeetingType from "../hooks/useMeetingType";
 import AddMeetingTypeDialog from "../dialog/addMeetingType";
 import useMeetingTypeCount from "../hooks/useMeetingTypeCount";
 import { number } from "yup/lib/locale";
-import AddUserToMeetingTypes from "../dialog/addUserToMeetingTypes";
+import { FilterType } from "../filter";
+import { ValuesType } from "utility-types";
+import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 export interface IMeetingType {
   MeetTypeId?: number;
@@ -61,12 +68,17 @@ export interface IMeetingType {
 const columnHelper = createColumnHelper<IMeetingType>();
 
 export default function MeetingTypeTable() {
+  let accessToken = localStorage.getItem("access_token");
+
+  let userIdLocal = localStorage.getItem("userId");
+
   const { pagination, handlePageNumberChange, handlePageSizeChange } =
     usePagination({
       pageNumber: 0,
       pageSize: 10,
     });
   const [isforMenu, setisforMenu] = useState<IMeetingType | null>();
+  let meetTypeId = isforMenu?.MeetTypeId;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [viewUser, setViewUser] = useState(false);
@@ -82,6 +94,72 @@ export default function MeetingTypeTable() {
   const handleCloseMenu = () => {
     setAnchorEl(null);
   };
+
+  const filterOptions = [
+    {
+      field: "Meeting Type",
+      options: FilterType.StringFilterType,
+    },
+    {
+      field: "Alias",
+      options: FilterType.StringFilterType,
+    },
+    {
+      field: "Order Index",
+      options: FilterType.StringFilterType,
+    },
+    {
+      field: "Is Enable",
+      options: FilterType.BooleanFilterType,
+    },
+  ];
+
+  const [filterField, setFilterField] =
+    useState<ValuesType<typeof filterOptions>["field"]>("Meeting Type");
+
+  const [filterOperator, setFilterOperator] = useState<
+    ValuesType<ValuesType<typeof filterOptions>["options"]>
+  >(filterOptions.find((op) => op.field === filterField)?.options[0]!);
+
+  const [searchValue, setsearchValue] = useState<any>();
+  const [multiValue, setMultiValue] = useState<string[]>([]);
+
+  const [sortCol, setSortCol] = useState();
+  const [sortOrder, setSortOrder] = useState();
+
+  interface IaxiosConfig {
+    params: {
+      pageSize: number;
+      pageNo: number;
+      searchCol?: string;
+      searchVal?: string;
+      operators?: string;
+      sortCol?: string;
+      sortOrder?: string;
+    };
+    headers: {
+      Authorization: string;
+    };
+  }
+
+  let axiosConfig: IaxiosConfig = {
+    params: {
+      pageSize: pagination.pageSize,
+      pageNo: pagination.pageNumber + 1,
+    },
+    headers: {
+      Authorization: "Bearer " + accessToken,
+    },
+  };
+
+  if (filterField) {
+    (axiosConfig.params["searchCol"] = filterField),
+      (axiosConfig.params["searchVal"] = searchValue);
+  }
+  if (sortCol && sortOrder) {
+    (axiosConfig.params["sortCol"] = sortCol),
+      (axiosConfig.params["sortOrder"] = sortOrder);
+  }
 
   const columns = useMemo(
     () => [
@@ -119,15 +197,15 @@ export default function MeetingTypeTable() {
 
   let accessToken = localStorage.getItem("access_token");
 
-  let userIdLocal = localStorage.getItem("userId");
-
   const { data: meetTypeData, refetch } = useMeetingType(
     pagination.pageSize,
     pagination.pageNumber + 1,
+    filterOperator,
     {
       params: {
         pageSize: pagination.pageSize,
         pageNo: pagination.pageNumber + 1,
+        filterOperator,
       },
       headers: {
         Authorization: "Bearer " + accessToken,
@@ -135,16 +213,18 @@ export default function MeetingTypeTable() {
     }
   );
 
-  const { data: updateStatus, mutate } = useMutation(
-    (data: any) =>
-      axios
-        .put(`/api/MeetingType/`, data, {
+  const { data: updateStatus, mutate: updateMutate } = useMutation(
+    (data: any) => {
+      return axios
+        .put("/api/MeetingType", data, {
+          params: { meetTypeId },
           headers: {
             "Content-Type": "application/json",
             Authorization: "Bearer " + accessToken,
           },
         })
-        .then((res) => res.data),
+        .then((res) => res.data);
+    },
     {
       onSuccess: () => {
         refetch();
@@ -191,13 +271,13 @@ export default function MeetingTypeTable() {
   const handleStatusChange = (value: any) => {
     const id = isforMenu?.MeetTypeId;
     const updateData = {
-      meetTypeId: id,
       isEnable: value,
       typeName: isforMenu?.TypeName,
       alias: isforMenu?.Alias,
       orderIdx: isforMenu?.OrderIdx,
     };
-    mutate(updateData);
+
+    updateMutate(updateData);
   };
 
   const table = useReactTable({
@@ -206,47 +286,182 @@ export default function MeetingTypeTable() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const handleSearch = () => {
+    if (searchValue || multiValue) {
+      let temp = "";
+      if (multiValue) {
+        multiValue.map((mul, id) => {
+          if (id !== multiValue.length - 1) {
+            temp += `'${mul}',`;
+          } else {
+            temp += `'${mul}'`;
+          }
+        });
+      }
+      (axiosConfig.params["searchCol"] = filterField),
+        (axiosConfig.params["searchVal"] = searchValue ?? temp),
+        (axiosConfig.params["operators"] = filterOperator);
+      refetch();
+    }
+  };
+
   return (
     <>
       <Toolbar />
-      <Button
-        sx={{ m: 1 }}
-        variant="contained"
-        onClick={() => {
-          setIsDialogOpen(true);
-          handleCloseMenu();
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-end",
         }}
       >
-        Add Type
-      </Button>
+        <Button
+          sx={{ m: 1 }}
+          variant="contained"
+          onClick={() => {
+            setIsDialogOpen(true);
+            handleCloseMenu();
+          }}
+        >
+          Add Type
+        </Button>
+        <Box
+          sx={{
+            m: 1,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "flex-end",
+          }}
+        >
+          <Select
+            id="demo-simple-select"
+            sx={{ marginRight: "5px" }}
+            value={filterField}
+            size="small"
+            onChange={(e) => {
+              setFilterField(e.target.value as never);
+              setsearchValue(null);
+              setMultiValue([]);
+              setFilterOperator(
+                filterOptions.find((op) => op.field === e.target.value)
+                  ?.options[0]! as never
+              );
+            }}
+          >
+            {filterOptions.map((col, i) => (
+              <MenuItem value={col.field}>{col.field}</MenuItem>
+            ))}
+          </Select>
+          <Select
+            id="demo-simple-select"
+            value={filterOperator}
+            sx={{ marginRight: "5px" }}
+            size="small"
+            onChange={(e) => {
+              setFilterOperator(e.target.value as never);
+              setsearchValue(null);
+              setMultiValue([]);
+            }}
+          >
+            {(
+              filterOptions.find((op) => op.field === filterField)?.options ??
+              []
+            ).map((col) => (
+              <MenuItem value={col}>{col}</MenuItem>
+            ))}
+          </Select>
 
-      {isDialogOpen && (
-        <AddMeetingTypeDialog
-          refetch={refetch}
-          open={isDialogOpen}
-          toEditAddMeetingType={isforMenu!}
-          onAddMeetingTypeDiscardDialog={() => {
-            setisforMenu(null);
-            setIsDialogOpen(false);
-          }}
-          onAddMeetingTypeSuccessDialog={() => {
-            setisforMenu(null);
-            setIsDialogOpen(false);
-          }}
-        />
-      )}
+          {filterField === "Posted On" ? (
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DesktopDatePicker
+                label="Select Date"
+                inputFormat="MM/DD/YYYY"
+                value={searchValue}
+                onChange={(val: any) => {
+                  setsearchValue(val);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    size="small"
+                    sx={{
+                      marginRight: "5px",
+                      ...(filterOperator == "is empty" ||
+                      filterOperator == "is not empty"
+                        ? { display: "none" }
+                        : { display: "inline-block" }),
+                    }}
+                    {...params}
+                  />
+                )}
+              />
+            </LocalizationProvider>
+          ) : filterOperator === "is any of" ? (
+            <Autocomplete
+              multiple
+              size="small"
+              sx={{
+                minWidth: "200px",
+                maxWidth: "300px",
+                maxHeight: "50px",
 
-      {viewUser && (
-        <AddUserToMeetingTypes
-          refetch={refetch}
-          open={viewUser}
-          meetTypeId={isforMenu!.MeetTypeId!}
-          onDialogClose={() => {
-            setisforMenu(null);
-            setViewUser(false);
-          }}
-        />
-      )}
+                marginRight: "5px",
+                zIndex: 100,
+              }}
+              id="tags-filled"
+              options={multiValue!.map((option) => option)}
+              freeSolo
+              renderTags={(value, getTagProps) => {
+                setMultiValue(value);
+                return value.map((option, index) => (
+                  <Chip
+                    variant="outlined"
+                    label={option}
+                    {...getTagProps({ index })}
+                  />
+                ));
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  variant="filled"
+                  label="Enter search value"
+                />
+              )}
+            />
+          ) : (
+            <TextField
+              size="small"
+              sx={{
+                marginRight: "5px",
+                ...(filterOperator == "is empty" ||
+                filterOperator == "is not empty"
+                  ? { display: "none" }
+                  : { display: "inline-block" }),
+              }}
+              value={searchValue}
+              onChange={(e) => setsearchValue(e.target.value)}
+            />
+          )}
+
+          <Button onClick={handleSearch} variant="contained">
+            Search
+          </Button>
+        </Box>
+      </Box>
+
+      <AddMeetingTypeDialog
+        refetch={refetch}
+        open={isDialogOpen}
+        toEditAddMeetingType={isforMenu!}
+        onAddMeetingTypeDiscardDialog={() => {
+          setisforMenu(null);
+          setIsDialogOpen(false);
+        }}
+        onAddMeetingTypeSuccessDialog={() => {
+          setisforMenu(null);
+          setIsDialogOpen(false);
+        }}
+      />
       <TableContainer sx={{ minWidth: 1000, margin: "1" }} component={Paper}>
         <Table size="small">
           <TableHead>
