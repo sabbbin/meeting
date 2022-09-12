@@ -90,7 +90,6 @@ export default function AddMeetingTypeDialog({
               Authorization: "Bearer " + accessToken,
             },
           }
-
         )
         .then((res) => res.data),
     {
@@ -123,7 +122,6 @@ export default function AddMeetingTypeDialog({
     validationSchema: validationSchema,
     onSubmit: (values) => {
       if (toEdit) {
-
         UpdateMeetingTypeMutation.mutate(values);
       } else CreateMeetingTypeMutation.mutate(values);
     },

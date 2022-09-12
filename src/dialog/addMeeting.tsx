@@ -54,17 +54,17 @@ interface AgendaRow {
   description?: string;
   isSelected?: boolean;
   postedBy?: string;
-  postedOn?: string
+  postedOn?: string;
 }
 
 const columnHelper = createColumnHelper<AgendaRow>();
 
 const validationSchema = yup.object({
   meetId: yup.number().required("Required"),
-  meetDatetime: yup.string().required("select date"),
+  meetDatetime: yup.string().required("Please select a date"),
   meetTypeId: yup.number().required("id req"),
-  location: yup.string().required("location req"),
-  calledBy: yup.string().required("valled bty req"),
+  location: yup.string().required("Please provide a location"),
+  calledBy: yup.string().required("Please provide a Name"),
 
 });
 
@@ -90,16 +90,9 @@ export default function AddMeetingDialog({
 
   const handleCloseMenu = () => {
 
-    // onAddMeetingSuccessDialog;
+    onAddMeetingSuccessDialog;
     setAnchorEl(null);
   };
-
-
-  const handleCheck = (e: ChangeEvent<HTMLInputElement>) => {
-    setChecked(!checked);
-
-  }
-
 
   const formik = useFormik<FormDate>({
     initialValues: {
@@ -214,14 +207,8 @@ export default function AddMeetingDialog({
   return (
     <Card>
       <Box
-      // PaperComponent={FormDialogPaper as never}
-      // PaperProps={{
-      //   onSubmit: formik.handleSubmit as never,
-      //   elevation: 1
-      // }}
-
-      // open={open}
-      // onClose={handleClose}
+        component={FormDialogPaper as never}
+        onSubmit={formik.handleSubmit as never}
       >
         <DialogTitle sx={{ textAlign: "center", fontSize: "25px" }}><b>{!!toEdit ? "Update" : "Add"} Meeting</b></DialogTitle>
         <CardContent>
@@ -229,13 +216,11 @@ export default function AddMeetingDialog({
             label="Date"
             autoFocus
             margin="dense"
-            name="Date"
+            name="meetDatetime"
             type="date"
             value={formik.values.meetDatetime}
             onChange={formik.handleChange}
-            error={
-              formik.touched.meetDatetime && Boolean(formik.errors.meetDatetime)
-            }
+            error={formik.touched.meetDatetime && Boolean(formik.errors.meetDatetime)}
             helperText={formik.touched.meetDatetime && formik.errors.meetDatetime}
             fullWidth
             variant="standard"
@@ -244,7 +229,7 @@ export default function AddMeetingDialog({
             label="Location"
             autoFocus
             margin="dense"
-            name="Location"
+            name="location"
             value={formik.values.location}
             onChange={formik.handleChange}
             error={formik.touched.location && Boolean(formik.errors.location)}
@@ -256,7 +241,7 @@ export default function AddMeetingDialog({
             label="CalledBy"
             autoFocus
             margin="dense"
-            name="CalledBy"
+            name="calledBy"
             value={formik.values.calledBy}
             onChange={formik.handleChange}
             error={formik.touched.calledBy && Boolean(formik.errors.calledBy)}
@@ -348,6 +333,6 @@ export default function AddMeetingDialog({
           <Button onClick={handleClose}>Cancel</Button>
         </CardActions>
       </Box>
-    </Card>
+    </Card >
   );
 }
