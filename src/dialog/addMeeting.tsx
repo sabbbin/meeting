@@ -10,17 +10,26 @@ import {
   DialogContent,
   DialogProps,
   DialogTitle,
+  Divider,
+  FormControlLabel,
   MenuItem,
   Paper,
   PaperTypeMap,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
   TextField,
+  Tooltip,
+  Typography,
 } from "@mui/material";
 import { IMeeting } from "../Tables/meeting";
 import * as yup from "yup";
-import { useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useFormControlUnstyledContext } from "@mui/base";
 import { useFormik } from "formik";
-import { Info, MeetingRoomRounded } from "@mui/icons-material";
+import { CheckBox, Info, MeetingRoomRounded } from "@mui/icons-material";
 import { OverridableComponent } from "@mui/material/OverridableComponent";
 import dayjs from "dayjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -28,12 +37,27 @@ import axios from "axios";
 import useUserMeetingType from "../hooks/useUserMeetingType";
 import getAgenda from "./getAgenda";
 import { width } from "@mui/system";
+import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { IAgenda } from "../Tables/agendaTable";
+import { DataGrid, GridColDef, GridValueGetterParams } from '@mui/x-data-grid';
+
 
 interface AddMeeting extends DialogProps {
   onAddMeetingDiscardDialog: () => void;
   onAddMeetingSuccessDialog: () => void;
   toEditAddMeeting: IMeeting;
 }
+
+interface AgendaRow {
+  agenda: string;
+  agendaId: string;
+  description?: string;
+  isSelected?: boolean;
+  postedBy?: string;
+  postedOn?: string
+}
+
+const columnHelper = createColumnHelper<AgendaRow>();
 
 const validationSchema = yup.object({
   meetId: yup.number().required("Required"),
@@ -50,12 +74,17 @@ const FormDialogPaper = (
   props: OverridableComponent<PaperTypeMap<{}, "div">>
 ) => <Paper {...(props as any)} as="form" />;
 
+
+
 export default function AddMeetingDialog({
   onAddMeetingSuccessDialog,
   onAddMeetingDiscardDialog,
   toEditAddMeeting: toEdit,
   open,
 }: AddMeeting) {
+
+  const [checked, setChecked] = useState(true);
+  const [agendaRow, setAgendaRow] = useState([]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   let access_token = localStorage.getItem("access_token");
 
@@ -64,6 +93,13 @@ export default function AddMeetingDialog({
     // onAddMeetingSuccessDialog;
     setAnchorEl(null);
   };
+
+
+  const handleCheck = (e: ChangeEvent<HTMLInputElement>) => {
+    setChecked(!checked);
+
+  }
+
 
   const formik = useFormik<FormDate>({
     initialValues: {
@@ -127,7 +163,7 @@ export default function AddMeetingDialog({
       Authorization: "Bearer " + access_token,
     },
   });
-  console.log(userMeetingtypeData)
+
 
   const { data: agenda } = getAgenda(meetTypeId, {
     params: {
@@ -137,6 +173,38 @@ export default function AddMeetingDialog({
       Authorization: "Bearer " + access_token,
     },
   })
+
+  const columns = [
+
+    columnHelper.accessor((row) => row, {
+      header: "Check",
+      cell: (info) => <CheckBox />
+    }),
+    columnHelper.accessor("agenda", {
+      header: "Agenda",
+      cell: (info) => <Tooltip title={info.getValue()}>
+        <Typography
+          sx={{
+            width: "150px",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {info.getValue()}
+        </Typography>
+      </Tooltip>,
+      footer: (info) => info.column.id,
+    }),
+
+  ]
+
+  const table = useReactTable({
+    data: agenda,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  })
+
 
 
   const handleClose = () => {
@@ -155,25 +223,10 @@ export default function AddMeetingDialog({
       // open={open}
       // onClose={handleClose}
       >
-        <DialogTitle>{!!toEdit ? "Update" : "Add"} Meeting</DialogTitle>
+        <DialogTitle sx={{ textAlign: "center", fontSize: "25px" }}><b>{!!toEdit ? "Update" : "Add"} Meeting</b></DialogTitle>
         <CardContent>
-          {/* <TextField
-          label="Meeting Id"
-          autoFocus
-          margin="dense"
-          id="meetId"
-          name="meetId"
-          type="text"
-          value={formik.values.meetId}
-          onChange={formik.handleChange}
-          error={formik.touched.meetId && Boolean(formik.errors.meetId)}
-          helperText={formik.touched.meetId && formik.errors.meetId}
-          fullWidth
-          variant="standard"
-        /> */}
-
           <TextField
-            label="meetDatetime"
+            label="Date"
             autoFocus
             margin="dense"
             name="Date"
@@ -187,18 +240,6 @@ export default function AddMeetingDialog({
             fullWidth
             variant="standard"
           />
-          {/* <TextField
-          label="MeetTypeId"
-          autoFocus
-          margin="dense"
-          name="MeetTypeId"
-          value={formik.values.meetTypeId}
-          onChange={formik.handleChange}
-          error={formik.touched.meetTypeId && Boolean(formik.errors.meetTypeId)}
-          helperText={formik.touched.meetTypeId && formik.errors.meetTypeId}
-          fullWidth
-          variant="standard"
-        /> */}
           <TextField
             label="Location"
             autoFocus
@@ -223,25 +264,13 @@ export default function AddMeetingDialog({
             fullWidth
             variant="standard"
           />
-          {/* <TextField
-          label="PostedBy"
-          autoFocus
-          margin="dense"
-          name="PostedBy"
-          value={formik.values.postedBy}
-          onChange={formik.handleChange}
-          error={formik.touched.postedBy && Boolean(formik.errors.postedBy)}
-          helperText={formik.touched.postedBy && formik.errors.postedBy}
-          fullWidth
-          variant="standard"
-        /> */}
           <TextField
             select
             fullWidth
             name="meetTypeId"
             id="meetTypeId"
             margin="dense"
-            label="Meeting"
+            label="Meeting Type"
             variant="standard"
             value={formik.values.meetTypeId}
             SelectProps={{
@@ -255,41 +284,56 @@ export default function AddMeetingDialog({
               </MenuItem>
             ))}
           </TextField>
-          <TextField
-            select
-            fullWidth
-            name="agendaId"
-            id="agendaId"
-            margin="dense"
-            label="Agenda"
-            variant="standard"
+          {formik.values.meetTypeId ? (
+            <Card sx={{ marginTop: 2.5 }}>
+              <Typography sx={{ m: 1, textAlign: 'center' }}><b>Add Agendas</b></Typography>
+              <Divider />
+              <Table>
+                <TableHead>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <TableCell
+                          sx={{
+                            fontWeight: "600",
+                          }}
+                          key={header.id}
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableHead>
+                <TableBody>
+                  {table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id}>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell
+                          sx={{
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            "&:hover": {
+                              overflow: "visible",
+                            },
+                          }}
+                          key={cell.id}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>) : (null)}
 
-          >
-            {agenda.map((agenda: any, index: number) => (
-              <MenuItem key={index} value={agenda.agendaId}>
-                {agenda.agenda}
-              </MenuItem>
-            ))}
-          </TextField>
-          {/* {formik.values.meetTypeId ? (
-            <Autocomplete
-              options={agenda ?? []}
-              renderOption={((agenda: any, index: number) => (
-                <MenuItem key={index} value={agenda.agendaId}>
-                  {agenda.agenda}
-                </MenuItem>
-              ))}
-              renderInput={(params) => <TextField
-                {...params}
-                label='Agendas'
-                multiline
-                fullWidth
-                name="agendaId"
-                id="agendaId"
-                margin="dense"
-                variant="standard" />}
-            />
-          ) : (null)} */}
         </CardContent>
         <CardActions>
           {toEdit ? (
