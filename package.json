@@ -22,6 +22,7 @@
     "cleanup": "^0.3.0",
     "dayjs": "^1.11.5",
     "formik": "^2.2.9",
+    "material-ui-popup-state": "^4.0.2",
     "notistack": "^2.0.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

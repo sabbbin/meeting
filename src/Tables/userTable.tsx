@@ -4,12 +4,9 @@ import {
   Box,
   Button,
   Chip,
-  FormControl,
   IconButton,
-  Input,
   Menu,
   MenuItem,
-  OutlinedInput,
   Paper,
   Select,
   Table,
@@ -30,10 +27,8 @@ import {
   getSortedRowModel,
   SortingState,
 } from "@tanstack/react-table";
-import { MouseEvent, useMemo, useState } from "react";
-import useUsers from "../hooks/useUsers";
+import React, { MouseEvent, useMemo, useState } from "react";
 
-import { useInputState } from "@mantine/hooks";
 import dayjs from "dayjs";
 import { ValuesType } from "utility-types";
 import AddMemberDialog from "../dialog/addMemberDialog";
@@ -46,12 +41,11 @@ import useUserCount from "../hooks/useUserCount";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import useStatus from "../hooks/useStatus";
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
-import { convertLength } from "@mui/material/styles/cssUtils";
+import Popover from "@mui/material/Popover";
+import PopupState, { bindTrigger, bindPopover } from "material-ui-popup-state";
 
-console.log(FilterType);
 export interface IUser {
   userId: number;
   username: string;
@@ -221,6 +215,7 @@ export default function UserTable() {
     },
   ]);
 
+  console.log("adfa", searchValue);
   let accessToken = localStorage.getItem("access_token");
   const [multiValue, setMultiValue] = useState<string[]>([]);
 
@@ -243,8 +238,8 @@ export default function UserTable() {
     params: {
       size: pagination.pageSize,
       page: pagination.pageNumber + 1,
-      sortCol: sortCol[0]?.id,
-      sortOrder: sortCol[0]?.desc,
+      sortCol: sortCol[0]?.id || "createdOn",
+      sortOrder: sortCol[0]?.desc || true,
     },
     headers: {
       Authorization: "Bearer " + accessToken,
@@ -252,13 +247,7 @@ export default function UserTable() {
   };
 
   const { data: userData, refetch } = useQuery(
-    [
-      "users",
-      pagination.pageSize,
-      pagination.pageNumber,
-      sortCol,
-      filterOperator,
-    ],
+    ["users", pagination.pageSize, pagination.pageNumber, sortCol],
     () =>
       axios
         .get("api/User/GetAllUser", { ...axiosConfig })
@@ -285,8 +274,14 @@ export default function UserTable() {
   });
 
   const handleSearch = () => {
-    if (searchValue || multiValue) {
+    if (
+      searchValue ||
+      multiValue.length > 0 ||
+      filterOperator == "is empty" ||
+      filterOperator == "is not empty"
+    ) {
       let temp = "";
+
       if (multiValue) {
         multiValue.map((mul, id) => {
           if (id !== multiValue.length - 1) {
@@ -296,8 +291,15 @@ export default function UserTable() {
           }
         });
       }
+
+      console.log("searchvalue", searchValue);
+      console.log("hwllo", temp);
+
+      if (filterOperator != "is empty" && filterOperator != "is not empty") {
+        axiosConfig.params["searchVal"] =
+          searchValue != "" ? searchValue : temp;
+      }
       (axiosConfig.params["searchCol"] = filterField),
-        (axiosConfig.params["searchVal"] = searchValue ?? temp),
         (axiosConfig.params["operators"] = filterOperator);
       refetch();
     }
@@ -323,130 +325,159 @@ export default function UserTable() {
         >
           Add User
         </Button>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Select
-            id="demo-simple-select"
-            value={filterField}
-            label="Age"
-            sx={{ marginRight: "5px" }}
-            size="small"
-            onChange={(e) => {
-              setFilterField(e.target.value as never);
-              setsearchValue(null);
-              setMultiValue([]);
-              setFilterOperator(
-                filterOptions.find((op) => op.field === e.target.value)
-                  ?.options[0]! as never
-              );
-            }}
-          >
-            {filterOptions.map((col, i) => (
-              <MenuItem value={col.field}>{col.field}</MenuItem>
-            ))}
-          </Select>
-          <Select
-            id="demo-simple-select"
-            value={filterOperator}
 
-            label="Age"
-            sx={{ marginRight: "5px" }}
-            size="small"
-            onChange={(e) => {
-              setFilterOperator(e.target.value as never);
-              setsearchValue(null);
-              setMultiValue([]);
-            }}
-          >
-            {(
-              filterOptions.find((op) => op.field === filterField)?.options ??
-              []
-            ).map((col) => (
-              <MenuItem value={col}>{col}</MenuItem>
-            ))}
-          </Select>
-
-          {filterField == "Created On" ? (
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DesktopDatePicker
-                label="Select Date"
-                inputFormat="YYYY-MM-DD"
-                value={searchValue}
-                onChange={(val: any) => {
-                  setsearchValue(dayjs(val).format("YYYY-MM-DD"));
+        <PopupState variant="popover" popupId="demo-popup-popover">
+          {(popupState) => (
+            <div>
+              <Button
+                variant="contained"
+                sx={{ marginBottom: "10px" }}
+                {...bindTrigger(popupState)}
+              >
+                Open search
+              </Button>
+              <Popover
+                {...bindPopover(popupState)}
+                anchorOrigin={{
+                  vertical: "top",
+                  horizontal: "left",
                 }}
-                renderInput={(params) => (
-                  <TextField
+                transformOrigin={{
+                  vertical: "top",
+                  horizontal: "right",
+                }}
+              >
+                <Paper
+                  sx={{
+                    padding: "10px",
+                  }}
+                >
+                  <Select
+                    id="demo-simple-select"
+                    value={filterField}
+                    label="Age"
+                    sx={{ marginRight: "5px" }}
                     size="small"
-                    sx={{
-                      marginRight: "5px",
-                      ...(filterOperator == "is empty" ||
-                        filterOperator == "is not empty"
-                        ? { display: "none" }
-                        : { display: "inline-block" }),
+                    onChange={(e) => {
+                      setFilterField(e.target.value as never);
+
+                      setsearchValue("");
+
+                      setMultiValue([]);
+                      setFilterOperator(
+                        filterOptions.find((op) => op.field === e.target.value)
+                          ?.options[0]! as never
+                      );
                     }}
-                    {...params}
-                  />
-                )}
-              />
-            </LocalizationProvider>
-          ) : filterOperator == "is any of" ? (
-            <Autocomplete
-              multiple
-              size="small"
-              sx={{
-                minWidth: "200px",
-                maxWidth: "300px",
-                maxHeight: "50px",
+                  >
+                    {filterOptions.map((col, i) => (
+                      <MenuItem value={col.field}>{col.field}</MenuItem>
+                    ))}
+                  </Select>
+                  <Select
+                    id="demo-simple-select"
+                    value={filterOperator}
+                    label="Age"
+                    sx={{ marginRight: "5px" }}
+                    size="small"
+                    onChange={(e) => {
+                      setFilterOperator(e.target.value as never);
+                      if (dayjs(searchValue).isValid()) {
+                        setsearchValue(dayjs().format("YYYY-MM-DD"));
+                      } else {
+                        setsearchValue("");
+                      }
+                      setMultiValue([]);
+                    }}
+                  >
+                    {(
+                      filterOptions.find((op) => op.field === filterField)
+                        ?.options ?? []
+                    ).map((col) => (
+                      <MenuItem value={col}>{col}</MenuItem>
+                    ))}
+                  </Select>
 
-                marginRight: "5px",
-                zIndex: 100,
-              }}
-              id="tags-filled"
-              options={multiValue!.map((option) => option)}
-              freeSolo
-              renderTags={(value, getTagProps) => {
-                setMultiValue(value);
-                return value.map((option, index) => (
-                  <Chip
-                    variant="outlined"
-                    label={option}
-                    {...getTagProps({ index })}
-                  />
-                ));
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  variant="filled"
-                  label="Enter search value"
-                />
-              )}
-            />
-          ) : (
-            <TextField
-              size="small"
-              sx={{
-                marginRight: "5px",
-                ...(filterOperator == "is empty" ||
-                  filterOperator == "is not empty"
-                  ? { display: "none" }
-                  : { display: "inline-block" }),
-              }}
-              value={searchValue}
-              onChange={(e) => setsearchValue(e.target.value)}
-            />
+                  {filterField == "Created On" ? (
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DesktopDatePicker
+                        label="Select Date"
+                        inputFormat="YYYY-MM-DD"
+                        value={searchValue}
+                        onChange={(val: any) => {
+                          setsearchValue(dayjs(val).format("YYYY-MM-DD"));
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            size="small"
+                            sx={{
+                              marginRight: "5px",
+                              ...(filterOperator == "is empty" ||
+                              filterOperator == "is not empty"
+                                ? { display: "none" }
+                                : { display: "inline-block" }),
+                            }}
+                            {...params}
+                          />
+                        )}
+                      />
+                    </LocalizationProvider>
+                  ) : filterOperator == "is any of" ? (
+                    <Autocomplete
+                      multiple
+                      size="small"
+                      sx={{
+                        minWidth: "200px",
+                        maxWidth: "300px",
+                        maxHeight: "50px",
+
+                        marginRight: "5px",
+                        zIndex: 100,
+                      }}
+                      id="tags-filled"
+                      options={multiValue!.map((option) => option)}
+                      freeSolo
+                      renderTags={(value, getTagProps) => {
+                        setMultiValue(value);
+                        return value.map((option, index) => (
+                          <Chip
+                            variant="outlined"
+                            label={option}
+                            {...getTagProps({ index })}
+                          />
+                        ));
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          variant="filled"
+                          label="Enter search value"
+                        />
+                      )}
+                    />
+                  ) : (
+                    <TextField
+                      size="small"
+                      sx={{
+                        marginRight: "5px",
+                        ...(filterOperator == "is empty" ||
+                        filterOperator == "is not empty"
+                          ? { display: "none" }
+                          : { display: "inline-block" }),
+                      }}
+                      value={searchValue}
+                      onChange={(e) => setsearchValue(e.target.value)}
+                    />
+                  )}
+
+                  <Button onClick={handleSearch} variant="contained">
+                    Search
+                  </Button>
+                </Paper>
+              </Popover>
+            </div>
           )}
-
-          <Button onClick={handleSearch} variant="contained">
-            Search
-          </Button>
-        </Box>
+        </PopupState>
       </Box>
 
       {isDialogOpen && (
@@ -559,7 +590,7 @@ export default function UserTable() {
         <TablePagination
           width="140px"
           component="div"
-          count={countData.TotalCount}
+          count={34}
           page={pagination.pageNumber}
           onPageChange={(e, page) => handlePageNumberChange(page)}
           rowsPerPage={pagination.pageSize}
