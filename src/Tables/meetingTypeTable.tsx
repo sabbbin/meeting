@@ -2,6 +2,7 @@ import {
   Autocomplete,
   Box,
   Button,
+  Chip,
   IconButton,
   Menu,
   MenuItem,
@@ -15,6 +16,7 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  TextField,
   Toolbar,
 } from "@mui/material";
 import {
@@ -56,6 +58,7 @@ import { FilterType } from "../filter";
 import { ValuesType } from "utility-types";
 import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import AddUserToMeetingTypes from "../dialog/addUserToMeetingTypes";
 
 export interface IMeetingType {
   MeetTypeId?: number;
@@ -68,9 +71,8 @@ export interface IMeetingType {
 const columnHelper = createColumnHelper<IMeetingType>();
 
 export default function MeetingTypeTable() {
-  let accessToken = localStorage.getItem("access_token");
-
   let userIdLocal = localStorage.getItem("userId");
+  let accessToken = localStorage.getItem("access_token");
 
   const { pagination, handlePageNumberChange, handlePageSizeChange } =
     usePagination({
@@ -194,8 +196,6 @@ export default function MeetingTypeTable() {
     ],
     []
   );
-
-  let accessToken = localStorage.getItem("access_token");
 
   const { data: meetTypeData, refetch } = useMeetingType(
     pagination.pageSize,
@@ -449,19 +449,32 @@ export default function MeetingTypeTable() {
         </Box>
       </Box>
 
-      <AddMeetingTypeDialog
-        refetch={refetch}
-        open={isDialogOpen}
-        toEditAddMeetingType={isforMenu!}
-        onAddMeetingTypeDiscardDialog={() => {
-          setisforMenu(null);
-          setIsDialogOpen(false);
-        }}
-        onAddMeetingTypeSuccessDialog={() => {
-          setisforMenu(null);
-          setIsDialogOpen(false);
-        }}
-      />
+      {isDialogOpen && (
+        <AddMeetingTypeDialog
+          refetch={refetch}
+          open={isDialogOpen}
+          toEditAddMeetingType={isforMenu!}
+          onAddMeetingTypeDiscardDialog={() => {
+            setisforMenu(null);
+            setIsDialogOpen(false);
+          }}
+          onAddMeetingTypeSuccessDialog={() => {
+            setisforMenu(null);
+            setIsDialogOpen(false);
+          }}
+        />
+      )}
+      {viewUser && (
+        <AddUserToMeetingTypes
+          refetch={refetch}
+          onDialogClose={() => {
+            setViewUser(false);
+            setisforMenu(null);
+          }}
+          open={viewUser}
+          meetTypeId={isforMenu!.MeetTypeId!}
+        />
+      )}
       <TableContainer sx={{ minWidth: 1000, margin: "1" }} component={Paper}>
         <Table size="small">
           <TableHead>

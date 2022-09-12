@@ -78,7 +78,7 @@ function AddUserToMeetingTypes({
     {
       onSuccess: (data) => {
         let leftdata = data.reduce((da: any, arr) => {
-          if (arr.IsSelected != 1) {
+          if (arr.IsSelected == 0) {
             let temp = {
               FullName: arr.FullName,
               UserId: arr.UserId,
@@ -156,7 +156,7 @@ function AddUserToMeetingTypes({
   );
   const handleSubmit = (e: any) => {
     e.preventDefault();
-    let data = left.reduce((init: any, dat) => {
+    let data = right.reduce((init: any, dat) => {
       return [...init, dat.UserId!];
     }, []);
     let userId = {
@@ -213,7 +213,7 @@ function AddUserToMeetingTypes({
     >
       <DialogContent>
         <Grid container justifyContent="center" alignItems="center">
-          <Grid item>{customList("User Not In Meeting", left)}</Grid>
+          <Grid item>{customList("User not In Meeting", left)}</Grid>
           <Grid item>
             <Grid container direction="column" alignItems="center">
               <Button
