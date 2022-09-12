@@ -23,11 +23,13 @@ import {
 } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import { MouseEvent, useMemo, useState } from "react";
-import AddMeetingDialog from "../dialog/addMeeting";
+// import AddMeetingDialog from "../dialog/addMeeting";
 import axios from "axios";
 import useMeeting from "../hooks/useMeeting";
 import usePagination from "../hooks/usePagination";
 import useMeetingTypeCount from "../hooks/useMeetingCount";
+import AddMeetingDrawer from "../drawer/addMemberDrawer";
+import AddMeetingDialog from "../dialog/addMeeting";
 
 export interface IMeeting {
   meetId: number;
@@ -35,9 +37,9 @@ export interface IMeeting {
   meetTypeId: number;
   location: string;
   calledBy: string;
-  postedBy: number;
   postedOn: Date;
-  statusId: number;
+  status: string;
+  typeName: string;
 }
 
 const columnHelper = createColumnHelper<IMeeting>();
@@ -69,13 +71,13 @@ export default function Meeting() {
     setOpenMenu(true);
   };
 
-  const { data: datatry } = useQuery(["data"], () =>
-    axios.get("api/Meeting/MeetingCountAll", {
-      headers: {
-        Authorization: "Bearer " + access_token,
-      },
-    })
-  );
+  // const { data: datatry } = useQuery(["data"], () =>
+  //   axios.get("api/Meeting/MeetingCountAll", {
+  //     headers: {
+  //       Authorization: "Bearer " + access_token,
+  //     },
+  //   })
+  // );
   const handleClose = () => {
     setOpenMenu(false);
   };
@@ -127,36 +129,28 @@ export default function Meeting() {
   })
 
   const columns = useMemo(() => [
-    columnHelper.accessor("meetId", {
-      header: 'Meet ID',
-      cell: (info) => info.getValue(),
-    }),
+    // columnHelper.accessor("meetId", {
+    //   header: 'Meet ID',
+    //   cell: (info) => info.getValue(),
+    // }),
     columnHelper.accessor("meetDatetime", {
       header: 'Meet Date',
       cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY"),
     }),
-    columnHelper.accessor("meetTypeId", {
-      header: 'Meet Type ID',
+    columnHelper.accessor("typeName", {
+      header: 'Meeting Type',
       cell: (info) => info.getValue(),
     }),
     columnHelper.accessor("location", {
       header: 'Location',
       cell: (info) => info.getValue(),
     }),
-    columnHelper.accessor("calledBy", {
-      header: 'Called By',
-      cell: (info) => info.getValue(),
-    }),
-    columnHelper.accessor("postedBy", {
-      header: 'Posted By',
-      cell: (info) => info.getValue(),
-    }),
     columnHelper.accessor("postedOn", {
       header: 'Posted On',
       cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY"),
     }),
-    columnHelper.accessor("statusId", {
-      header: 'Status ID',
+    columnHelper.accessor("status", {
+      header: 'Status',
       cell: (info) => info.getValue(),
     }),
     columnHelper.accessor((row) => row, {
@@ -180,7 +174,8 @@ export default function Meeting() {
   return (
     <>
       <Toolbar />
-      <Button
+      {!isDialogOpen && (< Button
+        sx={{ m: 1 }}
         variant="contained"
         onClick={() => {
           setIsDialogOpen(true);
@@ -188,9 +183,10 @@ export default function Meeting() {
         }}
       >
         Add New Meeting
-      </Button>
-      {isDialogOpen && (
+      </Button>)}
+      {isDialogOpen ? (
         <AddMeetingDialog
+
           open={isDialogOpen}
           toEditAddMeeting={isForMenu!}
           onAddMeetingDiscardDialog={() => {
@@ -202,9 +198,7 @@ export default function Meeting() {
             setIsDialogOpen(false);
           }}
         />
-      )}
-
-      <TableContainer component={Paper}>
+      ) : (<TableContainer component={Paper}>
         <Table>
           <TableHead>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -282,7 +276,9 @@ export default function Meeting() {
             handlePageSizeChange(+e.currentTarget.value)
           }
         />
-      </TableContainer>
+      </TableContainer>)}
+
+
     </>
   );
 }

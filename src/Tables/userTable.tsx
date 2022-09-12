@@ -296,7 +296,6 @@ export default function UserTable() {
           }
         });
       }
-
       (axiosConfig.params["searchCol"] = filterField),
         (axiosConfig.params["searchVal"] = searchValue ?? temp),
         (axiosConfig.params["operators"] = filterOperator);
@@ -354,6 +353,7 @@ export default function UserTable() {
           <Select
             id="demo-simple-select"
             value={filterOperator}
+
             label="Age"
             sx={{ marginRight: "5px" }}
             size="small"
@@ -386,7 +386,7 @@ export default function UserTable() {
                     sx={{
                       marginRight: "5px",
                       ...(filterOperator == "is empty" ||
-                      filterOperator == "is not empty"
+                        filterOperator == "is not empty"
                         ? { display: "none" }
                         : { display: "inline-block" }),
                     }}
@@ -434,7 +434,7 @@ export default function UserTable() {
               sx={{
                 marginRight: "5px",
                 ...(filterOperator == "is empty" ||
-                filterOperator == "is not empty"
+                  filterOperator == "is not empty"
                   ? { display: "none" }
                   : { display: "inline-block" }),
               }}

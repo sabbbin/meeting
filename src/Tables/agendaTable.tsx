@@ -1,5 +1,7 @@
 import {
+  Autocomplete,
   Button,
+  Chip,
   IconButton,
   Menu,
   MenuItem,
@@ -165,7 +167,11 @@ export default function AgendaTable() {
       options: FilterType.StringFilterType,
     },
     {
-      field: "Agenda",
+      field: "Description",
+      options: FilterType.StringFilterType,
+    },
+    {
+      field: "Status",
       options: FilterType.StringFilterType,
     },
     {
@@ -180,7 +186,12 @@ export default function AgendaTable() {
 
   const [filterField, setFilterField] = useState<ValuesType<typeof filterOptions>["field"]>("Type");
 
+  const [filterOperator, setFilterOperator] = useState<
+    ValuesType<ValuesType<typeof filterOptions>["options"]>
+  >(filterOptions.find((op) => op.field === filterField)?.options[0]!);
+
   const [searchValue, setsearchValue] = useState<any>();
+  const [multiValue, setMultiValue] = useState<string[]>([]);
 
   const [sortCol, setSortCol] = useState();
   const [sortOrder, setSortOrder] = useState();
@@ -194,6 +205,7 @@ export default function AgendaTable() {
       pageNo: number;
       searchCol?: string;
       searchVal?: string;
+      operators?: string;
       sortCol?: string;
       sortOrder?: string;
     };
@@ -226,11 +238,13 @@ export default function AgendaTable() {
     pagination.pageSize,
     pagination.pageNumber + 1,
     userId,
+    filterOperator,
     {
       params: {
         pageSize: pagination.pageSize,
         pageNo: pagination.pageNumber + 1,
         userId: userId,
+        filterOperator,
       },
       headers: {
         Authorization: "Bearer " + accessToken,
@@ -241,6 +255,7 @@ export default function AgendaTable() {
   const { data: meetingTypeCount } = useAgendaCount(userId, {
     params: {
       userId: userId,
+
     },
     headers: {
       Authorization: "Bearer " + accessToken,
@@ -277,61 +292,163 @@ export default function AgendaTable() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const handleSearch = () => {
+    if (searchValue || multiValue) {
+      let temp = "";
+      if (multiValue) {
+        multiValue.map((mul, id) => {
+          if (id !== multiValue.length - 1) {
+            temp += `'${mul}',`;
+          } else {
+            temp += `'${mul}'`;
+          }
+        });
+      }
+      (axiosConfig.params["searchCol"] = filterField),
+        (axiosConfig.params["searchVal"] = searchValue ?? temp),
+        (axiosConfig.params["operators"] = filterOperator);
+      refetch();
+    }
+  }
 
   return (
     <>
       <Toolbar />
-      <Button
-        sx={{ m: 1 }}
-        variant="contained"
-        onClick={() => {
-          setIsDialogOpen(true);
-          handleCloseMenu();
-        }}
-      >
-        Add Agenda
-      </Button>
-      <Box sx={{ m: 1 }}>
-        <Select
-          id="demo-simple-select"
-          label="Age"
-          sx={{ marginRight: "5px" }}
-          size="small"
-          onChange={(e) => {
-            setFilterField(e.target.value as never);
+      <Box sx={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-end",
+      }}>
+        <Button
+          sx={{ m: 1 }}
+          variant="contained"
+          onClick={() => {
+            setIsDialogOpen(true);
+            handleCloseMenu();
           }}
         >
-          {/* {filterField.getColumn().map((col) => (
-            <MenuItem value={col}>{col}</MenuItem>
-         ))} */}
-        </Select>
-        {filterField != "Posted On" ? (<TextField
-          size="small"
-          sx={{ marginRight: "5px" }}
-          value={searchValue}
-          onChange={(e) => setsearchValue(e.target.value)}
-        />) : (<LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DesktopDatePicker
-            label="Select Date"
-            inputFormat="MM/DD/YYYY"
-            value={searchValue}
-            onChange={(val: any) => {
-              setsearchValue(val);
+          Add Agenda
+        </Button>
+        <Box sx={{
+          m: 1,
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "flex-end",
+        }}>
+          <Select
+            id="demo-simple-select"
+            sx={{ marginRight: "5px" }}
+            value={filterField}
+            size="small"
+            onChange={(e) => {
+              setFilterField(e.target.value as never);
+              setsearchValue(null);
+              setMultiValue([]);
+              setFilterOperator(
+                filterOptions.find((op) => op.field === e.target.value)
+                  ?.options[0]! as never
+              );
             }}
-            renderInput={(params) => (
+          >
+            {filterOptions.map((col, i) => (
+              <MenuItem value={col.field}>{col.field}</MenuItem>
+            ))}
+          </Select>
+          <Select
+            id="demo-simple-select"
+            value={filterOperator}
+            sx={{ marginRight: "5px" }}
+            size="small"
+            onChange={(e) => {
+              setFilterOperator(e.target.value as never);
+              setsearchValue(null);
+              setMultiValue([]);
+            }}
+          >
+            {(
+              filterOptions.find((op) => op.field === filterField)?.options ??
+              []
+            ).map((col) => (
+              <MenuItem value={col}>{col}</MenuItem>
+            ))}
+          </Select>
+
+          {filterField === "Posted On" ? (
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DesktopDatePicker
+                label="Select Date"
+                inputFormat="MM/DD/YYYY"
+                value={searchValue}
+                onChange={(val: any) => {
+                  setsearchValue(val);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    size="small"
+                    sx={{
+                      marginRight: "5px",
+                      ...(filterOperator == "is empty" ||
+                        filterOperator == "is not empty"
+                        ? { display: "none" }
+                        : { display: "inline-block" }),
+                    }}
+                    {...params}
+                  />
+                )}
+              />
+            </LocalizationProvider>) :
+            filterOperator === "is any of" ? (
+              <Autocomplete
+                multiple
+                size="small"
+                sx={{
+                  minWidth: "200px",
+                  maxWidth: "300px",
+                  maxHeight: "50px",
+
+                  marginRight: "5px",
+                  zIndex: 100,
+                }}
+                id="tags-filled"
+                options={multiValue!.map((option) => option)}
+                freeSolo
+                renderTags={(value, getTagProps) => {
+                  setMultiValue(value);
+                  return value.map((option, index) => (
+                    <Chip
+                      variant="outlined"
+                      label={option}
+                      {...getTagProps({ index })}
+                    />
+                  ));
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    variant="filled"
+                    label="Enter search value"
+                  />
+                )}
+              />
+            ) : (
               <TextField
                 size="small"
-                sx={{ marginRight: "5px" }}
-                {...params}
+                sx={{
+                  marginRight: "5px",
+                  ...(filterOperator == "is empty" ||
+                    filterOperator == "is not empty"
+                    ? { display: "none" }
+                    : { display: "inline-block" }),
+                }}
+                value={searchValue}
+                onChange={(e) => setsearchValue(e.target.value)}
               />
             )}
-          />
-        </LocalizationProvider>)}
 
-        <Button variant="contained">
-          Search
-        </Button>
-
+          <Button onClick={handleSearch} variant="contained">
+            Search
+          </Button>
+        </Box>
       </Box>
       {isDialogOpen && (
         <AddAgendaDialog

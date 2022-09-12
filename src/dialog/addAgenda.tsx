@@ -88,7 +88,7 @@ export default function AddAgendaDialog({
     async (data) =>
       await axios
         .put("api/MeetingAgenda", data, {
-          params: { agendaId: toEdit.agendaId },
+          params: { agendaId: toEdit?.agendaId },
           headers: {
             "Content-Type": "application/json",
             Authorization: "Bearer " + accessToken,
