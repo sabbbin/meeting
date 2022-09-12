@@ -9,33 +9,110 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import Checkbox from "@mui/material/Checkbox";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
-import { Dialog, DialogContent, Paper } from "@mui/material";
+import {
+  Dialog,
+  DialogContent,
+  DialogProps,
+  Paper,
+  PaperTypeMap,
+} from "@mui/material";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { OverridableComponent } from "@mui/material/OverridableComponent";
+import { LocalConvenienceStoreOutlined } from "@mui/icons-material";
 
-function not(a: readonly number[], b: readonly number[]) {
+interface getUserFromMeeting {
+  UserId: number;
+  UserName: string;
+  FullName: string;
+  IsSelected: number;
+}
+
+function not(
+  a: readonly getUserFromMeeting[],
+  b: readonly getUserFromMeeting[]
+) {
   return a.filter((value) => b.indexOf(value) === -1);
 }
 
-function intersection(a: readonly number[], b: readonly number[]) {
+function intersection(
+  a: readonly getUserFromMeeting[],
+  b: readonly getUserFromMeeting[]
+) {
   return a.filter((value) => b.indexOf(value) !== -1);
 }
 
-function AddUserToMeetingTypes() {
-  const [checked, setChecked] = React.useState<readonly number[]>([]);
-  const [left, setLeft] = React.useState<readonly number[]>([0, 2, 3]);
-  const [right, setRight] = React.useState<readonly number[]>([]);
+interface AddUserToMeetingTypes extends DialogProps {
+  refetch: () => void;
+  meetTypeId: number;
+  onDialogClose: () => void;
+}
+
+const FormDialogPaper = (
+  props: OverridableComponent<PaperTypeMap<{}, "div">>
+) => <Paper {...(props as any)} as="form" />;
+
+function AddUserToMeetingTypes({
+  refetch,
+  onDialogClose,
+  meetTypeId,
+  open,
+}: AddUserToMeetingTypes) {
+  const [checked, setChecked] = React.useState<readonly getUserFromMeeting[]>(
+    []
+  );
+  const [left, setLeft] = React.useState<readonly getUserFromMeeting[]>([]);
+  const [right, setRight] = React.useState<readonly getUserFromMeeting[]>([]);
+  let access_token = localStorage.getItem("access_token");
+
+  let getUserFromMeeting = useQuery<getUserFromMeeting[]>(
+    ["getUserData"],
+    async () =>
+      await axios
+        .get(`api/MeetingType/GetUserByType/${meetTypeId}`, {
+          headers: {
+            Authorization: "bearer " + access_token,
+          },
+        })
+        .then((res) => res.data),
+    {
+      onSuccess: (data) => {
+        let leftdata = data.reduce((da: any, arr) => {
+          if (arr.IsSelected != 1) {
+            let temp = {
+              FullName: arr.FullName,
+              UserId: arr.UserId,
+            };
+            return [...da, temp];
+          } else {
+            return da;
+          }
+        }, []);
+        let rightdata = data.reduce((da: any, arr) => {
+          if (arr.IsSelected == 1) {
+            let temp = {
+              FullName: arr.FullName,
+              UserId: arr.UserId,
+            };
+            return [...da, temp];
+          } else {
+            return da;
+          }
+        }, []);
+
+        setLeft(leftdata);
+        setRight(rightdata);
+      },
+    }
+  );
 
   React.useEffect(() => {
-    const dummyData = [
-      1, 2, 3, 4, 5, 6, 7, 8, 5, 6, 7, 4, 3, 211, 12, 13, 14, 15, 16, 17, 18,
-      99,
-    ];
-    let temp = not(dummyData, left);
-    setRight(temp);
-  }, []);
+    getUserFromMeeting.refetch();
+  }, [meetTypeId]);
 
   const leftChecked = intersection(checked, left);
   const rightChecked = intersection(checked, right);
-  const handleToggle = (value: number) => () => {
+  const handleToggle = (value: getUserFromMeeting) => () => {
     const currentIndex = checked.indexOf(value);
     const newChecked = [...checked];
     if (currentIndex === -1) {
@@ -57,7 +134,41 @@ function AddUserToMeetingTypes() {
     setChecked(not(checked, rightChecked));
   };
 
-  const customList = (title: React.ReactNode, items: readonly number[]) => (
+  interface submitUserToMeeting {
+    userIds: [number];
+  }
+
+  let submitUserToMeeting = useMutation<unknown, unknown, submitUserToMeeting>(
+    (data) =>
+      axios.post("api/MeetingType/MergeMeetingTypeUser", data, {
+        params: {
+          meetTypeId: meetTypeId,
+        },
+        headers: {
+          Authorization: "bearer " + access_token,
+        },
+      }),
+    {
+      onSuccess: () => {
+        onDialogClose();
+      },
+    }
+  );
+  const handleSubmit = (e: any) => {
+    e.preventDefault();
+    let data = left.reduce((init: any, dat) => {
+      return [...init, dat.UserId!];
+    }, []);
+    let userId = {
+      userIds: data,
+    };
+    submitUserToMeeting.mutate(userId);
+  };
+
+  const customList = (
+    title: React.ReactNode,
+    items: readonly getUserFromMeeting[]
+  ) => (
     <Card>
       <CardHeader sx={{ px: 2, py: 1 }} title={title}></CardHeader>
 
@@ -74,13 +185,13 @@ function AddUserToMeetingTypes() {
           overflow: "auto",
         }}
       >
-        {items.map((value: number) => {
+        {items.map((value: any, id) => {
           return (
-            <ListItem key={value} button onClick={handleToggle(value)} dense>
+            <ListItem key={id} button onClick={handleToggle(value)} dense>
               <ListItemIcon>
                 <Checkbox checked={checked.indexOf(value) !== -1}></Checkbox>
               </ListItemIcon>
-              <ListItemText primary={value} />
+              <ListItemText primary={value.FullName} />
             </ListItem>
           );
         })}
@@ -89,7 +200,8 @@ function AddUserToMeetingTypes() {
   );
   return (
     <Dialog
-      open={true}
+      PaperComponent={FormDialogPaper as never}
+      open={open}
       sx={{
         "& .MuiDialog-container": {
           "& .MuiPaper-root": {
@@ -101,7 +213,7 @@ function AddUserToMeetingTypes() {
     >
       <DialogContent>
         <Grid container justifyContent="center" alignItems="center">
-          <Grid item>{customList("User In Meeting", left)}</Grid>
+          <Grid item>{customList("User Not In Meeting", left)}</Grid>
           <Grid item>
             <Grid container direction="column" alignItems="center">
               <Button
@@ -111,7 +223,7 @@ function AddUserToMeetingTypes() {
                 onClick={handleCheckedRight}
                 disabled={leftChecked.length == 0}
               >
-                Remove
+                Add
               </Button>
               <Button
                 sx={{ m: 2 }}
@@ -120,11 +232,11 @@ function AddUserToMeetingTypes() {
                 onClick={handleCheckedLeft}
                 disabled={rightChecked.length == 0}
               >
-                Add
+                Remove
               </Button>
             </Grid>
           </Grid>
-          <Grid item> {customList("User not in Meeting", right)}</Grid>
+          <Grid item> {customList("User  in Meeting", right)}</Grid>
         </Grid>
         <div>
           <Button
@@ -133,6 +245,8 @@ function AddUserToMeetingTypes() {
               marginTop: "20px",
               float: "right",
             }}
+            type="submit"
+            onClick={handleSubmit}
           >
             Submit
           </Button>
@@ -142,6 +256,7 @@ function AddUserToMeetingTypes() {
               margin: "20px 10px 0 0",
               float: "right",
             }}
+            onClick={onDialogClose}
           >
             Cancel
           </Button>

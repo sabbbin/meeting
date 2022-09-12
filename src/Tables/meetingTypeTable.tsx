@@ -1,18 +1,9 @@
 import {
   Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Fab,
   IconButton,
   Menu,
   MenuItem,
-  MenuList,
   Paper,
-  PaperTypeMap,
   Table,
   TableBody,
   TableCell,
@@ -20,7 +11,6 @@ import {
   TableHead,
   TablePagination,
   TableRow,
-  TextField,
   Toolbar,
 } from "@mui/material";
 import {
@@ -58,6 +48,7 @@ import useMeetingType from "../hooks/useMeetingType";
 import AddMeetingTypeDialog from "../dialog/addMeetingType";
 import useMeetingTypeCount from "../hooks/useMeetingTypeCount";
 import { number } from "yup/lib/locale";
+import AddUserToMeetingTypes from "../dialog/addUserToMeetingTypes";
 
 export interface IMeetingType {
   MeetTypeId?: number;
@@ -78,6 +69,7 @@ export default function MeetingTypeTable() {
   const [isforMenu, setisforMenu] = useState<IMeetingType | null>();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [viewUser, setViewUser] = useState(false);
   const handleClickColumn = (
     event: MouseEvent<HTMLButtonElement>,
     MeetType: IMeetingType
@@ -227,19 +219,34 @@ export default function MeetingTypeTable() {
       >
         Add Type
       </Button>
-      <AddMeetingTypeDialog
-        refetch={refetch}
-        open={isDialogOpen}
-        toEditAddMeetingType={isforMenu!}
-        onAddMeetingTypeDiscardDialog={() => {
-          setisforMenu(null);
-          setIsDialogOpen(false);
-        }}
-        onAddMeetingTypeSuccessDialog={() => {
-          setisforMenu(null);
-          setIsDialogOpen(false);
-        }}
-      />
+
+      {isDialogOpen && (
+        <AddMeetingTypeDialog
+          refetch={refetch}
+          open={isDialogOpen}
+          toEditAddMeetingType={isforMenu!}
+          onAddMeetingTypeDiscardDialog={() => {
+            setisforMenu(null);
+            setIsDialogOpen(false);
+          }}
+          onAddMeetingTypeSuccessDialog={() => {
+            setisforMenu(null);
+            setIsDialogOpen(false);
+          }}
+        />
+      )}
+
+      {viewUser && (
+        <AddUserToMeetingTypes
+          refetch={refetch}
+          open={viewUser}
+          meetTypeId={isforMenu!.MeetTypeId!}
+          onDialogClose={() => {
+            setisforMenu(null);
+            setViewUser(false);
+          }}
+        />
+      )}
       <TableContainer sx={{ minWidth: 1000, margin: "1" }} component={Paper}>
         <Table size="small">
           <TableHead>
@@ -315,6 +322,14 @@ export default function MeetingTypeTable() {
               Enable
             </MenuItem>
           )}
+          <MenuItem
+            onClick={() => {
+              setViewUser(true);
+              handleCloseMenu();
+            }}
+          >
+            View User
+          </MenuItem>
           <MenuItem
             onClick={() => {
               handleDelete(true);

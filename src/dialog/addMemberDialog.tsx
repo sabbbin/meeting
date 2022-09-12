@@ -1,54 +1,23 @@
 import {
+  Autocomplete,
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogProps,
   DialogTitle,
-  Fab,
-  IconButton,
-  Menu,
-  MenuItem,
-  MenuList,
   Paper,
   PaperTypeMap,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TablePagination,
-  TableRow,
   TextField,
-  Toolbar,
 } from "@mui/material";
 
 import * as React from "react";
-import { Theme, useTheme } from "@mui/material/styles";
-import Box from "@mui/material/Box";
-import OutlinedInput from "@mui/material/OutlinedInput";
-import InputLabel from "@mui/material/InputLabel";
-import FormControl from "@mui/material/FormControl";
-import Select, { SelectChangeEvent } from "@mui/material/Select";
+
 import { OverridableComponent } from "@mui/material/OverridableComponent";
 import { IUser } from "../Tables/userTable";
 import { useFormik } from "formik";
 import axios from "axios";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { TenMp } from "@mui/icons-material";
-
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
-};
 
 const FormDialogPaper = (
   props: OverridableComponent<PaperTypeMap<{}, "div">>
@@ -60,6 +29,16 @@ interface AddMemberDialogProps extends DialogProps {
   toEditMember: IUser;
 }
 
+interface UserMeetingTypeGet {
+  TypeName: string;
+  MeetTypeId: number;
+}
+
+interface UserMeetingType {
+  userId: number;
+  meetTypeId: number[];
+}
+
 const access_token = localStorage.getItem("access_token");
 
 export default function AddMemberDialog({
@@ -69,16 +48,45 @@ export default function AddMemberDialog({
   open,
 }: AddMemberDialogProps) {
   const [personName, setPersonName] = React.useState<string[]>([]);
+  const [meetingField, setMeetingField] = React.useState<UserMeetingTypeGet[]>(
+    []
+  );
 
-  const handleChange = (event: SelectChangeEvent<typeof personName>) => {
-    const {
-      target: { value },
-    } = event;
-    setPersonName(
-      // On autofill we get a stringified value.
-      typeof value === "string" ? value.split(",") : value
-    );
-  };
+  //get the userMeeting types for user
+  const { data: getMeetTypeSelected, refetch: getData } = useQuery<
+    UserMeetingTypeGet[]
+  >(
+    ["getMeetType", toEditMember],
+    () =>
+      axios
+        .get(`api/MeetingType/${toEditMember?.userId}`, {
+          headers: {
+            Authorization: "Bearer " + access_token,
+          },
+        })
+        .then((res) => res.data),
+    {
+      onSuccess: (getMeetTypeSelected) => {
+        let data = getMeetTypeSelected.reduce(
+          (a: any, b) => {
+            let { MeetTypeId } = b;
+
+            return [...a, MeetTypeId];
+          },
+          [toEditMember]
+        );
+        let abc = data.shift();
+
+        let temp = data.reduce((init: any, dat: any) => {
+          return [...data];
+        }, []);
+
+        if (temp.length > 0) {
+          setPersonName(temp);
+        }
+      },
+    }
+  );
 
   //load all meeting types
   const { data: dataTypeForUser } = useQuery(
@@ -91,9 +99,15 @@ export default function AddMemberDialog({
           },
         })
         .then((res) => res.data),
+
     {
       initialData: {
         dataTypeForUser: [],
+      },
+      onSuccess: async () => {
+        let info = await getData().then((res) => res.data);
+        console.log("info", info);
+        if (info) setMeetingField(info);
       },
     }
   );
@@ -114,11 +128,6 @@ export default function AddMemberDialog({
     setPersonName([]);
     onDiscardAddMemberDialog();
   };
-
-  interface UserMeetingType {
-    userId: number;
-    meetTypeId: number[];
-  }
 
   ///adding user in meeting types fields
   let { data: successData, mutate } = useMutation<
@@ -146,103 +155,42 @@ export default function AddMemberDialog({
   const UpdateMember = (e: any) => {
     e.preventDefault();
     let temp = {
-      meetTypeIds: personName,
+      meetTypeIds: meetingField.map((m) => m.MeetTypeId),
     };
 
+    console.log("tempt", meetingField);
     mutate(temp);
   };
 
-  interface UserMeetingTypeGet {
-    userId: number;
-    MeetTypeId: number;
-  }
-
-  //get the userMeeting types for user
-  const {
-    data: getMeetTypeSelected,
-    isSuccess,
-    refetch: getData,
-  } = useQuery<UserMeetingTypeGet[]>(
-    ["getMeetType", toEditMember],
-    () =>
-      axios
-        .get(`api/MeetingType/${toEditMember?.userId}`, {
-          headers: {
-            Authorization: "Bearer " + access_token,
-          },
-        })
-        .then((res) => res.data),
-    {
-      onSuccess: (getMeetTypeSelected) => {
-        let data = getMeetTypeSelected.reduce(
-          (a: any, b) => {
-            let { MeetTypeId } = b;
-
-            return [...a, MeetTypeId];
-          },
-          [toEditMember]
-        );
-        let abc = data.shift();
-        console.log("abc", abc);
-        let temp = data.reduce((init: any, dat: any) => {
-          return [...data];
-        }, []);
-        console.log("dafas", temp);
-        if (temp.length > 0) {
-          setPersonName(temp);
-        }
-      },
-    }
-  );
-
-  console.log("jalsdfjlasdjfl", getMeetTypeSelected, toEditMember);
-  console.log("toedit member", toEditMember);
-
-  React.useEffect(() => {
-    getData();
-  }, [toEditMember]);
-
-  console.log(personName, toEditMember.userId);
   return (
-    <>
-      <Dialog
-        PaperComponent={FormDialogPaper as never}
-        open={open}
-        onClose={handleClose}
-        onSubmit={UpdateMember}
-      >
-        <DialogTitle>Add/remove user from Meetings</DialogTitle>
-        <DialogContent>
-          <Select
-            fullWidth
-            labelId="demo-multiple-chip-label"
-            id="demo-multiple-chip"
-            multiple
-            value={personName}
-            onChange={handleChange}
-            input={<OutlinedInput id="select-multiple-chip" label="Chip" />}
-            renderValue={(selected) => (
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                {selected.map((value) => (
-                  <Chip key={value} label={dataMeeting[value]} />
-                ))}
-              </Box>
-            )}
-            MenuProps={MenuProps}
-          >
-            {dataTypeForUser.length > 0 &&
-              dataTypeForUser.map((meeting: any) => (
-                <MenuItem key={meeting} value={meeting.MeetTypeId}>
-                  {meeting.TypeName}
-                </MenuItem>
-              ))}
-          </Select>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onDiscardAddMemberDialog}>Cancel</Button>
-          <Button type="submit">Submit</Button>
-        </DialogActions>
-      </Dialog>
-    </>
+    <Dialog
+      PaperComponent={FormDialogPaper as never}
+      open={open}
+      onClose={handleClose}
+      onSubmit={UpdateMember}
+    >
+      <DialogTitle>Add/remove user from Meetings</DialogTitle>
+      <DialogContent>
+        <Autocomplete
+          id="tags-outlined"
+          multiple
+          options={dataTypeForUser}
+          value={[...meetingField]}
+          filterSelectedOptions
+          getOptionLabel={(option) => option.TypeName}
+          onChange={(e, value) => {
+            setMeetingField(value);
+          }}
+          isOptionEqualToValue={(option, value) =>
+            option.MeetTypeId == value.MeetTypeId
+          }
+          renderInput={(params) => <TextField required {...params}></TextField>}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onDiscardAddMemberDialog}>Cancel</Button>
+        <Button type="submit">Submit</Button>
+      </DialogActions>
+    </Dialog>
   );
 }
