@@ -23,6 +23,8 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
+  getSortedRowModel,
+  SortingState,
   useReactTable,
 } from "@tanstack/react-table";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -145,11 +147,12 @@ export default function AgendaTable() {
       }),
       columnHelper.accessor((row) => row, {
         header: "Actions",
-        cell: (info) => (info.getValue().statusId === 6 &&
-          <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
-            <MoreVertIcon />
-          </IconButton>
-        ),
+        cell: (info) =>
+          info.getValue().statusId === 6 && (
+            <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
+              <MoreVertIcon />
+            </IconButton>
+          ),
       }),
     ],
     []
@@ -181,10 +184,11 @@ export default function AgendaTable() {
     {
       field: "Posted On",
       options: FilterType.DateFilterType,
-    }
+    },
   ] as const;
 
-  const [filterField, setFilterField] = useState<ValuesType<typeof filterOptions>["field"]>("Type");
+  const [filterField, setFilterField] =
+    useState<ValuesType<typeof filterOptions>["field"]>("Type");
 
   const [filterOperator, setFilterOperator] = useState<
     ValuesType<ValuesType<typeof filterOptions>["options"]>
@@ -193,10 +197,12 @@ export default function AgendaTable() {
   const [searchValue, setsearchValue] = useState<any>();
   const [multiValue, setMultiValue] = useState<string[]>([]);
 
-  const [sortCol, setSortCol] = useState();
-  const [sortOrder, setSortOrder] = useState();
-
-
+  const [sortCol, setSortCol] = useState<SortingState>([
+    {
+      id: "typeName",
+      desc: false,
+    },
+  ]);
 
   interface IaxiosConfig {
     params: {
@@ -207,7 +213,7 @@ export default function AgendaTable() {
       searchVal?: string;
       operators?: string;
       sortCol?: string;
-      sortOrder?: string;
+      sortOrder?: boolean;
     };
     headers: {
       Authorization: string;
@@ -218,44 +224,30 @@ export default function AgendaTable() {
       pageSize: pagination.pageSize,
       pageNo: pagination.pageNumber + 1,
       userId: userId,
+      sortCol: sortCol[0]?.id || "typeName",
+      sortOrder: sortCol[0]?.desc || true,
     },
     headers: {
       Authorization: "Bearer " + accessToken,
     },
   };
 
-  if (filterField) {
-    (axiosConfig.params["searchCol"] = filterField),
-      (axiosConfig.params["searchVal"] = searchValue);
-  }
-  if (sortCol && sortOrder) {
-    (axiosConfig.params["sortCol"] = sortCol),
-      (axiosConfig.params["sortOrder"] = sortOrder);
-  }
-
+  // if (filterField) {
+  //   (axiosConfig.params["searchCol"] = filterField),
+  //     (axiosConfig.params["searchVal"] = searchValue);
+  // }
 
   const { data: meetingAgendaData, refetch } = useAgenda(
     pagination.pageSize,
     pagination.pageNumber + 1,
     userId,
-    filterOperator,
-    {
-      params: {
-        pageSize: pagination.pageSize,
-        pageNo: pagination.pageNumber + 1,
-        userId: userId,
-        filterOperator,
-      },
-      headers: {
-        Authorization: "Bearer " + accessToken,
-      },
-    }
+    sortCol,
+    { ...axiosConfig }
   );
 
   const { data: meetingTypeCount } = useAgendaCount(userId, {
     params: {
       userId: userId,
-
     },
     headers: {
       Authorization: "Bearer " + accessToken,
@@ -266,7 +258,7 @@ export default function AgendaTable() {
   const { mutate: deleteMutatae } = useMutation<unknown, unknown, deleteId>(
     (deleteId) =>
       axios
-        .delete('/api/MeetingAgenda/', {
+        .delete("/api/MeetingAgenda/", {
           params: { agendaId: isforAgenda?.agendaId },
           headers: {
             "Content-Type": "application/json",
@@ -290,6 +282,12 @@ export default function AgendaTable() {
     data: meetingAgendaData,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    state: {
+      sorting: sortCol,
+    },
+    onSortingChange: setSortCol,
+    getSortedRowModel: getSortedRowModel(),
+    debugTable: true,
   });
 
   const handleSearch = () => {
@@ -309,16 +307,18 @@ export default function AgendaTable() {
         (axiosConfig.params["operators"] = filterOperator);
       refetch();
     }
-  }
+  };
 
   return (
     <>
       <Toolbar />
-      <Box sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-end",
-      }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-end",
+        }}
+      >
         <Button
           sx={{ m: 1 }}
           variant="contained"
@@ -329,12 +329,14 @@ export default function AgendaTable() {
         >
           Add Agenda
         </Button>
-        <Box sx={{
-          m: 1,
-          display: "flex",
-          alignItems: "flex-end",
-          justifyContent: "flex-end",
-        }}>
+        <Box
+          sx={{
+            m: 1,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "flex-end",
+          }}
+        >
           <Select
             id="demo-simple-select"
             sx={{ marginRight: "5px" }}
@@ -388,7 +390,7 @@ export default function AgendaTable() {
                     sx={{
                       marginRight: "5px",
                       ...(filterOperator == "is empty" ||
-                        filterOperator == "is not empty"
+                      filterOperator == "is not empty"
                         ? { display: "none" }
                         : { display: "inline-block" }),
                     }}
@@ -396,54 +398,54 @@ export default function AgendaTable() {
                   />
                 )}
               />
-            </LocalizationProvider>) :
-            filterOperator === "is any of" ? (
-              <Autocomplete
-                multiple
-                size="small"
-                sx={{
-                  minWidth: "200px",
-                  maxWidth: "300px",
-                  maxHeight: "50px",
+            </LocalizationProvider>
+          ) : filterOperator === "is any of" ? (
+            <Autocomplete
+              multiple
+              size="small"
+              sx={{
+                minWidth: "200px",
+                maxWidth: "300px",
+                maxHeight: "50px",
 
-                  marginRight: "5px",
-                  zIndex: 100,
-                }}
-                id="tags-filled"
-                options={multiValue!.map((option) => option)}
-                freeSolo
-                renderTags={(value, getTagProps) => {
-                  setMultiValue(value);
-                  return value.map((option, index) => (
-                    <Chip
-                      variant="outlined"
-                      label={option}
-                      {...getTagProps({ index })}
-                    />
-                  ));
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    variant="filled"
-                    label="Enter search value"
+                marginRight: "5px",
+                zIndex: 100,
+              }}
+              id="tags-filled"
+              options={multiValue!.map((option) => option)}
+              freeSolo
+              renderTags={(value, getTagProps) => {
+                setMultiValue(value);
+                return value.map((option, index) => (
+                  <Chip
+                    variant="outlined"
+                    label={option}
+                    {...getTagProps({ index })}
                   />
-                )}
-              />
-            ) : (
-              <TextField
-                size="small"
-                sx={{
-                  marginRight: "5px",
-                  ...(filterOperator == "is empty" ||
-                    filterOperator == "is not empty"
-                    ? { display: "none" }
-                    : { display: "inline-block" }),
-                }}
-                value={searchValue}
-                onChange={(e) => setsearchValue(e.target.value)}
-              />
-            )}
+                ));
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  variant="filled"
+                  label="Enter search value"
+                />
+              )}
+            />
+          ) : (
+            <TextField
+              size="small"
+              sx={{
+                marginRight: "5px",
+                ...(filterOperator == "is empty" ||
+                filterOperator == "is not empty"
+                  ? { display: "none" }
+                  : { display: "inline-block" }),
+              }}
+              value={searchValue}
+              onChange={(e) => setsearchValue(e.target.value)}
+            />
+          )}
 
           <Button onClick={handleSearch} variant="contained">
             Search
@@ -472,17 +474,31 @@ export default function AgendaTable() {
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableCell
-                    sx={{
-                      fontWeight: "600",
-                    }}
                     key={header.id}
+                    sx={{
+                      whiteSpace: "nowrap",
+                      alignItems: "center",
+                    }}
                   >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                    {header.isPlaceholder ? null : (
+                      <div
+                        {...{
+                          className: header.column.getCanSort()
+                            ? "cursor-pointer select-none"
+                            : "",
+                          onClick: header.column.getToggleSortingHandler(),
+                        }}
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                        {{
+                          asc: " 🔼",
+                          desc: " 🔽",
+                        }[header.column.getIsSorted() as string] ?? null}
+                      </div>
+                    )}
                   </TableCell>
                 ))}
               </TableRow>
@@ -540,7 +556,6 @@ export default function AgendaTable() {
             Delete
           </MenuItem>
         </Menu>
-
       </TableContainer>
     </>
   );

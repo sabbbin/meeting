@@ -20,6 +20,8 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
+  SortingState,
+  getSortedRowModel,
 } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import { MouseEvent, useMemo, useState } from "react";
@@ -44,14 +46,7 @@ export interface IMeeting {
 
 const columnHelper = createColumnHelper<IMeeting>();
 
-
-const handleChangePage = () => { };
-const handleChangeRowsPerPage = () => { };
-
-
 export default function Meeting() {
-
-
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [open, setOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -60,6 +55,13 @@ export default function Meeting() {
   const [isForMenu, setIsForMenu] = useState<IMeeting | null>();
   const [openMenu, setOpenMenu] = useState(false);
   let access_token = localStorage.getItem("access_token");
+
+  const [sortCol, setSortCol] = useState<SortingState>([
+    {
+      id: "location",
+      desc: false,
+    },
+  ]);
 
   const handleClickColumn = (
     event: MouseEvent<HTMLButtonElement>,
@@ -71,13 +73,6 @@ export default function Meeting() {
     setOpenMenu(true);
   };
 
-  // const { data: datatry } = useQuery(["data"], () =>
-  //   axios.get("api/Meeting/MeetingCountAll", {
-  //     headers: {
-  //       Authorization: "Bearer " + access_token,
-  //     },
-  //   })
-  // );
   const handleClose = () => {
     setOpenMenu(false);
   };
@@ -96,11 +91,9 @@ export default function Meeting() {
       .then((res) => res.data)
   );
 
-
   let accessToken = localStorage.getItem("access_token");
 
   let userId = localStorage.getItem("userId");
-
 
   const { pagination, handlePageNumberChange, handlePageSizeChange } =
     usePagination({
@@ -108,16 +101,43 @@ export default function Meeting() {
       pageSize: 10,
     });
 
-  const { data: meetingData } = useMeeting(pagination.pageNumber, pagination.pageSize, userId, {
+  interface IaxiosConfig {
+    params: {
+      pageSize: number;
+      pageNo: number;
+      userId: string;
+      searchCol?: string;
+      searchVal?: string[];
+      operators?: string;
+      sortCol?: string;
+      sortOrder?: boolean;
+    };
+    headers: {
+      Authorization: string;
+    };
+  }
+
+  let axiosConfig: IaxiosConfig = {
     params: {
       pageSize: pagination.pageSize,
       pageNo: pagination.pageNumber + 1,
-      userId: userId,
+      sortCol: sortCol[0]?.id || "typeName",
+      sortOrder: sortCol[0]?.desc || true,
+      userId: userId!,
     },
     headers: {
       Authorization: "Bearer " + accessToken,
     },
-  })
+  };
+  const { data: meetingData } = useMeeting(
+    pagination.pageNumber,
+    pagination.pageSize,
+    userId,
+    sortCol,
+    {
+      ...axiosConfig,
+    }
+  );
 
   const { data: meetingCountData } = useMeetingTypeCount(userId, {
     params: {
@@ -126,42 +146,43 @@ export default function Meeting() {
     headers: {
       Authorization: "Bearer " + accessToken,
     },
-  })
+  });
 
-  const columns = useMemo(() => [
-    // columnHelper.accessor("meetId", {
-    //   header: 'Meet ID',
-    //   cell: (info) => info.getValue(),
-    // }),
-    columnHelper.accessor("meetDatetime", {
-      header: 'Meet Date',
-      cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY"),
-    }),
-    columnHelper.accessor("typeName", {
-      header: 'Meeting Type',
-      cell: (info) => info.getValue(),
-    }),
-    columnHelper.accessor("location", {
-      header: 'Location',
-      cell: (info) => info.getValue(),
-    }),
-    columnHelper.accessor("postedOn", {
-      header: 'Posted On',
-      cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY"),
-    }),
-    columnHelper.accessor("status", {
-      header: 'Status',
-      cell: (info) => info.getValue(),
-    }),
-    columnHelper.accessor((row) => row, {
-      header: "Actions",
-      cell: (info) => (
-        <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
-          <MoreVertIcon />
-        </IconButton>
-      ),
-    }),
-  ],
+  const columns = useMemo(
+    () => [
+      // columnHelper.accessor("meetId", {
+      //   header: 'Meet ID',
+      //   cell: (info) => info.getValue(),
+      // }),
+      columnHelper.accessor("meetDatetime", {
+        header: "Meet Date",
+        cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY"),
+      }),
+      columnHelper.accessor("typeName", {
+        header: "Meeting Type",
+        cell: (info) => info.getValue(),
+      }),
+      columnHelper.accessor("location", {
+        header: "Location",
+        cell: (info) => info.getValue(),
+      }),
+      columnHelper.accessor("postedOn", {
+        header: "Posted On",
+        cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY"),
+      }),
+      columnHelper.accessor("status", {
+        header: "Status",
+        cell: (info) => info.getValue(),
+      }),
+      columnHelper.accessor((row) => row, {
+        header: "Actions",
+        cell: (info) => (
+          <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
+            <MoreVertIcon />
+          </IconButton>
+        ),
+      }),
+    ],
     []
   );
 
@@ -169,24 +190,31 @@ export default function Meeting() {
     data: meetingData,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    state: {
+      sorting: sortCol,
+    },
+    onSortingChange: setSortCol,
+    getSortedRowModel: getSortedRowModel(),
+    debugTable: true,
   });
 
   return (
     <>
       <Toolbar />
-      {!isDialogOpen && (< Button
-        sx={{ m: 1 }}
-        variant="contained"
-        onClick={() => {
-          setIsDialogOpen(true);
-          handleClose();
-        }}
-      >
-        Add New Meeting
-      </Button>)}
+      {!isDialogOpen && (
+        <Button
+          sx={{ m: 1 }}
+          variant="contained"
+          onClick={() => {
+            setIsDialogOpen(true);
+            handleClose();
+          }}
+        >
+          Add New Meeting
+        </Button>
+      )}
       {isDialogOpen ? (
         <AddMeetingDialog
-
           open={isDialogOpen}
           toEditAddMeeting={isForMenu!}
           onAddMeetingDiscardDialog={() => {
@@ -198,39 +226,57 @@ export default function Meeting() {
             setIsDialogOpen(false);
           }}
         />
-      ) : (<TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableCell sx={{
-                    fontWeight: "600",
-                  }} key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableHead>
-          <TableBody>
-            {table.getRowModel().rows.map((row) => {
-              return (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
+      ) : (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableCell
+                      key={header.id}
+                      sx={{
+                        whiteSpace: "nowrap",
+                        alignItems: "center",
+                      }}
+                    >
+                      {header.isPlaceholder ? null : (
+                        <div
+                          {...{
+                            className: header.column.getCanSort()
+                              ? "cursor-pointer select-none"
+                              : "",
+                            onClick: header.column.getToggleSortingHandler(),
+                          }}
+                        >
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                          {{
+                            asc: " 🔼",
+                            desc: " 🔽",
+                          }[header.column.getIsSorted() as string] ?? null}
+                        </div>
                       )}
                     </TableCell>
                   ))}
-                  {/* <TableCell>
+                </TableRow>
+              ))}
+            </TableHead>
+            <TableBody>
+              {table.getRowModel().rows.map((row) => {
+                return (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                    {/* <TableCell>
                     <IconButton
                       onClick={(e) => {
                         setIsForMenu(row.original);
@@ -241,44 +287,43 @@ export default function Meeting() {
                       <MoreVertIcon />
                     </IconButton>
                   </TableCell> */}
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-        <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
-          <MenuItem
-            onClick={() => {
-              setIsDialogOpen(true);
-              handleClose();
-            }}
-          >
-            Edit
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              setIsDialogOpen(true);
-              handleClose();
-              mutate();
-            }}
-          >
-            Delete
-          </MenuItem>
-        </Menu>
-        <TablePagination
-          width="140px"
-          component="div"
-          count={meetingCountData.TotalCount}
-          page={pagination.pageNumber}
-          onPageChange={(e, page) => handlePageNumberChange(page)}
-          rowsPerPage={pagination.pageSize}
-          onRowsPerPageChange={(e) =>
-            handlePageSizeChange(+e.currentTarget.value)
-          }
-        />
-      </TableContainer>)}
-
-
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+          <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
+            <MenuItem
+              onClick={() => {
+                setIsDialogOpen(true);
+                handleClose();
+              }}
+            >
+              Edit
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                setIsDialogOpen(true);
+                handleClose();
+                mutate();
+              }}
+            >
+              Delete
+            </MenuItem>
+          </Menu>
+          <TablePagination
+            width="140px"
+            component="div"
+            count={meetingCountData.TotalCount}
+            page={pagination.pageNumber}
+            onPageChange={(e, page) => handlePageNumberChange(page)}
+            rowsPerPage={pagination.pageSize}
+            onRowsPerPageChange={(e) =>
+              handlePageSizeChange(+e.currentTarget.value)
+            }
+          />
+        </TableContainer>
+      )}
     </>
   );
 }

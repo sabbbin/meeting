@@ -292,9 +292,6 @@ export default function UserTable() {
         });
       }
 
-      console.log("searchvalue", searchValue);
-      console.log("hwllo", temp);
-
       if (filterOperator != "is empty" && filterOperator != "is not empty") {
         axiosConfig.params["searchVal"] =
           searchValue != "" ? searchValue : temp;
