@@ -10,17 +10,26 @@ import {
   DialogContent,
   DialogProps,
   DialogTitle,
+  Divider,
+  FormControlLabel,
   MenuItem,
   Paper,
   PaperTypeMap,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
   TextField,
+  Tooltip,
+  Typography,
 } from "@mui/material";
 import { IMeeting } from "../Tables/meeting";
 import * as yup from "yup";
-import { useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useFormControlUnstyledContext } from "@mui/base";
 import { useFormik } from "formik";
-import { Info, MeetingRoomRounded } from "@mui/icons-material";
+import { CheckBox, Info, MeetingRoomRounded } from "@mui/icons-material";
 import { OverridableComponent } from "@mui/material/OverridableComponent";
 import dayjs from "dayjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -28,6 +37,11 @@ import axios from "axios";
 import useUserMeetingType from "../hooks/useUserMeetingType";
 import getAgenda from "./getAgenda";
 import { width } from "@mui/system";
+import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { IAgenda } from "../Tables/agendaTable";
+import { DataGrid, GridColDef, GridValueGetterParams } from '@mui/x-data-grid';
+import { IMeetingType } from "../Tables/meetingTypeTable";
+
 
 interface AddMeeting extends DialogProps {
   onAddMeetingDiscardDialog: () => void;
@@ -35,20 +49,43 @@ interface AddMeeting extends DialogProps {
   toEditAddMeeting: IMeeting;
 }
 
-const validationSchema = yup.object({
-  meetId: yup.number().required("Required"),
-  meetDatetime: yup.string().required("select date"),
-  meetTypeId: yup.number().required("id req"),
-  location: yup.string().required("location req"),
-  calledBy: yup.string().required("valled bty req"),
 
+
+interface AgendaRow {
+  meetId: number,
+  agendaIds: string[]
+}
+interface IGetAgenda {
+  isSelected: boolean,
+  agendaId: string,
+  agenda: string,
+  description: string,
+  postedBy: string,
+  postedOn: string
+}
+
+const columnHelper = createColumnHelper<IGetAgenda>();
+
+const validationSchema = yup.object({
+  meetDatetime: yup.string().required("Please select a date"),
+  meetTypeId: yup.number().required("id req"),
+  location: yup.string().required("Please provide a location"),
+  calledBy: yup.string().required("Please provide a Name"),
+  postedBy: yup.number(),
 });
 
-type FormDate = yup.TypeOf<typeof validationSchema>;
+// const agendaValidationSchema = yup.object({
+//   description: yup.string(),
+
+// })
+
+type FormData = yup.TypeOf<typeof validationSchema>;
 
 const FormDialogPaper = (
   props: OverridableComponent<PaperTypeMap<{}, "div">>
 ) => <Paper {...(props as any)} as="form" />;
+
+
 
 export default function AddMeetingDialog({
   onAddMeetingSuccessDialog,
@@ -56,64 +93,64 @@ export default function AddMeetingDialog({
   toEditAddMeeting: toEdit,
   open,
 }: AddMeeting) {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+
   let access_token = localStorage.getItem("access_token");
 
-  const handleCloseMenu = () => {
 
-    // onAddMeetingSuccessDialog;
-    setAnchorEl(null);
+  let accessToken = localStorage.getItem("access_token");
+
+  const headers = {
+    Authorization: "Bearer " + accessToken,
   };
 
-  const formik = useFormik<FormDate>({
+  const CreateMeetingData = useMutation<unknown, unknown, IMeeting>(
+    async (data) =>
+      await axios
+        .post("api/Meeting", data, {
+          headers: headers,
+        })
+        .then((res) => res.data),
+    {
+      onSuccess() {
+
+        onAddMeetingSuccessDialog()
+      }
+    }
+  )
+
+
+  const formik = useFormik<FormData>({
     initialValues: {
-      meetId: 0,
       meetDatetime: dayjs().format("YYYY-MM-DD"),
       meetTypeId: 0,
       location: "",
       calledBy: "",
+      postedBy: Number(localStorage.getItem("userId")),
 
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
-      if (toEdit) {
-        updateMeetingData.mutate(values)
-      }
-      createMeetingData.mutate(values)
+      CreateMeetingData.mutate(values)
+      console.log(values);
+
     },
+
   });
-  useEffect(() => {
-    if (toEdit) {
-      formik.setValues({
-        meetId: toEdit?.meetId,
-        meetDatetime: dayjs(toEdit?.meetDatetime).format("YYYY-MM-DD"),
-        meetTypeId: toEdit?.meetTypeId,
-        location: toEdit?.location,
-        calledBy: toEdit?.calledBy,
 
-      });
-    }
-  }, [toEdit]);
+  // useEffect(() => {
+  //   if (toEdit) {
+  //     formik.setValues({
+  //       meetId: toEdit?.meetId,
+  //       meetDatetime: dayjs(toEdit?.meetDatetime).format("YYYY-MM-DD"),
+  //       meetTypeId: toEdit?.meetTypeId,
+  //       location: toEdit?.location,
+  //       calledBy: toEdit?.calledBy,
+  //       ,
+  //     });
+  //   }
+  // }, [toEdit]);
 
-
-  let { data: updateMeetingData } = useMutation(() =>
-    axios
-      .patch("api/Meeting", {
-        headers: {
-          Authorization: "Bearer " + access_token,
-        },
-      })
-      .then((res) => res.data)
-  );
-  let { data: createMeetingData } = useMutation((data) =>
-    axios
-      .post("api/Meeting", data, {
-        headers: {
-          Authorization: "Bearer " + access_token,
-        },
-      })
-      .then((res) => res.data)
-  );
 
   let userId = localStorage.getItem("userId");
 
@@ -127,7 +164,7 @@ export default function AddMeetingDialog({
       Authorization: "Bearer " + access_token,
     },
   });
-  console.log(userMeetingtypeData)
+
 
   const { data: agenda } = getAgenda(meetTypeId, {
     params: {
@@ -139,6 +176,54 @@ export default function AddMeetingDialog({
   })
 
 
+  // const agendaFormik = useFormik<AgendaRow>({
+  //   initialValues: {
+  //     description: '',
+  //     postedBy: 0,
+  //     postedOn?: 'string',
+  //   }
+
+  //   },
+  //   validationSchema: validationSchema,
+  //   onSubmit: (values) => {
+  //     CreateMeetingData.mutate(values)
+  //     console.log(values);
+
+  //   },
+
+  // });
+  const columns = [
+
+    columnHelper.accessor((row) => row, {
+      header: "Check",
+      cell: (info) => <CheckBox />
+    }),
+    columnHelper.accessor("agenda", {
+      header: "Agenda",
+      cell: (info) => <Tooltip title={!info.getValue()}>
+        <Typography
+          sx={{
+            width: "150px",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {info.getValue()}
+        </Typography>
+      </Tooltip>,
+      footer: (info) => info.column.id,
+    }),
+  ]
+
+  const table = useReactTable({
+    data: agenda,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  })
+
+
+
   const handleClose = () => {
     onAddMeetingDiscardDialog();
   };
@@ -146,64 +231,30 @@ export default function AddMeetingDialog({
   return (
     <Card>
       <Box
-      // PaperComponent={FormDialogPaper as never}
-      // PaperProps={{
-      //   onSubmit: formik.handleSubmit as never,
-      //   elevation: 1
-      // }}
+        component={FormDialogPaper as never}
+        onSubmit={formik.handleSubmit as never}
 
-      // open={open}
-      // onClose={handleClose}
       >
-        <DialogTitle>{!!toEdit ? "Update" : "Add"} Meeting</DialogTitle>
+        <DialogTitle sx={{ textAlign: "center", fontSize: "25px" }}><b>{!!toEdit ? "Update" : "Add"} Meeting</b></DialogTitle>
         <CardContent>
-          {/* <TextField
-          label="Meeting Id"
-          autoFocus
-          margin="dense"
-          id="meetId"
-          name="meetId"
-          type="text"
-          value={formik.values.meetId}
-          onChange={formik.handleChange}
-          error={formik.touched.meetId && Boolean(formik.errors.meetId)}
-          helperText={formik.touched.meetId && formik.errors.meetId}
-          fullWidth
-          variant="standard"
-        /> */}
-
           <TextField
-            label="meetDatetime"
+            label="Date"
             autoFocus
             margin="dense"
-            name="Date"
+            name="meetDatetime"
             type="date"
             value={formik.values.meetDatetime}
             onChange={formik.handleChange}
-            error={
-              formik.touched.meetDatetime && Boolean(formik.errors.meetDatetime)
-            }
+            error={formik.touched.meetDatetime && Boolean(formik.errors.meetDatetime)}
             helperText={formik.touched.meetDatetime && formik.errors.meetDatetime}
             fullWidth
             variant="standard"
           />
-          {/* <TextField
-          label="MeetTypeId"
-          autoFocus
-          margin="dense"
-          name="MeetTypeId"
-          value={formik.values.meetTypeId}
-          onChange={formik.handleChange}
-          error={formik.touched.meetTypeId && Boolean(formik.errors.meetTypeId)}
-          helperText={formik.touched.meetTypeId && formik.errors.meetTypeId}
-          fullWidth
-          variant="standard"
-        /> */}
           <TextField
             label="Location"
             autoFocus
             margin="dense"
-            name="Location"
+            name="location"
             value={formik.values.location}
             onChange={formik.handleChange}
             error={formik.touched.location && Boolean(formik.errors.location)}
@@ -215,7 +266,7 @@ export default function AddMeetingDialog({
             label="CalledBy"
             autoFocus
             margin="dense"
-            name="CalledBy"
+            name="calledBy"
             value={formik.values.calledBy}
             onChange={formik.handleChange}
             error={formik.touched.calledBy && Boolean(formik.errors.calledBy)}
@@ -223,25 +274,13 @@ export default function AddMeetingDialog({
             fullWidth
             variant="standard"
           />
-          {/* <TextField
-          label="PostedBy"
-          autoFocus
-          margin="dense"
-          name="PostedBy"
-          value={formik.values.postedBy}
-          onChange={formik.handleChange}
-          error={formik.touched.postedBy && Boolean(formik.errors.postedBy)}
-          helperText={formik.touched.postedBy && formik.errors.postedBy}
-          fullWidth
-          variant="standard"
-        /> */}
           <TextField
             select
             fullWidth
             name="meetTypeId"
             id="meetTypeId"
             margin="dense"
-            label="Meeting"
+            label="Meeting Type"
             variant="standard"
             value={formik.values.meetTypeId}
             SelectProps={{
@@ -255,41 +294,56 @@ export default function AddMeetingDialog({
               </MenuItem>
             ))}
           </TextField>
-          <TextField
-            select
-            fullWidth
-            name="agendaId"
-            id="agendaId"
-            margin="dense"
-            label="Agenda"
-            variant="standard"
+          {formik.values.meetTypeId ? (
+            <Card sx={{ marginTop: 2.5 }}>
+              <Typography sx={{ m: 1, textAlign: 'center' }}><b>Add Agendas</b></Typography>
+              <Divider />
+              <Table>
+                <TableHead>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <TableCell
+                          sx={{
+                            fontWeight: "600",
+                          }}
+                          key={header.id}
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableHead>
+                <TableBody>
+                  {table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id}>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell
+                          sx={{
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            "&:hover": {
+                              overflow: "visible",
+                            },
+                          }}
+                          key={cell.id}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>) : (null)}
 
-          >
-            {agenda.map((agenda: any, index: number) => (
-              <MenuItem key={index} value={agenda.agendaId}>
-                {agenda.agenda}
-              </MenuItem>
-            ))}
-          </TextField>
-          {/* {formik.values.meetTypeId ? (
-            <Autocomplete
-              options={agenda ?? []}
-              renderOption={((agenda: any, index: number) => (
-                <MenuItem key={index} value={agenda.agendaId}>
-                  {agenda.agenda}
-                </MenuItem>
-              ))}
-              renderInput={(params) => <TextField
-                {...params}
-                label='Agendas'
-                multiline
-                fullWidth
-                name="agendaId"
-                id="agendaId"
-                margin="dense"
-                variant="standard" />}
-            />
-          ) : (null)} */}
         </CardContent>
         <CardActions>
           {toEdit ? (
@@ -304,6 +358,6 @@ export default function AddMeetingDialog({
           <Button onClick={handleClose}>Cancel</Button>
         </CardActions>
       </Box>
-    </Card>
+    </Card >
   );
 }

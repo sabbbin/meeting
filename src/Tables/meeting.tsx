@@ -34,14 +34,16 @@ import AddMeetingDrawer from "../drawer/addMemberDrawer";
 import AddMeetingDialog from "../dialog/addMeeting";
 
 export interface IMeeting {
-  meetId: number;
-  meetDatetime: Date;
-  meetTypeId: number;
-  location: string;
-  calledBy: string;
-  postedOn: Date;
-  status: string;
-  typeName: string;
+  meetId?: number;
+  meetDatetime: string | undefined;
+  meetTypeId: number | undefined;
+  location: string | undefined;
+  calledBy: string | undefined;
+  postedOn?: Date;
+  status?: string;
+  typeName?: string;
+  postedBy?: number | undefined;
+
 }
 
 const columnHelper = createColumnHelper<IMeeting>();
