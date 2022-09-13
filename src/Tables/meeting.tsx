@@ -136,11 +136,11 @@ export default function Meeting() {
     //   cell: (info) => info.getValue(),
     // }),
     columnHelper.accessor("meetDatetime", {
-      header: 'Meet Date',
-      cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY"),
+      header: 'Date',
+      cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY h:mm A"),
     }),
     columnHelper.accessor("typeName", {
-      header: 'Meeting Type',
+      header: 'Type',
       cell: (info) => info.getValue(),
     }),
     columnHelper.accessor("location", {

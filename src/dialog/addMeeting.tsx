@@ -41,6 +41,8 @@ import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "
 import { IAgenda } from "../Tables/agendaTable";
 import { DataGrid, GridColDef, GridValueGetterParams } from '@mui/x-data-grid';
 import { IMeetingType } from "../Tables/meetingTypeTable";
+import { DateTimePicker, DesktopDateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 
 interface AddMeeting extends DialogProps {
@@ -135,7 +137,7 @@ export default function AddMeetingDialog({
 
   const formik = useFormik<FormData>({
     initialValues: {
-      meetDatetime: dayjs().format("YYYY-MM-DD"),
+      meetDatetime: dayjs().toString(),
       meetTypeId: 0,
       location: "",
       calledBy: "",
@@ -146,8 +148,8 @@ export default function AddMeetingDialog({
     onSubmit: (values) => {
       CreateMeetingData.mutate(values)
       console.log(values);
-
     },
+
 
   });
 
@@ -242,7 +244,24 @@ export default function AddMeetingDialog({
       >
         <DialogTitle sx={{ textAlign: "center", fontSize: "25px" }}><b>{!!toEdit ? "Update" : "Add"} Meeting</b></DialogTitle>
         <CardContent>
-          <TextField
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              label="Select Date and time"
+              value={formik.values.meetDatetime}
+              onChange={(newValue) => {
+                formik.setFieldValue("meetDatetime", newValue);
+              }}
+              renderInput={(params) => (
+                <TextField
+                  fullWidth
+                  error={formik.touched.meetDatetime && Boolean(formik.errors.meetDatetime)}
+                  helperText={formik.touched.meetDatetime && formik.errors.meetDatetime}
+                  {...params}
+                />
+              )}
+            />
+          </LocalizationProvider>
+          {/* <TextField
             label="Date"
             autoFocus
             margin="dense"
@@ -254,7 +273,7 @@ export default function AddMeetingDialog({
             helperText={formik.touched.meetDatetime && formik.errors.meetDatetime}
             fullWidth
             variant="standard"
-          />
+          /> */}
           <TextField
             label="Location"
             autoFocus
