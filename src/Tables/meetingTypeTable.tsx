@@ -133,8 +133,8 @@ export default function MeetingTypeTable() {
 
   const [sortCol, setSortCol] = useState<SortingState>([
     {
-      id: "TypeName",
-      desc: false,
+      id: "typeName",
+      desc: true,
     },
   ]);
 
@@ -146,7 +146,7 @@ export default function MeetingTypeTable() {
       searchVal?: string;
       operators?: string;
       sortCol?: string;
-      sortOrder?: boolean;
+      sortOrder?: string;
     };
     headers: {
       Authorization: string;
@@ -157,8 +157,8 @@ export default function MeetingTypeTable() {
     params: {
       pageSize: pagination.pageSize,
       pageNo: pagination.pageNumber + 1,
-      sortCol: sortCol[0]?.id || "typeName",
-      sortOrder: sortCol[0]?.desc || true,
+      sortCol: sortCol[0]!.id || "typeName",
+      sortOrder: sortCol[0]!.desc == true ? "desc" : "asc",
     },
     headers: {
       Authorization: "Bearer " + accessToken,
@@ -207,6 +207,7 @@ export default function MeetingTypeTable() {
       ...axiosConfig,
     }
   );
+  console.log("axiosconfitg", axiosConfig);
 
   const { data: updateStatus, mutate: updateMutate } = useMutation(
     (data: any) => {
@@ -249,14 +250,14 @@ export default function MeetingTypeTable() {
     }
   );
 
-  const { data: meetingTypeCount } = useMeetingTypeCount(userIdLocal, {
-    params: {
-      userId: userIdLocal,
-    },
-    headers: {
-      Authorization: "Bearer " + accessToken,
-    },
-  });
+  // const { data: meetingTypeCount } = useMeetingTypeCount(userIdLocal, {
+  //   params: {
+  //     userId: userIdLocal,
+  //   },
+  //   headers: {
+  //     Authorization: "Bearer " + accessToken,
+  //   },
+  // });
 
   const handleDelete = (value: any) => {
     const deleteId = isforMenu?.MeetTypeId!;
@@ -570,7 +571,7 @@ export default function MeetingTypeTable() {
         <TablePagination
           width="140px"
           component="div"
-          count={meetingTypeCount.TotalCount}
+          count={meetTypeData[0]?.totalRows || 0}
           page={pagination.pageNumber}
           onPageChange={(e, page) => handlePageNumberChange(page)}
           rowsPerPage={pagination.pageSize}

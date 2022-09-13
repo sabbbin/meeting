@@ -587,7 +587,7 @@ export default function UserTable() {
         <TablePagination
           width="140px"
           component="div"
-          count={34}
+          count={userData[0]?.totalRows || 0}
           page={pagination.pageNumber}
           onPageChange={(e, page) => handlePageNumberChange(page)}
           rowsPerPage={pagination.pageSize}
