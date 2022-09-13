@@ -215,7 +215,6 @@ export default function UserTable() {
     },
   ]);
 
-  console.log("adfa", searchValue);
   let accessToken = localStorage.getItem("access_token");
   const [multiValue, setMultiValue] = useState<string[]>([]);
 
@@ -413,7 +412,7 @@ export default function UserTable() {
                             sx={{
                               marginRight: "5px",
                               ...(filterOperator == "is empty" ||
-                              filterOperator == "is not empty"
+                                filterOperator == "is not empty"
                                 ? { display: "none" }
                                 : { display: "inline-block" }),
                             }}
@@ -461,7 +460,7 @@ export default function UserTable() {
                       sx={{
                         marginRight: "5px",
                         ...(filterOperator == "is empty" ||
-                        filterOperator == "is not empty"
+                          filterOperator == "is not empty"
                           ? { display: "none" }
                           : { display: "inline-block" }),
                       }}

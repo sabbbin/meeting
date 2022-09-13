@@ -107,7 +107,7 @@ export default function AddMeetingDialog({
     Authorization: "Bearer " + accessToken,
   };
 
-  const CreateMeetingData = useMutation<unknown, unknown, IMeeting>(
+  const CreateMeetingData = useMutation<number, unknown, IMeeting>(
     async (data) =>
       await axios
         .post("api/Meeting", data, {
@@ -115,8 +115,11 @@ export default function AddMeetingDialog({
         })
         .then((res) => res.data),
     {
-      onSuccess() {
+      onSuccess(data) {
 
+        if (data) { agendaFormik.setFieldValue("meetId", data) }
+        agendaFormik.values.meetId = data
+        MergeMeetingMinute.mutate(agendaFormik.values)
         onAddMeetingSuccessDialog()
       }
     }
@@ -137,7 +140,7 @@ export default function AddMeetingDialog({
 
   const formik = useFormik<FormData>({
     initialValues: {
-      meetDatetime: dayjs().toString(),
+      meetDatetime: dayjs().format('YYYY-MM-DDHH:MM:SS').toString(),
       meetTypeId: 0,
       location: "",
       calledBy: "",
@@ -147,11 +150,10 @@ export default function AddMeetingDialog({
     validationSchema: validationSchema,
     onSubmit: (values) => {
       CreateMeetingData.mutate(values)
-      console.log(values);
     },
-
-
   });
+
+
 
   const agendaFormik = useFormik<AgendaRow>({
     initialValues: {
@@ -159,7 +161,7 @@ export default function AddMeetingDialog({
       agendaIds: []
     },
     onSubmit: (values) => {
-      MergeMeetingMinute.mutate(values)
+
     }
   })
 
@@ -234,6 +236,7 @@ export default function AddMeetingDialog({
   const handleClose = () => {
     onAddMeetingDiscardDialog();
   };
+  console.log('agendids', agendaFormik.values)
 
   return (
     <Card>
