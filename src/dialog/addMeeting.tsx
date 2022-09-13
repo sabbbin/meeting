@@ -40,6 +40,7 @@ import { width } from "@mui/system";
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { IAgenda } from "../Tables/agendaTable";
 import { DataGrid, GridColDef, GridValueGetterParams } from '@mui/x-data-grid';
+import { IMeetingType } from "../Tables/meetingTypeTable";
 
 
 interface AddMeeting extends DialogProps {
@@ -48,27 +49,37 @@ interface AddMeeting extends DialogProps {
   toEditAddMeeting: IMeeting;
 }
 
+
+
 interface AgendaRow {
-  agenda: string;
-  agendaId: string;
-  description?: string;
-  isSelected?: boolean;
-  postedBy?: string;
-  postedOn?: string;
+  meetId: number,
+  agendaIds: string[]
+}
+interface IGetAgenda {
+  isSelected: boolean,
+  agendaId: string,
+  agenda: string,
+  description: string,
+  postedBy: string,
+  postedOn: string
 }
 
-const columnHelper = createColumnHelper<AgendaRow>();
+const columnHelper = createColumnHelper<IGetAgenda>();
 
 const validationSchema = yup.object({
-  meetId: yup.number().required("Required"),
   meetDatetime: yup.string().required("Please select a date"),
   meetTypeId: yup.number().required("id req"),
   location: yup.string().required("Please provide a location"),
   calledBy: yup.string().required("Please provide a Name"),
-
+  postedBy: yup.number(),
 });
 
-type FormDate = yup.TypeOf<typeof validationSchema>;
+// const agendaValidationSchema = yup.object({
+//   description: yup.string(),
+
+// })
+
+type FormData = yup.TypeOf<typeof validationSchema>;
 
 const FormDialogPaper = (
   props: OverridableComponent<PaperTypeMap<{}, "div">>
@@ -83,66 +94,63 @@ export default function AddMeetingDialog({
   open,
 }: AddMeeting) {
 
-  const [checked, setChecked] = useState(true);
-  const [agendaRow, setAgendaRow] = useState([]);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
   let access_token = localStorage.getItem("access_token");
 
-  const handleCloseMenu = () => {
 
-    onAddMeetingSuccessDialog;
-    setAnchorEl(null);
+  let accessToken = localStorage.getItem("access_token");
+
+  const headers = {
+    Authorization: "Bearer " + accessToken,
   };
 
-  const formik = useFormik<FormDate>({
+  const CreateMeetingData = useMutation<unknown, unknown, IMeeting>(
+    async (data) =>
+      await axios
+        .post("api/Meeting", data, {
+          headers: headers,
+        })
+        .then((res) => res.data),
+    {
+      onSuccess() {
+
+        onAddMeetingSuccessDialog()
+      }
+    }
+  )
+
+
+  const formik = useFormik<FormData>({
     initialValues: {
-      meetId: 0,
       meetDatetime: dayjs().format("YYYY-MM-DD"),
       meetTypeId: 0,
       location: "",
       calledBy: "",
+      postedBy: Number(localStorage.getItem("userId")),
 
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
-      if (toEdit) {
-        updateMeetingData.mutate(values)
-      }
-      createMeetingData.mutate(values)
+      CreateMeetingData.mutate(values)
+      console.log(values);
+
     },
+
   });
-  useEffect(() => {
-    if (toEdit) {
-      formik.setValues({
-        meetId: toEdit?.meetId,
-        meetDatetime: dayjs(toEdit?.meetDatetime).format("YYYY-MM-DD"),
-        meetTypeId: toEdit?.meetTypeId,
-        location: toEdit?.location,
-        calledBy: toEdit?.calledBy,
 
-      });
-    }
-  }, [toEdit]);
+  // useEffect(() => {
+  //   if (toEdit) {
+  //     formik.setValues({
+  //       meetId: toEdit?.meetId,
+  //       meetDatetime: dayjs(toEdit?.meetDatetime).format("YYYY-MM-DD"),
+  //       meetTypeId: toEdit?.meetTypeId,
+  //       location: toEdit?.location,
+  //       calledBy: toEdit?.calledBy,
+  //       ,
+  //     });
+  //   }
+  // }, [toEdit]);
 
-
-  let { data: updateMeetingData } = useMutation(() =>
-    axios
-      .patch("api/Meeting", {
-        headers: {
-          Authorization: "Bearer " + access_token,
-        },
-      })
-      .then((res) => res.data)
-  );
-  let { data: createMeetingData } = useMutation((data) =>
-    axios
-      .post("api/Meeting", data, {
-        headers: {
-          Authorization: "Bearer " + access_token,
-        },
-      })
-      .then((res) => res.data)
-  );
 
   let userId = localStorage.getItem("userId");
 
@@ -167,6 +175,23 @@ export default function AddMeetingDialog({
     },
   })
 
+
+  // const agendaFormik = useFormik<AgendaRow>({
+  //   initialValues: {
+  //     description: '',
+  //     postedBy: 0,
+  //     postedOn?: 'string',
+  //   }
+
+  //   },
+  //   validationSchema: validationSchema,
+  //   onSubmit: (values) => {
+  //     CreateMeetingData.mutate(values)
+  //     console.log(values);
+
+  //   },
+
+  // });
   const columns = [
 
     columnHelper.accessor((row) => row, {
@@ -175,7 +200,7 @@ export default function AddMeetingDialog({
     }),
     columnHelper.accessor("agenda", {
       header: "Agenda",
-      cell: (info) => <Tooltip title={info.getValue()}>
+      cell: (info) => <Tooltip title={!info.getValue()}>
         <Typography
           sx={{
             width: "150px",
@@ -189,7 +214,6 @@ export default function AddMeetingDialog({
       </Tooltip>,
       footer: (info) => info.column.id,
     }),
-
   ]
 
   const table = useReactTable({
@@ -209,6 +233,7 @@ export default function AddMeetingDialog({
       <Box
         component={FormDialogPaper as never}
         onSubmit={formik.handleSubmit as never}
+
       >
         <DialogTitle sx={{ textAlign: "center", fontSize: "25px" }}><b>{!!toEdit ? "Update" : "Add"} Meeting</b></DialogTitle>
         <CardContent>
