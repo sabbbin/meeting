@@ -66,10 +66,10 @@ import PopupState, { bindPopover, bindTrigger } from "material-ui-popup-state";
 
 export interface IMeetingType {
   MeetTypeId?: number;
-  TypeName: string;
-  Alias: string;
-  OrderIdx: number;
-  IsEnable: boolean;
+  typeName: string;
+  alias: string;
+  orderIdx: number;
+  isEnable: boolean;
 }
 
 const columnHelper = createColumnHelper<IMeetingType>();
@@ -112,11 +112,11 @@ export default function MeetingTypeTable() {
       options: FilterType.StringFilterType,
     },
     {
-      field: "Order Index",
+      field: "OrderIdx",
       options: FilterType.StringFilterType,
     },
     {
-      field: "Is Enable",
+      field: "IsEnable",
       options: FilterType.BooleanFilterType,
     },
   ];
@@ -167,23 +167,23 @@ export default function MeetingTypeTable() {
 
   const columns = useMemo(
     () => [
-      columnHelper.accessor("TypeName", {
+      columnHelper.accessor("typeName", {
         header: "TypeName",
         cell: (info) => info.getValue(),
         footer: (info) => info.column.id,
       }),
-      columnHelper.accessor("Alias", {
+      columnHelper.accessor("alias", {
         header: "Alias",
         cell: (info) => info.getValue(),
         footer: (info) => info.column.id,
       }),
-      columnHelper.accessor("OrderIdx", {
-        header: "Order Index",
+      columnHelper.accessor("orderIdx", {
+        header: "OrderIdx",
         cell: (info) => info.getValue(),
         footer: (info) => info.column.id,
       }),
-      columnHelper.accessor("IsEnable", {
-        header: "Is Enable",
+      columnHelper.accessor("isEnable", {
+        header: "IsEnable",
         cell: (info) => (info.getValue() ? "Enable" : "Disable"),
         footer: (info) => info.column.id,
       }),
@@ -267,9 +267,9 @@ export default function MeetingTypeTable() {
     const id = isforMenu?.MeetTypeId;
     const updateData = {
       isEnable: value,
-      typeName: isforMenu?.TypeName,
-      alias: isforMenu?.Alias,
-      orderIdx: isforMenu?.OrderIdx,
+      typeName: isforMenu?.typeName,
+      alias: isforMenu?.alias,
+      orderIdx: isforMenu?.orderIdx,
     };
 
     updateMutate(updateData);
@@ -311,8 +311,8 @@ export default function MeetingTypeTable() {
           searchValue != "" ? searchValue : temp;
       }
       (axiosConfig.params["searchCol"] = filterField),
-        // (axiosConfig.params["operators"] = filterOperator);
-        console.log("params", axiosConfig);
+        (axiosConfig.params["operators"] = filterOperator);
+
       refetch();
     }
   };
@@ -587,7 +587,7 @@ export default function MeetingTypeTable() {
           >
             Edit
           </MenuItem>
-          {isforMenu?.IsEnable == true ? (
+          {isforMenu?.isEnable == true ? (
             <MenuItem
               onClick={() => {
                 handleStatusChange(false);
