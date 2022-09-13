@@ -130,8 +130,7 @@ export default function AddMeetingDialog({
     onSuccess() {
       onAddMeetingSuccessDialog()
     }
-  }
-  )
+  })
 
 
   const formik = useFormik<FormData>({
@@ -206,7 +205,7 @@ export default function AddMeetingDialog({
 
     columnHelper.accessor("agenda", {
       header: "Agenda",
-      cell: (info) => <Tooltip title={!info.getValue()}>
+      cell: (info) => <Tooltip title={info.getValue()}>
         <Typography
           sx={{
             width: "150px",
