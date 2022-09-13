@@ -4,7 +4,7 @@ import {
   Button,
   Card,
   CardActions,
-  CardContent,
+  CardContent, Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -29,7 +29,7 @@ import * as yup from "yup";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useFormControlUnstyledContext } from "@mui/base";
 import { useFormik } from "formik";
-import { CheckBox, Info, MeetingRoomRounded } from "@mui/icons-material";
+import { Info, MeetingRoomRounded } from "@mui/icons-material";
 import { OverridableComponent } from "@mui/material/OverridableComponent";
 import dayjs from "dayjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -74,10 +74,11 @@ const validationSchema = yup.object({
   postedBy: yup.number(),
 });
 
-// const agendaValidationSchema = yup.object({
-//   description: yup.string(),
+const agendaValidationSchema = yup.object({
+  meetId: yup.number().required('required'),
+  agendaIds: yup.array().required('required'),
 
-// })
+})
 
 type FormData = yup.TypeOf<typeof validationSchema>;
 
@@ -119,6 +120,19 @@ export default function AddMeetingDialog({
     }
   )
 
+  const MergeMeetingMinute = useMutation<unknown, unknown, AgendaRow>(
+    async (data) =>
+      await axios
+        .post("api/Minute", data, {
+          headers: headers,
+        })
+        .then((res) => res.data), {
+    onSuccess() {
+      onAddMeetingSuccessDialog()
+    }
+  }
+  )
+
 
   const formik = useFormik<FormData>({
     initialValues: {
@@ -137,6 +151,18 @@ export default function AddMeetingDialog({
     },
 
   });
+
+  const agendaFormik = useFormik<AgendaRow>({
+    initialValues: {
+      meetId: 0,
+      agendaIds: []
+    },
+    onSubmit: (values) => {
+      MergeMeetingMinute.mutate(values)
+    }
+  })
+
+
 
   // useEffect(() => {
   //   if (toEdit) {
@@ -176,28 +202,8 @@ export default function AddMeetingDialog({
   })
 
 
-  // const agendaFormik = useFormik<AgendaRow>({
-  //   initialValues: {
-  //     description: '',
-  //     postedBy: 0,
-  //     postedOn?: 'string',
-  //   }
-
-  //   },
-  //   validationSchema: validationSchema,
-  //   onSubmit: (values) => {
-  //     CreateMeetingData.mutate(values)
-  //     console.log(values);
-
-  //   },
-
-  // });
   const columns = [
 
-    columnHelper.accessor((row) => row, {
-      header: "Check",
-      cell: (info) => <CheckBox />
-    }),
     columnHelper.accessor("agenda", {
       header: "Agenda",
       cell: (info) => <Tooltip title={!info.getValue()}>
@@ -300,8 +306,10 @@ export default function AddMeetingDialog({
               <Divider />
               <Table>
                 <TableHead>
+
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id}>
+                      <TableCell></TableCell>
                       {headerGroup.headers.map((header) => (
                         <TableCell
                           sx={{
@@ -323,6 +331,13 @@ export default function AddMeetingDialog({
                 <TableBody>
                   {table.getRowModel().rows.map((row) => (
                     <TableRow key={row.id}>
+                      <TableCell>
+                        <Checkbox
+                          name='agendaIds'
+                          value={row.original.agendaId}
+                          onChange={agendaFormik.handleChange}
+                        />
+                      </TableCell>
                       {row.getVisibleCells().map((cell) => (
                         <TableCell
                           sx={{
