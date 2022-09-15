@@ -1,12 +1,16 @@
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import {
+  Autocomplete,
   Box,
   Button,
+  Chip,
   Collapse,
   IconButton,
   Menu,
   MenuItem,
   Paper,
+  Popover,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -14,6 +18,7 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  TextField,
   Toolbar,
   Tooltip,
   Typography,
@@ -40,6 +45,12 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { number } from "yup";
 import AgendaTable from "./agendaTable";
+import AddCallByMeeting from "../dialog/addCallByMeeting";
+import PopupState, { bindPopover, bindTrigger } from "material-ui-popup-state";
+import { ValuesType } from "utility-types";
+import { FilterType } from "../filter";
+import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 export interface IMeeting {
   meetId?: number;
@@ -64,6 +75,8 @@ export default function Meeting() {
   const [isForMenu, setIsForMenu] = useState<IMeeting | null>();
   const [openMenu, setOpenMenu] = useState(false);
   let access_token = localStorage.getItem("access_token");
+
+  const [callByMeeting, setCallByMeeting] = useState(false);
 
   const [sortCol, setSortCol] = useState<SortingState>([
     {
@@ -138,7 +151,7 @@ export default function Meeting() {
       Authorization: "Bearer " + accessToken,
     },
   };
-  const { data: meetingData } = useMeeting(
+  const { data: meetingData, refetch: getMeeting } = useMeeting(
     pagination.pageNumber,
     pagination.pageSize,
     userId,
@@ -148,6 +161,29 @@ export default function Meeting() {
     }
   );
 
+  const filterOptions = [
+    {
+      field: "typeName",
+      options: FilterType.StringFilterType,
+    },
+    {
+      field: "meetDatetime",
+      options: FilterType.DateFilterType,
+    },
+    {
+      field: "location",
+      options: FilterType.StringFilterType,
+    },
+    {
+      field: "postedOn",
+      options: FilterType.DateFilterType,
+    },
+    {
+      field: "status",
+      options: FilterType.StringFilterType,
+    },
+  ];
+
   const { data: meetingCountData } = useMeetingTypeCount(userId, {
     params: {
       userId: userId,
@@ -156,6 +192,45 @@ export default function Meeting() {
       Authorization: "Bearer " + accessToken,
     },
   });
+
+  const handleSearch = () => {
+    if (
+      searchValue ||
+      multiValue.length > 0 ||
+      filterOperator == "is empty" ||
+      filterOperator == "is not empty"
+    ) {
+      let temp = "";
+
+      if (multiValue) {
+        multiValue.map((mul, id) => {
+          if (id !== multiValue.length - 1) {
+            temp += `'${mul}',`;
+          } else {
+            temp += `'${mul}'`;
+          }
+        });
+      }
+
+      if (filterOperator != "is empty" && filterOperator != "is not empty") {
+        axiosConfig.params["searchVal"] =
+          searchValue != "" ? searchValue : temp;
+      }
+      (axiosConfig.params["searchCol"] = filterField),
+        (axiosConfig.params["operators"] = filterOperator);
+    }
+    getMeeting();
+  };
+
+  const [filterField, setFilterField] =
+    useState<ValuesType<typeof filterOptions>["field"]>("typeName");
+
+  const [filterOperator, setFilterOperator] = useState<
+    ValuesType<ValuesType<typeof filterOptions>["options"]>
+  >(filterOptions.find((op) => op.field === filterField)?.options[0]!);
+
+  const [searchValue, setsearchValue] = useState<any>();
+  const [multiValue, setMultiValue] = useState<string[]>([]);
 
   const columns = useMemo(
     () => [
@@ -242,17 +317,191 @@ export default function Meeting() {
     <>
       <Toolbar />
       {!isDialogOpen && (
-        <Button
-          sx={{ m: 1 }}
-          variant="contained"
-          onClick={() => {
-            setIsDialogOpen(true);
-            handleClose();
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
-          Add New Meeting
-        </Button>
+          <Button
+            sx={{ m: 1 }}
+            variant="contained"
+            onClick={() => {
+              setIsDialogOpen(true);
+              handleClose();
+            }}
+          >
+            Add New Meeting
+          </Button>
+
+          <PopupState variant="popover" popupId="demo-popup-popover">
+            {(popupState) => (
+              <div>
+                <Button
+                  variant="contained"
+                  sx={{ marginBottom: "10px" }}
+                  {...bindTrigger(popupState)}
+                >
+                  Open search
+                </Button>
+                <Popover
+                  {...bindPopover(popupState)}
+                  anchorOrigin={{
+                    vertical: "top",
+                    horizontal: "left",
+                  }}
+                  transformOrigin={{
+                    vertical: "top",
+                    horizontal: "right",
+                  }}
+                >
+                  <Paper
+                    sx={{
+                      padding: "10px",
+                    }}
+                  >
+                    <Select
+                      id="demo-simple-select"
+                      value={filterField}
+                      label="Age"
+                      sx={{ marginRight: "5px" }}
+                      size="small"
+                      onChange={(e) => {
+                        setFilterField(e.target.value as never);
+
+                        setsearchValue("");
+
+                        setMultiValue([]);
+                        setFilterOperator(
+                          filterOptions.find(
+                            (op) => op.field === e.target.value
+                          )?.options[0]! as never
+                        );
+                      }}
+                    >
+                      {filterOptions.map((col, i) => (
+                        <MenuItem value={col.field}>{col.field}</MenuItem>
+                      ))}
+                    </Select>
+                    <Select
+                      id="demo-simple-select"
+                      value={filterOperator}
+                      label="Age"
+                      sx={{ marginRight: "5px" }}
+                      size="small"
+                      onChange={(e) => {
+                        setFilterOperator(e.target.value as never);
+                        if (dayjs(searchValue).isValid()) {
+                          setsearchValue(dayjs().format("YYYY-MM-DD"));
+                        } else {
+                          setsearchValue("");
+                        }
+                        setMultiValue([]);
+                      }}
+                    >
+                      {(
+                        filterOptions.find((op) => op.field === filterField)
+                          ?.options ?? []
+                      ).map((col) => (
+                        <MenuItem value={col}>{col}</MenuItem>
+                      ))}
+                    </Select>
+
+                    {filterField == "meetDatetime" ||
+                    filterField == "postedOn" ? (
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DesktopDatePicker
+                          label="Select Date"
+                          inputFormat="YYYY-MM-DD"
+                          value={searchValue}
+                          onChange={(val: any) => {
+                            setsearchValue(dayjs(val).format("YYYY-MM-DD"));
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              size="small"
+                              sx={{
+                                marginRight: "5px",
+                                ...(filterOperator == "is empty" ||
+                                filterOperator == "is not empty"
+                                  ? { display: "none" }
+                                  : { display: "inline-block" }),
+                              }}
+                              {...params}
+                            />
+                          )}
+                        />
+                      </LocalizationProvider>
+                    ) : filterOperator == "is any of" ? (
+                      <Autocomplete
+                        multiple
+                        size="small"
+                        sx={{
+                          minWidth: "200px",
+                          maxWidth: "300px",
+                          maxHeight: "50px",
+
+                          marginRight: "5px",
+                          zIndex: 100,
+                        }}
+                        id="tags-filled"
+                        options={multiValue!.map((option) => option)}
+                        freeSolo
+                        renderTags={(value, getTagProps) => {
+                          setMultiValue(value);
+                          return value.map((option, index) => (
+                            <Chip
+                              variant="outlined"
+                              label={option}
+                              {...getTagProps({ index })}
+                            />
+                          ));
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            variant="filled"
+                            label="Enter search value"
+                          />
+                        )}
+                      />
+                    ) : (
+                      <TextField
+                        size="small"
+                        sx={{
+                          marginRight: "5px",
+                          ...(filterOperator == "is empty" ||
+                          filterOperator == "is not empty"
+                            ? { display: "none" }
+                            : { display: "inline-block" }),
+                        }}
+                        value={searchValue}
+                        onChange={(e) => setsearchValue(e.target.value)}
+                      />
+                    )}
+
+                    <Button onClick={handleSearch} variant="contained">
+                      Search
+                    </Button>
+                  </Paper>
+                </Popover>
+              </div>
+            )}
+          </PopupState>
+        </Box>
       )}
+
+      {callByMeeting && (
+        <AddCallByMeeting
+          meeting={isForMenu!}
+          onDialogClose={() => {
+            setCallByMeeting(false);
+            handleClose();
+          }}
+        />
+      )}
+
       {isDialogOpen ? (
         <AddMeetingDialog
           open={isDialogOpen}
@@ -443,6 +692,14 @@ export default function Meeting() {
             </TableBody>
           </Table>
           <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
+            <MenuItem
+              onClick={() => {
+                setCallByMeeting(true);
+                handleClose();
+              }}
+            >
+              Call Meeting
+            </MenuItem>
             <MenuItem
               onClick={() => {
                 setIsDialogOpen(true);
