@@ -53,7 +53,7 @@ import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 export interface IMeeting {
-  meetId?: number;
+  meetId?: number | undefined;
   meetDatetime: string | undefined;
   meetTypeId: number | undefined;
   location: string | undefined;
@@ -270,6 +270,29 @@ export default function Meeting() {
     []
   );
 
+  type deleteId = number;
+  const { mutate: deleteMutatae } = useMutation<unknown, unknown, deleteId>(
+    (deleteId) =>
+      axios
+        .delete("/api/Meeting/", {
+          params: { meetId: isForMenu?.meetId },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + accessToken,
+          },
+        })
+        .then((res) => res.data),
+    {
+      onSuccess: () => {
+        getMeeting();
+      },
+    }
+  );
+
+  const handleDelete = () => {
+    const deleteId = isForMenu?.meetId;
+    deleteMutatae(deleteId!);
+  };
   const table = useReactTable({
     data: meetingData,
     columns,
