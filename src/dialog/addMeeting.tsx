@@ -45,7 +45,12 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { IAgenda } from "../Tables/agendaTable";
-import { DataGrid, GridColDef, GridValueGetterParams } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  GridColDef,
+  gridColumnsTotalWidthSelector,
+  GridValueGetterParams,
+} from "@mui/x-data-grid";
 import { IMeetingType } from "../Tables/meetingTypeTable";
 import {
   DateTimePicker,
@@ -108,18 +113,18 @@ export default function AddMeetingDialog({
     Authorization: "Bearer " + accessToken,
   };
 
-  useEffect(() => {
-    if (toEdit) {
-      formik.setValues({
-        meetId: toEdit.meetId,
-        meetDatetime: dayjs(toEdit?.meetDatetime).format("YYYY-MM-DD"),
-        meetTypeId: toEdit?.meetTypeId,
-        location: toEdit?.location,
-        calledBy: toEdit?.calledBy,
-        postedBy: toEdit.postedBy,
-      });
-    }
-  }, [toEdit]);
+  // useEffect(() => {
+  //   if (toEdit) {
+  //     formik.setValues({
+  //       meetId: toEdit.meetId,
+  //       meetDatetime: dayjs(toEdit?.meetDatetime).format("YYYY-MM-DD"),
+  //       meetTypeId: toEdit?.meetTypeId,
+  //       location: toEdit?.location,
+  //       calledBy: toEdit?.calledBy,
+  //       postedBy: toEdit.postedBy,
+  //     });
+  //   }
+  // }, [toEdit]);
 
   // useEffect(() => {
   //   if (toEdit) {
@@ -141,11 +146,14 @@ export default function AddMeetingDialog({
     {
       onSuccess(data) {
         if (data) {
+          console.log("data", data);
           agendaFormik.setFieldValue("meetId", data);
+          agendaFormik.values.meetId = data;
+
+          MergeMeetingMinute.mutate(agendaFormik.values);
+          console.log("asa", agendaFormik.values);
+          onAddMeetingSuccessDialog();
         }
-        agendaFormik.values.meetId = data;
-        MergeMeetingMinute.mutate(agendaFormik.values);
-        onAddMeetingSuccessDialog();
       },
     }
   );

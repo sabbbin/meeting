@@ -33,6 +33,8 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { IMeeting } from "../Tables/meeting";
+import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 const FormDialogPaper = (
   props: OverridableComponent<PaperTypeMap<{}, "div">>
@@ -46,11 +48,15 @@ interface ICallByMeetingForm {
 }
 interface AgendaForm {
   agenda: string;
-  postedBy: string;
+
   date: string;
   status: string;
   discussion: string;
-  descion: string;
+  description: string;
+  conclusion: string;
+  postedBy: string;
+  postedOn: string;
+  presenter: string;
 }
 
 interface IAddCallByMeeting {
@@ -64,10 +70,13 @@ interface IGetMinutes {
   agenda: string;
   agendaId: number;
   description: string;
-  presenter: string;
   discussion: string;
   conclusion: string;
+  postedBy: string;
+  postedOn: string;
+  presenter: string;
 }
+
 export default function AddCallByMeeting({
   onDialogClose,
   meeting,
@@ -87,6 +96,7 @@ export default function AddCallByMeeting({
   });
 
   const [showAgenda, setShowAgenda] = useState(-1);
+
   interface IMeetingUser {
     IsSelected: number;
     UserId: number;
@@ -120,6 +130,22 @@ export default function AddCallByMeeting({
     }
   );
 
+  const { data: getMinuteAndHistory, refetch: callMinuteAndHistory } = useQuery(
+    ["getMinutesAndHistory", showAgenda],
+    () =>
+      axios
+        .get("api/Minute/GetMinuteAndHistory", {
+          params: {
+            meetid: meeting.meetId,
+            agendaid: showAgenda,
+          },
+        })
+        .then((res) => res.data),
+    {
+      initialData: [],
+    }
+  );
+
   const { data: getDataMinutes, refetch: callGetMinutes } = useQuery<
     IGetMinutes[]
   >(
@@ -128,7 +154,7 @@ export default function AddCallByMeeting({
       axios
         .get("api/Minute/GetMinute", {
           params: {
-            meetid: meeting.meetTypeId,
+            meetid: meeting.meetId,
           },
           headers: {
             Authorization: "bearer " + accessToken,
@@ -148,6 +174,7 @@ export default function AddCallByMeeting({
     console.log("meeting id", meeting.meetId);
     console.log("meeting", getDataMinutes);
   }, []);
+
   const formikIAgendaForm = useFormik<AgendaForm>({
     initialValues: {
       agenda: "adf",
@@ -155,7 +182,10 @@ export default function AddCallByMeeting({
       date: "2020-03-12",
       status: "active",
       discussion: "this is nice metting",
-      descion: "this is final decision",
+      description: "",
+      conclusion: "this is final decision",
+      postedOn: "",
+      presenter: "",
     },
     onSubmit: () => {},
   });
@@ -214,26 +244,36 @@ export default function AddCallByMeeting({
               }
             />
 
-            <TextField
-              label="meetingTypes"
-              margin="dense"
-              size="small"
-              value={formikICallByMeetingForm.values.meetingTypes}
-            />
-            <TextField
-              label="DateTime"
-              autoFocus
-              margin="dense"
-              size="small"
-              name="meetingDate"
-              value={formikICallByMeetingForm.values.meetingDate}
-              onChange={formikICallByMeetingForm.handleChange}
-              error={
-                formikICallByMeetingForm.touched.meetingDate &&
-                Boolean(formikICallByMeetingForm.errors.meetingDate)
-              }
-              variant="standard"
-            />
+            <Typography>
+              Meeting Types : {formikICallByMeetingForm.values.meetingTypes}
+            </Typography>
+
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DateTimePicker
+                label="Select Date and time"
+                value={formikICallByMeetingForm.values.meetingDate}
+                inputFormat="YYYY-MM-DD    HH:MM:ss A"
+                onChange={(newValue) => {
+                  formikICallByMeetingForm.setFieldValue(
+                    "meetingDate",
+                    newValue
+                  );
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    error={
+                      formikICallByMeetingForm.touched.meetingDate &&
+                      Boolean(formikICallByMeetingForm.errors.meetingDate)
+                    }
+                    helperText={
+                      formikICallByMeetingForm.touched.meetingDate &&
+                      formikICallByMeetingForm.errors.meetingDate
+                    }
+                    {...params}
+                  />
+                )}
+              />
+            </LocalizationProvider>
           </Box>
           <Box
             sx={{
@@ -247,6 +287,8 @@ export default function AddCallByMeeting({
                 marginTop: 5,
                 marginBottom: 5,
                 width: "45%",
+
+                padding: "1px"!,
               }}
             >
               <Table stickyHeader aria-label="sticky table">
@@ -265,8 +307,8 @@ export default function AddCallByMeeting({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {attendMember.map((member) => (
-                    <TableRow>
+                  {attendMember.map((member, id) => (
+                    <TableRow key={id} hover>
                       <TableCell>
                         <Checkbox
                           checked={!member.isAbsences}
@@ -331,36 +373,288 @@ export default function AddCallByMeeting({
             Agenda
           </Typography>
 
-          {getDataMinutes.map((a) => (
+          <Formik
+            initialValues={getDataMinutes}
+            onSubmit={() => {
+              console.log("value");
+            }}
+            render={({ values }) => (
+              <Form>
+                <FieldArray
+                  name="getDataMinutes"
+                  render={
+                    (arrayHelpers) =>
+                      values.map((val) => {
+                        return (
+                          <div>
+                            <Box
+                              sx={{
+                                padding: 5,
+                                paddingBottom: 10,
+                                marginBottom: 2,
+                                border: "2px solid black",
+                                borderRadius: 3,
+                              }}
+                            >
+                              <Box>
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  {showAgenda != val.agendaId ? (
+                                    <KeyboardArrowDownIcon
+                                      sx={{
+                                        fontSize: 45,
+                                      }}
+                                      onClick={() => {
+                                        setShowAgenda(val.agendaId);
+                                        console.log("downarrow", showAgenda);
+                                      }}
+                                    />
+                                  ) : (
+                                    <KeyboardArrowUpIcon
+                                      sx={{
+                                        fontSize: 45,
+                                      }}
+                                      onClick={() => {
+                                        setShowAgenda(-1);
+                                        console.log("uparrao", showAgenda);
+                                      }}
+                                    />
+                                  )}
+
+                                  <Typography variant="subtitle1">
+                                    Title :{val.agenda}
+                                  </Typography>
+                                </Box>
+                                <Typography
+                                  variant="subtitle2"
+                                  sx={{
+                                    display: "block",
+                                    marginLeft: 3,
+                                    marginBottom: 2,
+                                    marginTop: 2,
+                                  }}
+                                >
+                                  Description: {val.description}
+                                </Typography>
+
+                                <Collapse
+                                  in={showAgenda == val.agendaId}
+                                  timeout="auto"
+                                  unmountOnExit
+                                  sx={{
+                                    marginBottom: 2,
+                                    marginLeft: 5,
+                                  }}
+                                >
+                                  {getMinuteAndHistory.length > 0 &&
+                                    getMinuteAndHistory.map((val: any) => (
+                                      <Box
+                                        sx={{
+                                          padding: 2,
+                                        }}
+                                      >
+                                        <Typography>
+                                          Date: {val.meetDatetime}
+                                        </Typography>
+                                        <Typography>
+                                          Discussion : {val.discussion}
+                                        </Typography>
+                                        <Typography>
+                                          Conclusion : {val.conclusion}
+                                        </Typography>
+                                      </Box>
+                                    ))}
+                                </Collapse>
+                              </Box>
+                              <Box
+                                sx={{
+                                  justifyContent: "space-between",
+                                  display: "flex",
+                                  marginBottom: 5,
+                                }}
+                              >
+                                <Typography>
+                                  Posted By: {val.postedBy}
+                                </Typography>
+                                <Typography>
+                                  Created Date: {val.postedOn}
+                                </Typography>
+
+                                <Stack
+                                  direction="row"
+                                  spacing={1}
+                                  alignItems="center"
+                                >
+                                  <Typography>Close</Typography>
+                                  <Switch checked />
+                                  <Typography>Open</Typography>
+                                </Stack>
+                              </Box>
+                              <TextField
+                                label="Discussion"
+                                name="discussion"
+                                size="small"
+                                sx={{
+                                  marginBottom: 3,
+                                }}
+                                multiline
+                                fullWidth
+                                maxRows={4}
+                                onChange={formikIAgendaForm.handleChange}
+                              />
+                              <TextField
+                                label="Decision"
+                                name="descion"
+                                fullWidth
+                                multiline
+                                size="small"
+                                sx={{
+                                  marginBottom: 3,
+                                }}
+                                maxRows={4}
+                                onChange={formikIAgendaForm.handleChange}
+                              />
+                              <TextField
+                                label="PresentedBy"
+                                size="small"
+                                sx={{
+                                  float: "right",
+                                  marginBottom: 1,
+                                }}
+                                value={val.presenter}
+                              />
+                            </Box>
+                          </div>
+                        );
+                      })
+
+                    // <div>
+                    //   <Box
+                    //     sx={{
+                    //       padding: 5,
+                    //       paddingBottom: 10,
+                    //       marginBottom: 2,
+                    //       border: "2px solid black",
+                    //       borderRadius: 3,
+                    //     }}
+                    //   >
+                    //     <Box>
+                    //       <Box
+                    //         sx={{
+                    //           display: "flex",
+                    //         }}
+                    //       >
+                    //         {showAgenda == -1 ? (
+                    //           <KeyboardArrowUpIcon />
+                    //         ) : (
+                    //           <KeyboardArrowDownIcon />
+                    //         )}
+
+                    //         <Typography>Title : {values.agenda}</Typography>
+                    //       </Box>
+
+                    //       <Collapse
+                    //         in={true}
+                    //         timeout="auto"
+                    //         unmountOnExit
+                    //         sx={{
+                    //           marginBottom: 2,
+                    //           marginLeft: 5,
+                    //         }}
+                    //       >
+                    //         <Typography>
+                    //           Discussion : {formikIAgendaForm.values.discussion}
+                    //         </Typography>
+                    //         <Typography>
+                    //           Decision : {formikIAgendaForm.values.descion}
+                    //         </Typography>
+                    //       </Collapse>
+                    //     </Box>
+                    //     <Box
+                    //       sx={{
+                    //         justifyContent: "space-between",
+                    //         display: "flex",
+                    //         marginBottom: 5,
+                    //       }}
+                    //     >
+                    //       <Typography>
+                    //         Posted By: {formikIAgendaForm.values.postedBy}{" "}
+                    //       </Typography>
+                    //       <Typography>
+                    //         Created Date: {formikIAgendaForm.values.date}{" "}
+                    //       </Typography>
+
+                    //       <Stack
+                    //         direction="row"
+                    //         spacing={1}
+                    //         alignItems="center"
+                    //       >
+                    //         <Typography>Close</Typography>
+                    //         <Switch />
+                    //         <Typography>Open</Typography>
+                    //       </Stack>
+                    //     </Box>
+                    //     <TextField
+                    //       label="Discussion"
+                    //       value={formikIAgendaForm.values.discussion}
+                    //       name="discussion"
+                    //       size="small"
+                    //       sx={{
+                    //         marginBottom: 3,
+                    //       }}
+                    //       multiline
+                    //       fullWidth
+                    //       maxRows={4}
+                    //       onChange={formikIAgendaForm.handleChange}
+                    //     />
+                    //     <TextField
+                    //       label="Decision"
+                    //       name="descion"
+                    //       fullWidth
+                    //       multiline
+                    //       size="small"
+                    //       value={formikIAgendaForm.values.descion}
+                    //       sx={{
+                    //         marginBottom: 3,
+                    //       }}
+                    //       maxRows={4}
+                    //       onChange={formikIAgendaForm.handleChange}
+                    //     />
+                    //     <TextField
+                    //       label="PresentedBy"
+                    //       size="small"
+                    //       sx={{
+                    //         float: "right",
+                    //         marginBottom: 1,
+                    //       }}
+                    //     />
+                    //   </Box>
+
+                    //   <div>
+                    //     <button type="submit">Submit</button>
+                    //   </div>
+                    // </div>
+                  }
+                />
+              </Form>
+            )}
+          />
+
+          {/* {getDataMinutes.map((minute) => (
             <Box
               sx={{
-                padding: 2,
+                padding: 5,
+                paddingBottom: 10,
                 marginBottom: 2,
+                border: "2px solid black",
+                borderRadius: 3,
               }}
             >
-              <Box
-                sx={{
-                  justifyContent: "space-between",
-                  display: "flex",
-                  marginBottom: 3,
-                }}
-              >
-                <TextField
-                  label="posted by"
-                  value={formikIAgendaForm.values.postedBy}
-                  size="small"
-                />
-                <TextField
-                  label="Date"
-                  value={formikIAgendaForm.values.date}
-                  size="small"
-                />
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Typography>Close</Typography>
-                  <Switch />
-                  <Typography>Open</Typography>
-                </Stack>
-              </Box>
               <Box>
                 <Box
                   sx={{
@@ -373,16 +667,7 @@ export default function AddCallByMeeting({
                     <KeyboardArrowDownIcon />
                   )}
 
-                  <TextField
-                    label="agenda"
-                    value={formikIAgendaForm.values.agenda}
-                    fullWidth
-                    sx={{
-                      marginBottom: 2,
-                      marginLeft: 2,
-                    }}
-                    size="small"
-                  />
+                  <Typography>Title : {minute.agenda}</Typography>
                 </Box>
 
                 <Collapse
@@ -394,33 +679,33 @@ export default function AddCallByMeeting({
                     marginLeft: 5,
                   }}
                 >
-                  <TextField
-                    label="Discussion"
-                    value={formikIAgendaForm.values.discussion}
-                    name="discussion"
-                    size="small"
-                    sx={{
-                      marginBottom: 3,
-                    }}
-                    multiline
-                    fullWidth
-                    maxRows={4}
-                    onChange={formikIAgendaForm.handleChange}
-                  />
-                  <TextField
-                    label="Decision"
-                    name="descion"
-                    fullWidth
-                    multiline
-                    size="small"
-                    value={formikIAgendaForm.values.descion}
-                    sx={{
-                      marginBottom: 3,
-                    }}
-                    maxRows={4}
-                    onChange={formikIAgendaForm.handleChange}
-                  />
+                  <Typography>
+                    Discussion : {formikIAgendaForm.values.discussion}
+                  </Typography>
+                  <Typography>
+                    Decision : {formikIAgendaForm.values.descion}
+                  </Typography>
                 </Collapse>
+              </Box>
+              <Box
+                sx={{
+                  justifyContent: "space-between",
+                  display: "flex",
+                  marginBottom: 5,
+                }}
+              >
+                <Typography>
+                  Posted By: {formikIAgendaForm.values.postedBy}{" "}
+                </Typography>
+                <Typography>
+                  Created Date: {formikIAgendaForm.values.date}{" "}
+                </Typography>
+
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Typography>Close</Typography>
+                  <Switch />
+                  <Typography>Open</Typography>
+                </Stack>
               </Box>
               <TextField
                 label="Discussion"
@@ -453,10 +738,11 @@ export default function AddCallByMeeting({
                 size="small"
                 sx={{
                   float: "right",
+                  marginBottom: 1,
                 }}
               />
             </Box>
-          ))}
+          ))} */}
         </CardContent>
         <Box
           sx={{
