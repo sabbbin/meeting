@@ -32,7 +32,7 @@ import AddMeetingDrawer from "../drawer/addMemberDrawer";
 import AddMeetingDialog from "../dialog/addMeeting";
 
 export interface IMeeting {
-  meetId?: number;
+  meetId?: number | undefined;
   meetDatetime: string | undefined;
   meetTypeId: number | undefined;
   location: string | undefined;
@@ -103,6 +103,9 @@ export default function Meeting() {
 
   let userId = localStorage.getItem("userId");
 
+  let sortCol = 'Location'
+  let sortOrder = 'dsc'
+
 
   const { pagination, handlePageNumberChange, handlePageSizeChange } =
     usePagination({
@@ -110,16 +113,18 @@ export default function Meeting() {
       pageSize: 10,
     });
 
-  const { data: meetingData } = useMeeting(pagination.pageNumber, pagination.pageSize, userId, {
+  const { data: meetingData, refetch } = useMeeting(pagination.pageNumber, pagination.pageSize, userId, sortCol, sortOrder, {
     params: {
       pageSize: pagination.pageSize,
       pageNo: pagination.pageNumber + 1,
       userId: userId,
+      sortCol: sortCol, sortOrder: sortOrder,
     },
     headers: {
       Authorization: "Bearer " + accessToken,
     },
   })
+
 
   const { data: meetingCountData } = useMeetingTypeCount(userId, {
     params: {
@@ -131,10 +136,6 @@ export default function Meeting() {
   })
 
   const columns = useMemo(() => [
-    // columnHelper.accessor("meetId", {
-    //   header: 'Meet ID',
-    //   cell: (info) => info.getValue(),
-    // }),
     columnHelper.accessor("meetDatetime", {
       header: 'Date',
       cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY h:mm A"),
@@ -157,7 +158,7 @@ export default function Meeting() {
     }),
     columnHelper.accessor((row) => row, {
       header: "Actions",
-      cell: (info) => (
+      cell: (info) => (info.getValue().status === 'Pending' &&
         <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
           <MoreVertIcon />
         </IconButton>
@@ -167,6 +168,29 @@ export default function Meeting() {
     []
   );
 
+  type deleteId = number;
+  const { mutate: deleteMutatae } = useMutation<unknown, unknown, deleteId>(
+    (deleteId) =>
+      axios
+        .delete('/api/Meeting/', {
+          params: { meetId: isForMenu?.meetId },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + accessToken,
+          },
+        })
+        .then((res) => res.data),
+    {
+      onSuccess: () => {
+        refetch();
+      },
+    }
+  );
+
+  const handleDelete = () => {
+    const deleteId = isForMenu?.meetId;
+    deleteMutatae(deleteId!);
+  }
   const table = useReactTable({
     data: meetingData,
     columns,
@@ -259,9 +283,8 @@ export default function Meeting() {
           </MenuItem>
           <MenuItem
             onClick={() => {
-              setIsDialogOpen(true);
-              handleClose();
-              mutate();
+              handleDelete();
+              handleCloseMenu();
             }}
           >
             Delete

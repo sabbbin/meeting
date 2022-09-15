@@ -54,7 +54,7 @@ interface AddMeeting extends DialogProps {
 
 
 interface AgendaRow {
-  meetId: number,
+  meetId: number | undefined,
   agendaIds: string[]
 }
 interface IGetAgenda {
@@ -69,7 +69,7 @@ interface IGetAgenda {
 const columnHelper = createColumnHelper<IGetAgenda>();
 
 const validationSchema = yup.object({
-  meetDatetime: yup.string().required("Please select a date"),
+  meetDatetime: yup.string(),
   meetTypeId: yup.number().required("id req"),
   location: yup.string().required("Please provide a location"),
   calledBy: yup.string().required("Please provide a Name"),
@@ -106,6 +106,30 @@ export default function AddMeetingDialog({
   const headers = {
     Authorization: "Bearer " + accessToken,
   };
+
+  useEffect(() => {
+    if (toEdit) {
+      formik.setValues({
+        meetId: toEdit.meetId,
+        meetDatetime: dayjs(toEdit?.meetDatetime).format("YYYY-MM-DD"),
+        meetTypeId: toEdit?.meetTypeId,
+        location: toEdit?.location,
+        calledBy: toEdit?.calledBy,
+        postedBy: toEdit.postedBy
+
+      });
+    }
+  }, [toEdit]);
+
+  // useEffect(() => {
+  //   if (toEdit) {
+  //     agendaFormik.setValues({
+  //       meetId: toEdit.meetId,
+  //       agendaIds: toEdit.agendaIds,
+
+  //     })
+  //   }
+  // })
 
   const CreateMeetingData = useMutation<number, unknown, IMeeting>(
     async (data) =>
@@ -160,25 +184,13 @@ export default function AddMeetingDialog({
       meetId: 0,
       agendaIds: []
     },
-    onSubmit: (values) => {
-
+    onSubmit: () => {
     }
   })
 
 
 
-  // useEffect(() => {
-  //   if (toEdit) {
-  //     formik.setValues({
-  //       meetId: toEdit?.meetId,
-  //       meetDatetime: dayjs(toEdit?.meetDatetime).format("YYYY-MM-DD"),
-  //       meetTypeId: toEdit?.meetTypeId,
-  //       location: toEdit?.location,
-  //       calledBy: toEdit?.calledBy,
-  //       ,
-  //     });
-  //   }
-  // }, [toEdit]);
+
 
 
   let userId = localStorage.getItem("userId");
@@ -223,6 +235,25 @@ export default function AddMeetingDialog({
       </Tooltip>,
       footer: (info) => info.column.id,
     }),
+    columnHelper.accessor("description", {
+      header: "Desription",
+      cell: (info) => <Tooltip title={info.getValue()}>
+        <Typography
+          sx={{
+            width: "150px",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {info.getValue()}
+        </Typography>
+      </Tooltip>,
+    }),
+    columnHelper.accessor("postedBy", {
+      header: "Posted By",
+      cell: (info) => info.getValue()
+    })
   ]
 
   const table = useReactTable({

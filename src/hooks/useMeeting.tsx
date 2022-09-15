@@ -7,10 +7,14 @@ function useMeeting(
     pageSize: number,
     pageNumber: number,
     userId: string | null,
-    axiosConfig: AxiosRequestConfig
+    sortCol: string,
+    sortOrder: string,
+
+    axiosConfig: AxiosRequestConfig,
+
 ) {
     return useQuery<IMeeting[]>(
-        ["meeting", pageSize, pageNumber, userId],
+        ["meeting", pageSize, pageNumber, userId, sortCol, sortOrder],
         async () =>
             await axios.get("api/Meeting", axiosConfig).then((res) => res.data),
         { initialData: [] }
