@@ -45,7 +45,12 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { IAgenda } from "../Tables/agendaTable";
-import { DataGrid, GridColDef, GridValueGetterParams } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  GridColDef,
+  gridColumnsTotalWidthSelector,
+  GridValueGetterParams,
+} from "@mui/x-data-grid";
 import { IMeetingType } from "../Tables/meetingTypeTable";
 import {
   DateTimePicker,
@@ -164,6 +169,7 @@ export default function AddMeetingDialog({
     {
       onSuccess(data) {
         if (data) {
+          console.log("data", data);
           agendaFormik.setFieldValue("meetId", data);
         }
         agendaFormik.values.meetId = data;
