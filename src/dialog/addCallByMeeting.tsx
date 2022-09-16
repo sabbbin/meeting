@@ -9,6 +9,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  IconButton,
   Paper,
   PaperTypeMap,
   Select,
@@ -81,6 +82,15 @@ export default function AddCallByMeeting({
   onDialogClose,
   meeting,
 }: IAddCallByMeeting) {
+  console.log("meeting", meeting);
+  useEffect(() => {
+    getUserMeetingType.refetch();
+    console.log("meeting", getUserMeetingType.data);
+
+    console.log("meeting id", meeting.meetId);
+    console.log("meeting getdata", getDataMinutes);
+  }, []);
+
   const formikICallByMeetingForm = useFormik<ICallByMeetingForm>({
     initialValues: {
       meetingDate: dayjs(meeting.meetDatetime)
@@ -96,6 +106,7 @@ export default function AddCallByMeeting({
   });
 
   const [showAgenda, setShowAgenda] = useState(-1);
+  const [callMinutesHistoryFlag, setCallMinutesHistoryFlag] = useState(false);
 
   interface IMeetingUser {
     IsSelected: number;
@@ -130,8 +141,28 @@ export default function AddCallByMeeting({
     }
   );
 
-  const { data: getMinuteAndHistory, refetch: callMinuteAndHistory } = useQuery(
-    ["getMinutesAndHistory", showAgenda],
+  const { data: getDataMinutes, refetch: callGetMinutes } = useQuery<
+    IGetMinutes[]
+  >(
+    ["getMinutes"],
+    async () =>
+      await axios
+        .get("api/Minute/GetMinute", {
+          params: {
+            meetid: meeting.meetId,
+          },
+          headers: {
+            Authorization: "bearer " + accessToken,
+          },
+        })
+        .then((res) => res.data),
+    {
+      initialData: [],
+    }
+  );
+
+  const { data: getMinuteAndHistory } = useQuery(
+    ["getMinutesAndHistory", callMinutesHistoryFlag],
     () =>
       axios
         .get("api/Minute/GetMinuteAndHistory", {
@@ -146,54 +177,7 @@ export default function AddCallByMeeting({
     }
   );
 
-  const { data: getDataMinutes, refetch: callGetMinutes } = useQuery<
-    IGetMinutes[]
-  >(
-    ["getMinutes", showAgenda],
-    () =>
-      axios
-        .get("api/Minute/GetMinute", {
-          params: {
-            meetid: meeting.meetId,
-          },
-          headers: {
-            Authorization: "bearer " + accessToken,
-          },
-        })
-        .then((res) => res.data),
-    {
-      initialData: [],
-    }
-  );
-  useEffect(() => {
-    callGetMinutes();
-    getUserMeetingType.refetch();
-    console.log("meeting", getUserMeetingType.data);
-
-    console.log("meeting", meeting);
-    console.log("meeting id", meeting.meetId);
-    console.log("meeting", getDataMinutes);
-  }, []);
-
-  const formikIAgendaForm = useFormik<AgendaForm>({
-    initialValues: {
-      agenda: "adf",
-      postedBy: "ram kumar",
-      date: "2020-03-12",
-      status: "active",
-      discussion: "this is nice metting",
-      description: "",
-      conclusion: "this is final decision",
-      postedOn: "",
-      presenter: "",
-    },
-    onSubmit: () => {},
-  });
-
-  const submitConclusion = (e: any) => {
-    e.preventDefault();
-    console.log("attendence", attendMember);
-  };
+  console.log("meeting", meeting);
 
   return (
     <Dialog
@@ -374,402 +358,229 @@ export default function AddCallByMeeting({
           </Typography>
 
           <Formik
-            initialValues={getDataMinutes}
-            onSubmit={() => {
-              console.log("value");
+            enableReinitialize
+            initialValues={{ forms: getDataMinutes }}
+            onSubmit={(values) => {
+              console.log("getData", values);
             }}
-            render={({ values }) => (
+            render={({ values, setFieldValue }) => (
               <Form>
                 <FieldArray
                   name="getDataMinutes"
-                  render={
-                    (arrayHelpers) =>
-                      values.map((val) => {
-                        return (
-                          <div>
-                            <Box
-                              sx={{
-                                padding: 5,
-                                paddingBottom: 10,
-                                marginBottom: 2,
-                                border: "2px solid black",
-                                borderRadius: 3,
-                              }}
-                            >
-                              <Box>
-                                <Box
-                                  sx={{
-                                    display: "flex",
-                                    justifyContent: "center",
-                                    alignItems: "center",
+                  render={() =>
+                    values.forms.map((value, index) => {
+                      return (
+                        <div>
+                          <Field
+                            key={index}
+                            component={Box}
+                            name={`getDateMinutes.${index}`}
+                            sx={{
+                              padding: 5,
+                              paddingBottom: 10,
+                              marginBottom: 2,
+                              border: "2px solid black",
+                              borderRadius: 3,
+                            }}
+                          >
+                            <Box>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "center",
+                                  alignItems: "center",
+                                }}
+                              >
+                                <IconButton
+                                  onClick={() => {
+                                    if (showAgenda !== value.agendaId) {
+                                      setShowAgenda(value.agendaId);
+                                      setCallMinutesHistoryFlag(
+                                        !callMinutesHistoryFlag
+                                      );
+                                    } else {
+                                      setShowAgenda(-1);
+                                    }
                                   }}
                                 >
-                                  {showAgenda != val.agendaId ? (
+                                  {showAgenda != value.agendaId ? (
                                     <KeyboardArrowDownIcon
                                       sx={{
                                         fontSize: 45,
-                                      }}
-                                      onClick={() => {
-                                        setShowAgenda(val.agendaId);
-                                        console.log("downarrow", showAgenda);
                                       }}
                                     />
                                   ) : (
                                     <KeyboardArrowUpIcon
                                       sx={{
                                         fontSize: 45,
-                                      }}
-                                      onClick={() => {
-                                        setShowAgenda(-1);
-                                        console.log("uparrao", showAgenda);
+                                        color: "red",
                                       }}
                                     />
                                   )}
+                                </IconButton>
 
-                                  <Typography variant="subtitle1">
-                                    Title :{val.agenda}
-                                  </Typography>
-                                </Box>
-                                <Typography
-                                  variant="subtitle2"
-                                  sx={{
-                                    display: "block",
-                                    marginLeft: 3,
-                                    marginBottom: 2,
-                                    marginTop: 2,
-                                  }}
-                                >
-                                  Description: {val.description}
+                                <Typography variant="subtitle1">
+                                  Title :{value.agenda}
                                 </Typography>
-
-                                <Collapse
-                                  in={showAgenda == val.agendaId}
-                                  timeout="auto"
-                                  unmountOnExit
-                                  sx={{
-                                    marginBottom: 2,
-                                    marginLeft: 5,
-                                  }}
-                                >
-                                  {getMinuteAndHistory.length > 0 &&
-                                    getMinuteAndHistory.map((val: any) => (
-                                      <Box
-                                        sx={{
-                                          padding: 2,
-                                        }}
-                                      >
-                                        <Typography>
-                                          Date: {val.meetDatetime}
-                                        </Typography>
-                                        <Typography>
-                                          Discussion : {val.discussion}
-                                        </Typography>
-                                        <Typography>
-                                          Conclusion : {val.conclusion}
-                                        </Typography>
-                                      </Box>
-                                    ))}
-                                </Collapse>
                               </Box>
-                              <Box
+                              <Typography
+                                variant="subtitle2"
                                 sx={{
-                                  justifyContent: "space-between",
-                                  display: "flex",
-                                  marginBottom: 5,
+                                  display: "block",
+                                  marginLeft: 3,
+                                  marginBottom: 2,
+                                  marginTop: 2,
                                 }}
                               >
-                                <Typography>
-                                  Posted By: {val.postedBy}
-                                </Typography>
-                                <Typography>
-                                  Created Date: {val.postedOn}
-                                </Typography>
+                                Description: {value.description}
+                              </Typography>
 
-                                <Stack
-                                  direction="row"
-                                  spacing={1}
-                                  alignItems="center"
-                                >
-                                  <Typography>Close</Typography>
-                                  <Switch checked />
-                                  <Typography>Open</Typography>
-                                </Stack>
-                              </Box>
-                              <TextField
-                                label="Discussion"
-                                name="discussion"
-                                size="small"
+                              <Collapse
+                                in={showAgenda == value.agendaId}
+                                timeout="auto"
+                                unmountOnExit
                                 sx={{
-                                  marginBottom: 3,
+                                  marginBottom: 2,
+                                  marginLeft: 5,
                                 }}
-                                multiline
-                                fullWidth
-                                maxRows={4}
-                                onChange={formikIAgendaForm.handleChange}
-                              />
-                              <TextField
-                                label="Decision"
-                                name="descion"
-                                fullWidth
-                                multiline
-                                size="small"
-                                sx={{
-                                  marginBottom: 3,
-                                }}
-                                maxRows={4}
-                                onChange={formikIAgendaForm.handleChange}
-                              />
-                              <TextField
-                                label="PresentedBy"
-                                size="small"
-                                sx={{
-                                  float: "right",
-                                  marginBottom: 1,
-                                }}
-                                value={val.presenter}
-                              />
+                              >
+                                {getMinuteAndHistory.length > 0 &&
+                                  getMinuteAndHistory.map((val: any) => (
+                                    <Box
+                                      sx={{
+                                        padding: 2,
+                                      }}
+                                    >
+                                      <Typography>
+                                        Date: {val.meetDatetime}
+                                      </Typography>
+                                      <Typography>
+                                        Discussion : {val.discussion}
+                                      </Typography>
+                                      <Typography>
+                                        Conclusion : {val.conclusion}
+                                      </Typography>
+                                    </Box>
+                                  ))}
+                              </Collapse>
                             </Box>
-                          </div>
-                        );
-                      })
+                            <Box
+                              sx={{
+                                justifyContent: "space-between",
+                                display: "flex",
+                                marginBottom: 5,
+                              }}
+                            >
+                              <Typography>
+                                Posted By: {value.postedBy}
+                              </Typography>
+                              <Typography>
+                                Created Date: {value.postedOn}
+                              </Typography>
 
-                    // <div>
-                    //   <Box
-                    //     sx={{
-                    //       padding: 5,
-                    //       paddingBottom: 10,
-                    //       marginBottom: 2,
-                    //       border: "2px solid black",
-                    //       borderRadius: 3,
-                    //     }}
-                    //   >
-                    //     <Box>
-                    //       <Box
-                    //         sx={{
-                    //           display: "flex",
-                    //         }}
-                    //       >
-                    //         {showAgenda == -1 ? (
-                    //           <KeyboardArrowUpIcon />
-                    //         ) : (
-                    //           <KeyboardArrowDownIcon />
-                    //         )}
-
-                    //         <Typography>Title : {values.agenda}</Typography>
-                    //       </Box>
-
-                    //       <Collapse
-                    //         in={true}
-                    //         timeout="auto"
-                    //         unmountOnExit
-                    //         sx={{
-                    //           marginBottom: 2,
-                    //           marginLeft: 5,
-                    //         }}
-                    //       >
-                    //         <Typography>
-                    //           Discussion : {formikIAgendaForm.values.discussion}
-                    //         </Typography>
-                    //         <Typography>
-                    //           Decision : {formikIAgendaForm.values.descion}
-                    //         </Typography>
-                    //       </Collapse>
-                    //     </Box>
-                    //     <Box
-                    //       sx={{
-                    //         justifyContent: "space-between",
-                    //         display: "flex",
-                    //         marginBottom: 5,
-                    //       }}
-                    //     >
-                    //       <Typography>
-                    //         Posted By: {formikIAgendaForm.values.postedBy}{" "}
-                    //       </Typography>
-                    //       <Typography>
-                    //         Created Date: {formikIAgendaForm.values.date}{" "}
-                    //       </Typography>
-
-                    //       <Stack
-                    //         direction="row"
-                    //         spacing={1}
-                    //         alignItems="center"
-                    //       >
-                    //         <Typography>Close</Typography>
-                    //         <Switch />
-                    //         <Typography>Open</Typography>
-                    //       </Stack>
-                    //     </Box>
-                    //     <TextField
-                    //       label="Discussion"
-                    //       value={formikIAgendaForm.values.discussion}
-                    //       name="discussion"
-                    //       size="small"
-                    //       sx={{
-                    //         marginBottom: 3,
-                    //       }}
-                    //       multiline
-                    //       fullWidth
-                    //       maxRows={4}
-                    //       onChange={formikIAgendaForm.handleChange}
-                    //     />
-                    //     <TextField
-                    //       label="Decision"
-                    //       name="descion"
-                    //       fullWidth
-                    //       multiline
-                    //       size="small"
-                    //       value={formikIAgendaForm.values.descion}
-                    //       sx={{
-                    //         marginBottom: 3,
-                    //       }}
-                    //       maxRows={4}
-                    //       onChange={formikIAgendaForm.handleChange}
-                    //     />
-                    //     <TextField
-                    //       label="PresentedBy"
-                    //       size="small"
-                    //       sx={{
-                    //         float: "right",
-                    //         marginBottom: 1,
-                    //       }}
-                    //     />
-                    //   </Box>
-
-                    //   <div>
-                    //     <button type="submit">Submit</button>
-                    //   </div>
-                    // </div>
+                              <Stack
+                                direction="row"
+                                spacing={1}
+                                alignItems="center"
+                              >
+                                <Typography>Close</Typography>
+                                <Switch checked />
+                                <Typography>Open</Typography>
+                              </Stack>
+                            </Box>
+                            <Field
+                              component={TextField}
+                              label="Discussion"
+                              name={`forms.${index}.discussion`}
+                              size="small"
+                              sx={{
+                                marginBottom: 3,
+                              }}
+                              multiline
+                              fullWidth
+                              maxRows={4}
+                              defaultValue={value.discussion}
+                              onChange={(
+                                v: React.ChangeEvent<HTMLInputElement>
+                              ) => {
+                                setFieldValue(
+                                  `forms.${index}.discussion`,
+                                  v.target.value
+                                );
+                              }}
+                            />
+                            <Field
+                              component={TextField}
+                              label="Conclusion"
+                              defaultValue={value.conclusion}
+                              name={`forms.${index}.conclusion`}
+                              fullWidth
+                              multiline
+                              size="small"
+                              sx={{
+                                marginBottom: 3,
+                              }}
+                              maxRows={4}
+                              onChange={(
+                                v: React.ChangeEvent<HTMLInputElement>
+                              ) => {
+                                setFieldValue(
+                                  `forms.${index}.conclusion`,
+                                  v.target.value
+                                );
+                              }}
+                            />
+                            <Field
+                              component={TextField}
+                              label="PresentedBy"
+                              name={`forms.${index}.presentedBy`}
+                              size="small"
+                              sx={{
+                                float: "right",
+                                marginBottom: 1,
+                              }}
+                              defaultValue={value.presenter}
+                              onChange={(
+                                v: React.ChangeEvent<HTMLInputElement>
+                              ) => {
+                                setFieldValue(
+                                  `forms.${index}.presentedBy`,
+                                  v.target.value
+                                );
+                              }}
+                            />
+                          </Field>
+                        </div>
+                      );
+                    })
                   }
                 />
-              </Form>
-            )}
-          />
-
-          {/* {getDataMinutes.map((minute) => (
-            <Box
-              sx={{
-                padding: 5,
-                paddingBottom: 10,
-                marginBottom: 2,
-                border: "2px solid black",
-                borderRadius: 3,
-              }}
-            >
-              <Box>
                 <Box
                   sx={{
                     display: "flex",
+                    justifyContent: "flex-end",
                   }}
                 >
-                  {showAgenda == -1 ? (
-                    <KeyboardArrowUpIcon />
-                  ) : (
-                    <KeyboardArrowDownIcon />
-                  )}
-
-                  <Typography>Title : {minute.agenda}</Typography>
+                  <Button
+                    variant="contained"
+                    type="submit"
+                    sx={{ marginRight: 2 }}
+                  >
+                    submit
+                  </Button>
+                  <Button variant="contained" onClick={() => onDialogClose()}>
+                    Cancle
+                  </Button>
                 </Box>
-
-                <Collapse
-                  in={true}
-                  timeout="auto"
-                  unmountOnExit
-                  sx={{
-                    marginBottom: 2,
-                    marginLeft: 5,
-                  }}
-                >
-                  <Typography>
-                    Discussion : {formikIAgendaForm.values.discussion}
-                  </Typography>
-                  <Typography>
-                    Decision : {formikIAgendaForm.values.descion}
-                  </Typography>
-                </Collapse>
-              </Box>
-              <Box
-                sx={{
-                  justifyContent: "space-between",
-                  display: "flex",
-                  marginBottom: 5,
-                }}
-              >
-                <Typography>
-                  Posted By: {formikIAgendaForm.values.postedBy}{" "}
-                </Typography>
-                <Typography>
-                  Created Date: {formikIAgendaForm.values.date}{" "}
-                </Typography>
-
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Typography>Close</Typography>
-                  <Switch />
-                  <Typography>Open</Typography>
-                </Stack>
-              </Box>
-              <TextField
-                label="Discussion"
-                value={formikIAgendaForm.values.discussion}
-                name="discussion"
-                size="small"
-                sx={{
-                  marginBottom: 3,
-                }}
-                multiline
-                fullWidth
-                maxRows={4}
-                onChange={formikIAgendaForm.handleChange}
-              />
-              <TextField
-                label="Decision"
-                name="descion"
-                fullWidth
-                multiline
-                size="small"
-                value={formikIAgendaForm.values.descion}
-                sx={{
-                  marginBottom: 3,
-                }}
-                maxRows={4}
-                onChange={formikIAgendaForm.handleChange}
-              />
-              <TextField
-                label="PresentedBy"
-                size="small"
-                sx={{
-                  float: "right",
-                  marginBottom: 1,
-                }}
-              />
-            </Box>
-          ))} */}
+              </Form>
+            )}
+          />
         </CardContent>
         <Box
           sx={{
             marginBottom: 5,
           }}
-        >
-          <Button
-            sx={{
-              float: "right",
-              marginLeft: 2,
-            }}
-            variant="contained"
-            onClick={onDialogClose}
-          >
-            Cancel
-          </Button>
-
-          <Button
-            sx={{
-              float: "right",
-            }}
-            variant="contained"
-            onClick={submitConclusion}
-          >
-            Submit
-          </Button>
-        </Box>
+        ></Box>
       </DialogContent>
     </Dialog>
   );

@@ -33,7 +33,7 @@ import {
   getSortedRowModel,
 } from "@tanstack/react-table";
 import dayjs from "dayjs";
-import { MouseEvent, useMemo, useState } from "react";
+import { MouseEvent, useEffect, useMemo, useState } from "react";
 // import AddMeetingDialog from "../dialog/addMeeting";
 import axios from "axios";
 import useMeeting from "../hooks/useMeeting";
@@ -68,7 +68,7 @@ const columnHelper = createColumnHelper<IMeeting>();
 
 export default function Meeting() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [open, setOpen] = useState(false);
+  const [flagForCallMinutes, setFlagForCallMInutes] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [page, setPage] = useState(1);
@@ -318,13 +318,13 @@ export default function Meeting() {
     conclusion: string;
   }
 
-  const { data: getMinutes, refetch: getRefetch } = useQuery<IGetMinutes[]>(
-    ["getMinutes", showAgenda],
+  const getMinutes = useQuery<IGetMinutes[]>(
+    ["getMinutes", flagForCallMinutes],
     () =>
       axios
         .get("api/Minute/GetMinute", {
           params: {
-            meetid: showAgenda,
+            meetid: 4,
           },
           headers: {
             Authorization: "bearer " + accessToken,
@@ -404,7 +404,9 @@ export default function Meeting() {
                       }}
                     >
                       {filterOptions.map((col, i) => (
-                        <MenuItem value={col.field}>{col.field}</MenuItem>
+                        <MenuItem key={i} value={col.field}>
+                          {col.field}
+                        </MenuItem>
                       ))}
                     </Select>
                     <Select
@@ -426,8 +428,10 @@ export default function Meeting() {
                       {(
                         filterOptions.find((op) => op.field === filterField)
                           ?.options ?? []
-                      ).map((col) => (
-                        <MenuItem value={col}>{col}</MenuItem>
+                      ).map((col, i) => (
+                        <MenuItem key={i} value={col}>
+                          {col}
+                        </MenuItem>
                       ))}
                     </Select>
 
@@ -587,12 +591,12 @@ export default function Meeting() {
                           aria-label="expand row"
                           size="small"
                           onClick={() => {
-                            setShowAgenda(
-                              row.original.meetId == showAgenda
-                                ? -1
-                                : row.original.meetId!
-                            ),
-                              getRefetch();
+                            if (showAgenda == row.original.meetId) {
+                              setShowAgenda(-1);
+                            } else {
+                              setShowAgenda(row.original.meetId);
+                              setFlagForCallMInutes(!flagForCallMinutes);
+                            }
                           }}
                         >
                           {showAgenda == row.original.meetId ? (
@@ -622,7 +626,7 @@ export default function Meeting() {
                           timeout="auto"
                           unmountOnExit
                         >
-                          {getMinutes.length == 0 ? (
+                          {getMinutes.data.length == 0 ? (
                             <Box
                               sx={{
                                 margin: 3,
@@ -660,8 +664,8 @@ export default function Meeting() {
                                   </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                  {getMinutes.length > 0 &&
-                                    getMinutes.map((minute, id) => (
+                                  {getMinutes.data.length > 0 &&
+                                    getMinutes.data.map((minute, id) => (
                                       <TableRow key={id}>
                                         <TableCell component="th" scope="row">
                                           <Tooltip title={minute.agenda}>

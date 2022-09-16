@@ -12,8 +12,7 @@ function useAgenda(
 ) {
   return useQuery<IAgenda[]>(
     ["Agenda", pageSize, pageNumber, userId, sortCol, axiosConfig],
-    async () =>
-      await axios.get("api/MeetingAgenda", axiosConfig).then((res) => res.data),
+    () => axios.get("api/MeetingAgenda", axiosConfig).then((res) => res.data),
     { initialData: [] }
   );
 }
