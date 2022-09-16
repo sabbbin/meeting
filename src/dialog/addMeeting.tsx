@@ -58,11 +58,13 @@ interface AddMeeting extends DialogProps {
   onAddMeetingDiscardDialog: () => void;
   onAddMeetingSuccessDialog: () => void;
   toEditAddMeeting: IMeeting;
+  // toEditAgenda: AgendaRow;
+
 }
 
-interface AgendaRow {
+export interface AgendaRow {
   meetId: number | undefined;
-  agendaIds: string[];
+  agendaIds: string[] | undefined;
 }
 interface IGetAgenda {
   isSelected: boolean;
@@ -76,6 +78,7 @@ interface IGetAgenda {
 const columnHelper = createColumnHelper<IGetAgenda>();
 
 const validationSchema = yup.object({
+  meetId: yup.number(),
   meetDatetime: yup.string(),
   meetTypeId: yup.number().required("id req"),
   location: yup.string().required("Please provide a location"),
@@ -83,10 +86,10 @@ const validationSchema = yup.object({
   postedBy: yup.number(),
 });
 
-const agendaValidationSchema = yup.object({
-  meetId: yup.number().required("required"),
-  agendaIds: yup.array().required("required"),
-});
+// const agendaValidationSchema = yup.object({
+//   meetId: yup.number().required("required"),
+//   agendaIds: yup.array().required("required"),
+// });
 
 type FormData = yup.TypeOf<typeof validationSchema>;
 
@@ -98,7 +101,7 @@ export default function AddMeetingDialog({
   onAddMeetingSuccessDialog,
   onAddMeetingDiscardDialog,
   toEditAddMeeting: toEdit,
-  open,
+
 }: AddMeeting) {
   let access_token = localStorage.getItem("access_token");
 
@@ -111,7 +114,7 @@ export default function AddMeetingDialog({
   useEffect(() => {
     if (toEdit) {
       formik.setValues({
-        meetId: toEdit.meetId,
+        meetId: toEdit?.meetId,
         meetDatetime: dayjs(toEdit?.meetDatetime).format("YYYY-MM-DD"),
         meetTypeId: toEdit?.meetTypeId,
         location: toEdit?.location,
@@ -122,7 +125,7 @@ export default function AddMeetingDialog({
   }, [toEdit]);
 
   // useEffect(() => {
-  //   if (toEdit) {
+  //   if (toEditAgenda) {
   //     agendaFormik.setValues({
   //       meetId: toEdit.meetId,
   //       agendaIds: toEdit.agendaIds,
@@ -130,6 +133,26 @@ export default function AddMeetingDialog({
   //     })
   //   }
   // })
+
+
+  const UpdateMeetingData = useMutation<number, unknown, IMeeting>(
+    async (data) =>
+      await axios
+        .put("api/Meeting", data, {
+          headers: headers,
+        })
+        .then((res) => res.data),
+    {
+      onSuccess(data) {
+        if (data) {
+          agendaFormik.setFieldValue("meetId", data);
+        }
+        agendaFormik.values.meetId = data;
+        MergeMeetingMinute.mutate(agendaFormik.values);
+        onAddMeetingSuccessDialog();
+
+      },
+    })
 
   const CreateMeetingData = useMutation<number, unknown, IMeeting>(
     async (data) =>
@@ -146,6 +169,7 @@ export default function AddMeetingDialog({
         agendaFormik.values.meetId = data;
         MergeMeetingMinute.mutate(agendaFormik.values);
         onAddMeetingSuccessDialog();
+
       },
     }
   );
@@ -166,6 +190,7 @@ export default function AddMeetingDialog({
 
   const formik = useFormik<FormData>({
     initialValues: {
+      meetId: 0,
       meetDatetime: dayjs().format(),
       meetTypeId: 0,
       location: "",
@@ -174,7 +199,12 @@ export default function AddMeetingDialog({
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
-      CreateMeetingData.mutate(values);
+      if (toEdit) {
+
+        UpdateMeetingData.mutate(values)
+      } else {
+        CreateMeetingData.mutate(values);
+      }
     },
   });
 
@@ -183,14 +213,14 @@ export default function AddMeetingDialog({
       meetId: 0,
       agendaIds: [],
     },
-    onSubmit: () => {},
+    onSubmit: () => { },
   });
 
   let userId = localStorage.getItem("userId");
 
   let meetTypeId = formik.values.meetTypeId;
 
-  const { data: userMeetingtypeData } = useUserMeetingType(userId, {
+  const { data: userMeetingtypeData, refetch } = useUserMeetingType(userId, {
     params: {
       userId: userId,
     },
@@ -259,7 +289,7 @@ export default function AddMeetingDialog({
   const handleClose = () => {
     onAddMeetingDiscardDialog();
   };
-  console.log("agendids", agendaFormik.values);
+
 
   return (
     <Card>
@@ -294,19 +324,6 @@ export default function AddMeetingDialog({
               )}
             />
           </LocalizationProvider>
-          {/* <TextField
-            label="Date"
-            autoFocus
-            margin="dense"
-            name="meetDatetime"
-            type="date"
-            value={formik.values.meetDatetime}
-            onChange={formik.handleChange}
-            error={formik.touched.meetDatetime && Boolean(formik.errors.meetDatetime)}
-            helperText={formik.touched.meetDatetime && formik.errors.meetDatetime}
-            fullWidth
-            variant="standard"
-          /> */}
           <TextField
             label="Location"
             autoFocus
@@ -372,9 +389,9 @@ export default function AddMeetingDialog({
                           {header.isPlaceholder
                             ? null
                             : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
                         </TableCell>
                       ))}
                     </TableRow>
@@ -416,15 +433,9 @@ export default function AddMeetingDialog({
           ) : null}
         </CardContent>
         <CardActions>
-          {toEdit ? (
-            <Button type="submit" variant="contained">
-              Update
-            </Button>
-          ) : (
-            <Button type="submit" variant="contained">
-              Register
-            </Button>
-          )}
+          <Button type="submit" variant="contained">
+            Submit
+          </Button>
           <Button onClick={handleClose}>Cancel</Button>
         </CardActions>
       </Box>

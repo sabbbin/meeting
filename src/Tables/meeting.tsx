@@ -40,7 +40,7 @@ import useMeeting from "../hooks/useMeeting";
 import usePagination from "../hooks/usePagination";
 import useMeetingTypeCount from "../hooks/useMeetingCount";
 import AddMeetingDrawer from "../drawer/addMemberDrawer";
-import AddMeetingDialog from "../dialog/addMeeting";
+import AddMeetingDialog, { AgendaRow } from "../dialog/addMeeting";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { number } from "yup";
@@ -62,6 +62,7 @@ export interface IMeeting {
   status?: string;
   typeName?: string;
   postedBy?: number | undefined;
+  agendaIds?: string[] | undefined;
 }
 
 const columnHelper = createColumnHelper<IMeeting>();
@@ -73,6 +74,7 @@ export default function Meeting() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [page, setPage] = useState(1);
   const [isForMenu, setIsForMenu] = useState<IMeeting | null>();
+  // const [isForAgenda, setisForAgenda] = useState<AgendaRow | null>();
   const [openMenu, setOpenMenu] = useState(false);
   let access_token = localStorage.getItem("access_token");
 
@@ -87,10 +89,10 @@ export default function Meeting() {
 
   const handleClickColumn = (
     event: MouseEvent<HTMLButtonElement>,
-    meeting: IMeeting
+    meeting: IMeeting,
   ) => {
     setAnchorEl(event.currentTarget);
-
+    //  setisForAgenda(agenda)
     setIsForMenu(meeting);
     setOpenMenu(true);
   };
@@ -239,11 +241,11 @@ export default function Meeting() {
       //   cell: (info) => info.getValue(),
       // }),
       columnHelper.accessor("meetDatetime", {
-        header: "Meet Date",
-        cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY"),
+        header: "Date and Time",
+        cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY hh:mm A"),
       }),
       columnHelper.accessor("typeName", {
-        header: "Meeting Type",
+        header: " Type",
         cell: (info) => info.getValue(),
       }),
       columnHelper.accessor("location", {
@@ -432,7 +434,7 @@ export default function Meeting() {
                     </Select>
 
                     {filterField == "meetDatetime" ||
-                    filterField == "postedOn" ? (
+                      filterField == "postedOn" ? (
                       <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DesktopDatePicker
                           label="Select Date"
@@ -447,7 +449,7 @@ export default function Meeting() {
                               sx={{
                                 marginRight: "5px",
                                 ...(filterOperator == "is empty" ||
-                                filterOperator == "is not empty"
+                                  filterOperator == "is not empty"
                                   ? { display: "none" }
                                   : { display: "inline-block" }),
                               }}
@@ -495,7 +497,7 @@ export default function Meeting() {
                         sx={{
                           marginRight: "5px",
                           ...(filterOperator == "is empty" ||
-                          filterOperator == "is not empty"
+                            filterOperator == "is not empty"
                             ? { display: "none" }
                             : { display: "inline-block" }),
                         }}
@@ -527,6 +529,7 @@ export default function Meeting() {
 
       {isDialogOpen ? (
         <AddMeetingDialog
+          // toEditAgenda={isForAgenda!}
           open={isDialogOpen}
           toEditAddMeeting={isForMenu!}
           onAddMeetingDiscardDialog={() => {
@@ -733,9 +736,9 @@ export default function Meeting() {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                setIsDialogOpen(true);
+                handleDelete();
                 handleClose();
-                mutate();
+
               }}
             >
               Delete
