@@ -168,11 +168,7 @@ export default function AddCallByMeeting({
   useEffect(() => {
     callGetMinutes();
     getUserMeetingType.refetch();
-    console.log("meeting", getUserMeetingType.data);
 
-    console.log("meeting", meeting);
-    console.log("meeting id", meeting.meetId);
-    console.log("meeting", getDataMinutes);
   }, []);
 
   const formikIAgendaForm = useFormik<AgendaForm>({
@@ -187,7 +183,7 @@ export default function AddCallByMeeting({
       postedOn: "",
       presenter: "",
     },
-    onSubmit: () => {},
+    onSubmit: () => { },
   });
 
   const submitConclusion = (e: any) => {
