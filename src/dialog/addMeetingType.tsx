@@ -130,10 +130,10 @@ export default function AddMeetingTypeDialog({
   useEffect(() => {
     if (toEdit)
       formik.setValues({
-        typeName: toEdit?.TypeName,
-        alias: toEdit?.Alias,
-        orderIdx: toEdit?.OrderIdx,
-        isEnable: toEdit?.IsEnable,
+        typeName: toEdit?.typeName,
+        alias: toEdit?.alias,
+        orderIdx: toEdit?.orderIdx,
+        isEnable: toEdit?.isEnable,
 
       });
   }, [toEdit]);

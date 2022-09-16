@@ -62,6 +62,7 @@ export interface IMeeting {
   status?: string;
   typeName?: string;
   postedBy?: number | undefined;
+  agendaIds?: string[] | undefined;
 }
 
 const columnHelper = createColumnHelper<IMeeting>();
@@ -73,6 +74,7 @@ export default function Meeting() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [page, setPage] = useState(1);
   const [isForMenu, setIsForMenu] = useState<IMeeting | null>();
+  // const [isForAgenda, setisForAgenda] = useState<AgendaRow | null>();
   const [openMenu, setOpenMenu] = useState(false);
   let access_token = localStorage.getItem("access_token");
 
@@ -90,7 +92,7 @@ export default function Meeting() {
     meeting: IMeeting
   ) => {
     setAnchorEl(event.currentTarget);
-
+    //  setisForAgenda(agenda)
     setIsForMenu(meeting);
     setOpenMenu(true);
   };
@@ -239,11 +241,11 @@ export default function Meeting() {
       //   cell: (info) => info.getValue(),
       // }),
       columnHelper.accessor("meetDatetime", {
-        header: "Meet Date",
-        cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY"),
+        header: "Date and Time",
+        cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY hh:mm A"),
       }),
       columnHelper.accessor("typeName", {
-        header: "Meeting Type",
+        header: " Type",
         cell: (info) => info.getValue(),
       }),
       columnHelper.accessor("location", {
@@ -531,6 +533,7 @@ export default function Meeting() {
 
       {isDialogOpen ? (
         <AddMeetingDialog
+          // toEditAgenda={isForAgenda!}
           open={isDialogOpen}
           toEditAddMeeting={isForMenu!}
           onAddMeetingDiscardDialog={() => {
@@ -737,9 +740,8 @@ export default function Meeting() {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                setIsDialogOpen(true);
+                handleDelete();
                 handleClose();
-                mutate();
               }}
             >
               Delete
