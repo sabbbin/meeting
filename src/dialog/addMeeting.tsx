@@ -77,8 +77,8 @@ interface IGetAgenda {
   agendaId: string;
   agenda: string;
   description: string;
-  postedBy: string;
-  postedOn?: string;
+  postedBy: number;
+  postedOn?: number;
 }
 
 const columnHelper = createColumnHelper<IGetAgenda>();
@@ -128,7 +128,7 @@ export default function AddMeetingDialog({
         meetTypeId: toEdit?.meetTypeId,
         location: toEdit?.location,
         calledBy: toEdit?.calledBy,
-        //postedBy: toEdit?.postedBy,
+        postedBy: toEdit?.postedBy,
       });
     }
   }, [toEdit]);
