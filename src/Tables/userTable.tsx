@@ -37,7 +37,7 @@ import ChangeStatusDialog from "../dialog/changeStatusDialog";
 import UserFormDialog from "../dialog/userFormDialog";
 import { FilterType } from "../filter";
 import usePagination from "../hooks/usePagination";
-import useUserCount from "../hooks/useUserCount";
+
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -45,6 +45,7 @@ import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 import Popover from "@mui/material/Popover";
 import PopupState, { bindTrigger, bindPopover } from "material-ui-popup-state";
+import { useSnackbar } from "notistack";
 
 export interface IUser {
   userId: number;
@@ -73,6 +74,7 @@ interface Role {
 const columnHelper = createColumnHelper<IUser>();
 
 export default function UserTable() {
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const { pagination, handlePageNumberChange, handlePageSizeChange } =
     usePagination({
       pageNumber: 0,
@@ -254,11 +256,7 @@ export default function UserTable() {
     { initialData: [] }
   );
 
-  const { data: countData } = useUserCount({
-    headers: {
-      Authorization: "Bearer " + accessToken,
-    },
-  });
+
 
   const table = useReactTable({
     data: userData,
@@ -482,6 +480,7 @@ export default function UserTable() {
           toEdit={isforMenu}
           open={isDialogOpen}
           onSuccessDialog={() => {
+            enqueueSnackbar('Success', { variant: "success" });
             setisforMenu(null);
             setIsDialogOpen(false);
           }}
@@ -496,6 +495,7 @@ export default function UserTable() {
           toEditMember={isforMenu!}
           open={isAddMemberDialogOpen}
           onSuccessAddMemberDialog={() => {
+            enqueueSnackbar('Successfully added member', { variant: "success" });
             setIsAddMemberDialogOpen(false);
           }}
           onDiscardAddMemberDialog={() => {
@@ -508,6 +508,7 @@ export default function UserTable() {
           refetch={refetch}
           open={isChangeStatus}
           onStatusSuccessDialog={() => {
+            enqueueSnackbar('Successfully changes status', { variant: "success" });
             setisChangeStatus(false);
           }}
           onStatusDiscardDialog={() => {
@@ -520,6 +521,7 @@ export default function UserTable() {
         <ChangePasswordDialog
           open={isResetPassword}
           onChangePasswordDiscardDialog={() => {
+            enqueueSnackbar('Successfully changed password', { variant: "success" });
             setisResetPassword(false);
           }}
           onChangePasswordSuccessDialog={() => {

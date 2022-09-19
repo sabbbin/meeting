@@ -43,7 +43,7 @@ export default function AddAgendaDialog({
   refetch,
   onSuccessDialog,
   toEditAddAgenda: toEdit,
-
+  onDiscardDialog,
   open,
 }: AddAgendaProps) {
   let accessToken = localStorage.getItem("access_token");
@@ -196,7 +196,7 @@ export default function AddAgendaDialog({
         </TextField>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onSuccessDialog}>Cancel</Button>
+        <Button onClick={onDiscardDialog}>Cancel</Button>
         <Button type="submit">Submit</Button>
       </DialogActions>
     </Dialog>
