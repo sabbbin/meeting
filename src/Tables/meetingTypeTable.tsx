@@ -51,11 +51,10 @@ import ChangeStatusDialog, {
   IChangeStatusDialog,
 } from "../dialog/changeStatusDialog";
 import ChangePasswordDialog from "../dialog/changePasswordDialog copy";
-import useUserCount from "../hooks/useUserCount";
 
 import useMeetingType from "../hooks/useMeetingType";
 import AddMeetingTypeDialog from "../dialog/addMeetingType";
-import useMeetingTypeCount from "../hooks/useMeetingTypeCount";
+
 import { number } from "yup/lib/locale";
 import { FilterType } from "../filter";
 import { ValuesType } from "utility-types";
@@ -63,6 +62,7 @@ import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import AddUserToMeetingTypes from "../dialog/addUserToMeetingTypes";
 import PopupState, { bindPopover, bindTrigger } from "material-ui-popup-state";
+import { useSnackbar } from "notistack";
 import StyledTableRow from "../components/StyledTableRow";
 import StyledTableCell from "../components/StyledTableCell";
 
@@ -77,6 +77,8 @@ export interface IMeetingType {
 const columnHelper = createColumnHelper<IMeetingType>();
 
 export default function MeetingTypeTable() {
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+
   let userIdLocal = localStorage.getItem("userId");
   let accessToken = localStorage.getItem("access_token");
 
@@ -507,6 +509,7 @@ export default function MeetingTypeTable() {
             setIsDialogOpen(false);
           }}
           onAddMeetingTypeSuccessDialog={() => {
+            enqueueSnackbar("Success", { variant: "success" });
             setisforMenu(null);
             setIsDialogOpen(false);
           }}

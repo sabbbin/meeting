@@ -33,7 +33,6 @@ import { MouseEvent, ReactNode, useMemo, useState } from "react";
 import usePagination from "../hooks/usePagination";
 import useAgenda from "../hooks/useAgenda";
 import dayjs from "dayjs";
-import useAgendaCount from "../hooks/useAgendaCount";
 import AddAgendaDialog from "../dialog/addAgenda";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
@@ -43,6 +42,7 @@ import { ValuesType } from "utility-types";
 import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import PopupState, { bindPopover, bindTrigger } from "material-ui-popup-state";
+import { useSnackbar } from "notistack";
 import StyledTableRow from "../components/StyledTableRow";
 import StyledTableCell from "../components/StyledTableCell";
 
@@ -57,11 +57,13 @@ export interface IAgenda {
   postedBy: number;
   postedOn: string;
   fullName: string;
+  totalRows?: number;
 }
 
 const columnHelper = createColumnHelper<IAgenda>();
 
 export default function AgendaTable() {
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isforAgenda, setisforAgenda] = useState<IAgenda | null>();
@@ -249,20 +251,20 @@ export default function AgendaTable() {
     { ...axiosConfig }
   );
 
-  const { data: meetingTypeCount } = useAgendaCount(userId, {
-    params: {
-      userId: userId,
-    },
-    headers: {
-      Authorization: "Bearer " + accessToken,
-    },
-  });
+  // const { data: meetingTypeCount } = useAgendaCount(userId, {
+  //   params: {
+  //     userId: userId,
+  //   },
+  //   headers: {
+  //     Authorization: "Bearer " + accessToken,
+  //   },
+  // });
 
   type deleteId = string;
   const { mutate: deleteMutatae } = useMutation<unknown, unknown, deleteId>(
     (deleteId) =>
       axios
-        .delete("/api/MeetingAgenda/", {
+        .delete("/api/Agenda/", {
           params: { agendaId: isforAgenda?.agendaId },
           headers: {
             "Content-Type": "application/json",
@@ -495,6 +497,7 @@ export default function AgendaTable() {
           toEditAddAgenda={isforAgenda}
           open={isDialogOpen}
           onSuccessDialog={() => {
+            enqueueSnackbar("Success", { variant: "success" });
             setisforAgenda(null);
             setIsDialogOpen(false);
           }}
@@ -566,7 +569,7 @@ export default function AgendaTable() {
         <TablePagination
           width="140px"
           component="div"
-          count={meetingTypeCount.TotalCount}
+          count={meetingAgendaData[0]?.totalRows || 0}
           page={pagination.pageNumber}
           onPageChange={(e, page) => handlePageNumberChange(page)}
           rowsPerPage={pagination.pageSize}

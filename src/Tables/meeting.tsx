@@ -37,7 +37,7 @@ import { MouseEvent, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import useMeeting from "../hooks/useMeeting";
 import usePagination from "../hooks/usePagination";
-import useMeetingTypeCount from "../hooks/useMeetingCount";
+
 import AddMeetingDrawer from "../drawer/addMemberDrawer";
 import AddMeetingDialog from "../dialog/addMeeting";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -50,11 +50,11 @@ import { ValuesType } from "utility-types";
 import { FilterType } from "../filter";
 import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { useSnackbar } from "notistack";
+import { useMeetingConclusinStore } from "../hooks/zustard";
+import { useNavigate } from "react-router-dom";
 import StyledTableRow from "../components/StyledTableRow";
 import StyledTableCell from "../components/StyledTableCell";
-import { useMeetingConclusinStore } from "../hooks/zustard";
-import { Navigate, NavLink, useNavigate } from "react-router-dom";
-import { replace } from "formik";
 
 export interface IMeeting {
   meetId?: number | undefined;
@@ -66,6 +66,8 @@ export interface IMeeting {
   status?: string;
   typeName?: string;
   postedBy?: number | undefined;
+  agendaIds?: string[] | undefined;
+  totalRows?: number;
 }
 
 const columnHelper = createColumnHelper<IMeeting>();
@@ -113,6 +115,8 @@ export default function Meeting() {
     setAnchorEl(null);
     setOpenMenu(false);
   };
+
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
   let accessToken = localStorage.getItem("access_token");
 
@@ -184,15 +188,6 @@ export default function Meeting() {
       options: FilterType.StringFilterType,
     },
   ];
-
-  const { data: meetingCountData } = useMeetingTypeCount(userId, {
-    params: {
-      userId: userId,
-    },
-    headers: {
-      Authorization: "Bearer " + accessToken,
-    },
-  });
 
   const handleSearch = () => {
     if (
@@ -546,6 +541,7 @@ export default function Meeting() {
             setIsDialogOpen(false);
           }}
           onAddMeetingSuccessDialog={() => {
+            enqueueSnackbar("Success", { variant: "success" });
             setIsForMenu(null);
             setIsDialogOpen(false);
           }}
@@ -766,7 +762,7 @@ export default function Meeting() {
           <TablePagination
             width="140px"
             component="div"
-            count={meetingCountData.TotalCount}
+            count={meetingData[0]?.totalRows || 0}
             page={pagination.pageNumber}
             onPageChange={(e, page) => handlePageNumberChange(page)}
             rowsPerPage={pagination.pageSize}
