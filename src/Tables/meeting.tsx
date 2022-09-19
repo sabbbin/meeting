@@ -87,8 +87,8 @@ export default function Meeting() {
 
   const [sortCol, setSortCol] = useState<SortingState>([
     {
-      id: "location",
-      desc: false,
+      id: "postedOn",
+      desc: true,
     },
   ]);
 
@@ -256,6 +256,7 @@ export default function Meeting() {
       }),
       columnHelper.accessor((row) => row, {
         header: "Actions",
+        enableSorting: false,
         cell: (info) => (
           <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
             <MoreVertIcon />
@@ -590,7 +591,7 @@ export default function Meeting() {
                 return (
                   <>
                     <StyledTableRow key={row.id}>
-                      <StyledTableCell>
+                      <StyledTableCell size="small">
                         <IconButton
                           aria-label="expand row"
                           size="small"
@@ -614,7 +615,7 @@ export default function Meeting() {
                       </StyledTableCell>
 
                       {row.getVisibleCells().map((cell) => (
-                        <StyledTableCell key={cell.id}>
+                        <StyledTableCell key={cell.id} size="small">
                           {flexRender(
                             cell.column.columnDef.cell,
                             cell.getContext()
@@ -682,6 +683,7 @@ export default function Meeting() {
                                         <StyledTableCell
                                           component="th"
                                           scope="row"
+                                          size="small"
                                         >
                                           <Tooltip title={minute.agenda}>
                                             <Typography

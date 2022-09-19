@@ -193,6 +193,7 @@ export default function MeetingTypeTable() {
       }),
       columnHelper.accessor((row) => row, {
         header: "Actions",
+        enableSorting: false,
         cell: (info) => (
           <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
             <MoreVertIcon />

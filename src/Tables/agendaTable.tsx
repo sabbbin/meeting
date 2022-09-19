@@ -153,6 +153,7 @@ export default function AgendaTable() {
       }),
       columnHelper.accessor((row) => row, {
         header: "Actions",
+        enableSorting: false,
         cell: (info) =>
           info.getValue().statusId === 6 && (
             <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
@@ -205,8 +206,8 @@ export default function AgendaTable() {
 
   const [sortCol, setSortCol] = useState<SortingState>([
     {
-      id: "typeName",
-      desc: false,
+      id: "Posted On",
+      desc: true,
     },
   ]);
 
