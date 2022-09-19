@@ -114,16 +114,6 @@ export default function Meeting() {
     setOpenMenu(false);
   };
 
-  let { data: deletedata, mutate } = useMutation(() =>
-    axios
-      .delete(`api/Meeting/${isForMenu?.meetId}`, {
-        headers: {
-          Authorization: "Bearer " + access_token,
-        },
-      })
-      .then((res) => res.data)
-  );
-
   let accessToken = localStorage.getItem("access_token");
 
   let userId = localStorage.getItem("userId");
@@ -548,8 +538,9 @@ export default function Meeting() {
 
       {isDialogOpen ? (
         <AddMeetingDialog
+          refetch={getMeeting}
           open={isDialogOpen}
-          toEditAddMeeting={isForMenu!}
+          toEditAddMeeting={isForMenu}
           onAddMeetingDiscardDialog={() => {
             setIsForMenu(null);
             setIsDialogOpen(false);
@@ -765,9 +756,8 @@ export default function Meeting() {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                setIsDialogOpen(true);
+                handleDelete();
                 handleClose();
-                mutate();
               }}
             >
               Delete

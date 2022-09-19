@@ -62,7 +62,8 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 interface AddMeeting extends DialogProps {
   onAddMeetingDiscardDialog: () => void;
   onAddMeetingSuccessDialog: () => void;
-  toEditAddMeeting: IMeeting;
+  toEditAddMeeting?: IMeeting | null;
+  refetch: () => void;
   // toEditAgenda: AgendaRow;
 
 }
@@ -76,8 +77,8 @@ interface IGetAgenda {
   agendaId: string;
   agenda: string;
   description: string;
-  postedBy: string;
-  postedOn: string;
+  postedBy: number;
+  postedOn?: number;
 }
 
 const columnHelper = createColumnHelper<IGetAgenda>();
@@ -88,7 +89,7 @@ const validationSchema = yup.object({
   meetTypeId: yup.number().required("id req"),
   location: yup.string().required("Please provide a location"),
   calledBy: yup.string().required("Please provide a Name"),
-  postedBy: yup.number(),
+  postedBy: yup.number().optional(),
 });
 
 // const agendaValidationSchema = yup.object({
@@ -106,25 +107,28 @@ export default function AddMeetingDialog({
   onAddMeetingSuccessDialog,
   onAddMeetingDiscardDialog,
   toEditAddMeeting: toEdit,
-
+  refetch,
 }: AddMeeting) {
+
+
+  let userId = localStorage.getItem("userId");
+
+
   let access_token = localStorage.getItem("access_token");
 
-  let accessToken = localStorage.getItem("access_token");
-
   const headers = {
-    Authorization: "Bearer " + accessToken,
+    Authorization: "Bearer " + access_token,
   };
 
   useEffect(() => {
     if (toEdit) {
       formik.setValues({
-        meetId: toEdit?.meetId,
+        meetId: toEdit?.meetId!,
         meetDatetime: dayjs(toEdit?.meetDatetime).format("YYYY-MM-DD"),
         meetTypeId: toEdit?.meetTypeId,
         location: toEdit?.location,
         calledBy: toEdit?.calledBy,
-        postedBy: toEdit.postedBy,
+        postedBy: toEdit?.postedBy,
       });
     }
   }, [toEdit]);
@@ -155,7 +159,7 @@ export default function AddMeetingDialog({
         agendaFormik.values.meetId = data;
         MergeMeetingMinute.mutate(agendaFormik.values);
         onAddMeetingSuccessDialog();
-
+        refetch();
       },
     })
 
@@ -175,7 +179,7 @@ export default function AddMeetingDialog({
         agendaFormik.values.meetId = data;
         MergeMeetingMinute.mutate(agendaFormik.values);
         onAddMeetingSuccessDialog();
-
+        refetch();
       },
     }
   );
@@ -190,6 +194,7 @@ export default function AddMeetingDialog({
     {
       onSuccess() {
         onAddMeetingSuccessDialog();
+        refetch();
       },
     }
   );
@@ -201,18 +206,22 @@ export default function AddMeetingDialog({
       meetTypeId: 0,
       location: "",
       calledBy: "",
-      postedBy: Number(localStorage.getItem("userId")),
+      postedBy: Number(userId),
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
+      console.log(values);
       if (toEdit) {
-
-        UpdateMeetingData.mutate(values)
+        let tempdata = { ...toEdit, ...values };
+        UpdateMeetingData.mutate(tempdata);
       } else {
         CreateMeetingData.mutate(values);
       }
     },
   });
+
+  console.log(formik.errors);
+
 
   const agendaFormik = useFormik<AgendaRow>({
     initialValues: {
@@ -222,11 +231,8 @@ export default function AddMeetingDialog({
     onSubmit: () => { },
   });
 
-  let userId = localStorage.getItem("userId");
 
-  let meetTypeId = formik.values.meetTypeId;
-
-  const { data: userMeetingtypeData, refetch } = useUserMeetingType(userId, {
+  const { data: userMeetingtypeData, refetch: meetingTypeRefetch } = useUserMeetingType(userId, {
     params: {
       userId: userId,
     },
@@ -235,7 +241,9 @@ export default function AddMeetingDialog({
     },
   });
 
-  const { data: agenda } = getAgenda(meetTypeId, {
+  let meetTypeId = formik.values.meetTypeId;
+
+  const { data: agenda, refetch: agendaRefetch } = getAgenda(meetTypeId, {
     params: {
       meetTypeId: meetTypeId,
     },
