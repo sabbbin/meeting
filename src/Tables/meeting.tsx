@@ -73,7 +73,7 @@ export default function Meeting() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [page, setPage] = useState(1);
-  const [isForMenu, setIsForMenu] = useState<IMeeting | null>();
+  const [isForMenu, setisForMenu] = useState<IMeeting | null>();
   // const [isForAgenda, setisForAgenda] = useState<AgendaRow | null>();
   const [openMenu, setOpenMenu] = useState(false);
   let access_token = localStorage.getItem("access_token");
@@ -93,7 +93,7 @@ export default function Meeting() {
   ) => {
     setAnchorEl(event.currentTarget);
     //  setisForAgenda(agenda)
-    setIsForMenu(meeting);
+    setisForMenu(meeting);
     setOpenMenu(true);
   };
 
@@ -105,15 +105,7 @@ export default function Meeting() {
     setOpenMenu(false);
   };
 
-  let { data: deletedata, mutate } = useMutation(() =>
-    axios
-      .delete(`api/Meeting/${isForMenu?.meetId}`, {
-        headers: {
-          Authorization: "Bearer " + access_token,
-        },
-      })
-      .then((res) => res.data)
-  );
+
 
   let accessToken = localStorage.getItem("access_token");
 
@@ -326,7 +318,7 @@ export default function Meeting() {
       axios
         .get("api/Minute/GetMinute", {
           params: {
-            meetid: 4,
+            meetid: 31,
           },
           headers: {
             Authorization: "bearer " + accessToken,
@@ -438,7 +430,7 @@ export default function Meeting() {
                     </Select>
 
                     {filterField == "meetDatetime" ||
-                    filterField == "postedOn" ? (
+                      filterField == "postedOn" ? (
                       <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DesktopDatePicker
                           label="Select Date"
@@ -453,7 +445,7 @@ export default function Meeting() {
                               sx={{
                                 marginRight: "5px",
                                 ...(filterOperator == "is empty" ||
-                                filterOperator == "is not empty"
+                                  filterOperator == "is not empty"
                                   ? { display: "none" }
                                   : { display: "inline-block" }),
                               }}
@@ -501,7 +493,7 @@ export default function Meeting() {
                         sx={{
                           marginRight: "5px",
                           ...(filterOperator == "is empty" ||
-                          filterOperator == "is not empty"
+                            filterOperator == "is not empty"
                             ? { display: "none" }
                             : { display: "inline-block" }),
                         }}
@@ -534,14 +526,15 @@ export default function Meeting() {
       {isDialogOpen ? (
         <AddMeetingDialog
           // toEditAgenda={isForAgenda!}
+          refetch={getMeeting}
           open={isDialogOpen}
-          toEditAddMeeting={isForMenu!}
+          toEditAddMeeting={isForMenu}
           onAddMeetingDiscardDialog={() => {
-            setIsForMenu(null);
+            setisForMenu(null);
             setIsDialogOpen(false);
           }}
           onAddMeetingSuccessDialog={() => {
-            setIsForMenu(null);
+            setisForMenu(null);
             setIsDialogOpen(false);
           }}
         />
