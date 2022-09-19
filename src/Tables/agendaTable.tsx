@@ -43,6 +43,8 @@ import { ValuesType } from "utility-types";
 import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import PopupState, { bindPopover, bindTrigger } from "material-ui-popup-state";
+import StyledTableRow from "../components/StyledTableRow";
+import StyledTableCell from "../components/StyledTableCell";
 
 export interface IAgenda {
   agendaId: string;
@@ -322,6 +324,7 @@ export default function AgendaTable() {
         }}
       >
         <Button
+          size="small"
           sx={{ m: 1 }}
           variant="contained"
           onClick={() => {
@@ -336,6 +339,7 @@ export default function AgendaTable() {
           {(popupState) => (
             <div>
               <Button
+                size="small"
                 variant="contained"
                 sx={{ marginBottom: "10px" }}
                 {...bindTrigger(popupState)}
@@ -504,9 +508,9 @@ export default function AgendaTable() {
         <Table>
           <TableHead>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <StyledTableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableCell
+                  <StyledTableCell
                     key={header.id}
                     sx={{
                       whiteSpace: "nowrap",
@@ -532,16 +536,16 @@ export default function AgendaTable() {
                         }[header.column.getIsSorted() as string] ?? null}
                       </div>
                     )}
-                  </TableCell>
+                  </StyledTableCell>
                 ))}
-              </TableRow>
+              </StyledTableRow>
             ))}
           </TableHead>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              <StyledTableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell
+                  <StyledTableCell
                     sx={{
                       whiteSpace: "nowrap",
                       overflow: "hidden",
@@ -553,9 +557,9 @@ export default function AgendaTable() {
                     key={cell.id}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
+                  </StyledTableCell>
                 ))}
-              </TableRow>
+              </StyledTableRow>
             ))}
           </TableBody>
         </Table>

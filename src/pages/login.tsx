@@ -116,6 +116,7 @@ export default function Login() {
                 <InputLabel>Username/Email</InputLabel>
                 <TextField
                   margin="normal"
+                  size="small"
                   fullWidth
                   id="username"
                   name="username"
@@ -131,6 +132,7 @@ export default function Login() {
                 <TextField
                   margin="normal"
                   fullWidth
+                  size="small"
                   id="password"
                   name="password"
                   type="password"
@@ -154,24 +156,6 @@ export default function Login() {
                   Sign In
                 </Button>
               </Box>
-            </CardContent>
-          </Card>
-          <Card
-            sx={{
-              margin: 4,
-              width: 343,
-            }}
-          >
-            <CardContent
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-              }}
-            >
-              New To Meetings?
-              <Link href="#" variant="body2">
-                {"Create an account."}
-              </Link>
             </CardContent>
           </Card>
         </Box>

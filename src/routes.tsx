@@ -1,5 +1,6 @@
 import { lazy } from "react";
 import { RouteObject } from "react-router-dom";
+import MeetingConclusion from "./pages/meetingConclusion";
 
 const Login = lazy(() => import("./pages/login"));
 const BaseLayout = lazy(() => import("./pages/baseLayout"));
@@ -24,6 +25,10 @@ export const AppRoutes: RouteObject[] = [
       {
         path: "/meeting",
         element: <Meeting />,
+      },
+      {
+        path: "/meeting/conclusion",
+        element: <MeetingConclusion />,
       },
       {
         path: "/agendaTable",

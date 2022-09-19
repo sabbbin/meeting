@@ -13,7 +13,6 @@ import {
   Select,
   Table,
   TableBody,
-  TableCell,
   TableContainer,
   TableHead,
   TablePagination,
@@ -51,6 +50,11 @@ import { ValuesType } from "utility-types";
 import { FilterType } from "../filter";
 import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import StyledTableRow from "../components/StyledTableRow";
+import StyledTableCell from "../components/StyledTableCell";
+import { useMeetingConclusinStore } from "../hooks/zustard";
+import { Navigate, NavLink, useNavigate } from "react-router-dom";
+import { replace } from "formik";
 
 export interface IMeeting {
   meetId?: number | undefined;
@@ -62,7 +66,6 @@ export interface IMeeting {
   status?: string;
   typeName?: string;
   postedBy?: number | undefined;
-  agendaIds?: string[] | undefined;
 }
 
 const columnHelper = createColumnHelper<IMeeting>();
@@ -74,9 +77,9 @@ export default function Meeting() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [page, setPage] = useState(1);
   const [isForMenu, setIsForMenu] = useState<IMeeting | null>();
-  // const [isForAgenda, setisForAgenda] = useState<AgendaRow | null>();
   const [openMenu, setOpenMenu] = useState(false);
   let access_token = localStorage.getItem("access_token");
+  const navigate = useNavigate();
 
   const [callByMeeting, setCallByMeeting] = useState(false);
 
@@ -87,13 +90,19 @@ export default function Meeting() {
     },
   ]);
 
+  const { storeMeeting, deleteMeeting } = useMeetingConclusinStore(
+    (state) => state
+  );
+
   const handleClickColumn = (
     event: MouseEvent<HTMLButtonElement>,
     meeting: IMeeting
   ) => {
     setAnchorEl(event.currentTarget);
-    //  setisForAgenda(agenda)
+
     setIsForMenu(meeting);
+    deleteMeeting();
+    storeMeeting(meeting);
     setOpenMenu(true);
   };
 
@@ -241,11 +250,11 @@ export default function Meeting() {
       //   cell: (info) => info.getValue(),
       // }),
       columnHelper.accessor("meetDatetime", {
-        header: "Date and Time",
-        cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY hh:mm A"),
+        header: "Meet Date",
+        cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY"),
       }),
       columnHelper.accessor("typeName", {
-        header: " Type",
+        header: "Meeting Type",
         cell: (info) => info.getValue(),
       }),
       columnHelper.accessor("location", {
@@ -320,21 +329,25 @@ export default function Meeting() {
     conclusion: string;
   }
 
-  const getMinutes = useQuery<IGetMinutes[]>(
-    ["getMinutes", flagForCallMinutes],
-    () =>
-      axios
+  let done: String;
+  const getMinutes = useQuery<IGetMinutes[], unknown, IGetMinutes[]>(
+    ["getMinutes"],
+    () => {
+      return axios
         .get("api/Minute/GetMinute", {
           params: {
-            meetid: 4,
+            meetid: showAgenda,
           },
           headers: {
             Authorization: "bearer " + accessToken,
           },
         })
-        .then((res) => res.data),
+        .then((res) => res.data);
+    },
     {
       initialData: [],
+      refetchOnWindowFocus: false,
+      enabled: false,
     }
   );
 
@@ -351,6 +364,7 @@ export default function Meeting() {
         >
           <Button
             sx={{ m: 1 }}
+            size="small"
             variant="contained"
             onClick={() => {
               setIsDialogOpen(true);
@@ -365,6 +379,7 @@ export default function Meeting() {
               <div>
                 <Button
                   variant="contained"
+                  size="small"
                   sx={{ marginBottom: "10px" }}
                   {...bindTrigger(popupState)}
                 >
@@ -521,7 +536,7 @@ export default function Meeting() {
         </Box>
       )}
 
-      {callByMeeting && (
+      {/* {callByMeeting && (
         <AddCallByMeeting
           meeting={isForMenu!}
           onDialogClose={() => {
@@ -529,11 +544,10 @@ export default function Meeting() {
             handleClose();
           }}
         />
-      )}
+      )} */}
 
       {isDialogOpen ? (
         <AddMeetingDialog
-          // toEditAgenda={isForAgenda!}
           open={isDialogOpen}
           toEditAddMeeting={isForMenu!}
           onAddMeetingDiscardDialog={() => {
@@ -547,13 +561,13 @@ export default function Meeting() {
         />
       ) : (
         <TableContainer component={Paper}>
-          <Table>
+          <Table size="small">
             <TableHead>
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  <TableCell> </TableCell>
+                <StyledTableRow key={headerGroup.id}>
+                  <StyledTableCell> </StyledTableCell>
                   {headerGroup.headers.map((header) => (
-                    <TableCell
+                    <StyledTableCell
                       key={header.id}
                       sx={{
                         whiteSpace: "nowrap",
@@ -579,25 +593,27 @@ export default function Meeting() {
                           }[header.column.getIsSorted() as string] ?? null}
                         </div>
                       )}
-                    </TableCell>
+                    </StyledTableCell>
                   ))}
-                </TableRow>
+                </StyledTableRow>
               ))}
             </TableHead>
             <TableBody>
               {table.getRowModel().rows.map((row) => {
                 return (
                   <>
-                    <TableRow key={row.id}>
-                      <TableCell>
+                    <StyledTableRow key={row.id}>
+                      <StyledTableCell>
                         <IconButton
                           aria-label="expand row"
                           size="small"
-                          onClick={() => {
+                          onClick={async () => {
                             if (showAgenda == row.original.meetId) {
                               setShowAgenda(-1);
                             } else {
-                              setShowAgenda(row.original.meetId);
+                              await setShowAgenda(row.original.meetId);
+
+                              getMinutes.refetch();
                               setFlagForCallMInutes(!flagForCallMinutes);
                             }
                           }}
@@ -608,19 +624,19 @@ export default function Meeting() {
                             <KeyboardArrowDownIcon />
                           )}
                         </IconButton>
-                      </TableCell>
+                      </StyledTableCell>
 
                       {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
+                        <StyledTableCell key={cell.id}>
                           {flexRender(
                             cell.column.columnDef.cell,
                             cell.getContext()
                           )}
-                        </TableCell>
+                        </StyledTableCell>
                       ))}
-                    </TableRow>
-                    <TableRow>
-                      <TableCell
+                    </StyledTableRow>
+                    <StyledTableRow>
+                      <StyledTableCell
                         style={{ paddingBottom: 0, paddingTop: 0 }}
                         colSpan={6}
                       >
@@ -651,26 +667,35 @@ export default function Meeting() {
                                 Minutes
                               </Typography>
                               <Table size="small" aria-label="purchases">
-                                <TableHead>
+                                <TableHead
+                                  sx={{
+                                    color: "se",
+                                  }}
+                                >
                                   <TableRow>
-                                    <TableCell>Agenda</TableCell>
-                                    <TableCell>Description</TableCell>
-                                    <TableCell align="right">
+                                    <StyledTableCell>Agenda</StyledTableCell>
+                                    <StyledTableCell>
+                                      Description
+                                    </StyledTableCell>
+                                    <StyledTableCell align="right">
                                       Presentator
-                                    </TableCell>
-                                    <TableCell align="right">
+                                    </StyledTableCell>
+                                    <StyledTableCell align="right">
                                       Discussion
-                                    </TableCell>
-                                    <TableCell align="right">
+                                    </StyledTableCell>
+                                    <StyledTableCell align="right">
                                       Conclusion
-                                    </TableCell>
+                                    </StyledTableCell>
                                   </TableRow>
                                 </TableHead>
                                 <TableBody>
                                   {getMinutes.data.length > 0 &&
                                     getMinutes.data.map((minute, id) => (
                                       <TableRow key={id}>
-                                        <TableCell component="th" scope="row">
+                                        <StyledTableCell
+                                          component="th"
+                                          scope="row"
+                                        >
                                           <Tooltip title={minute.agenda}>
                                             <Typography
                                               sx={{
@@ -683,8 +708,8 @@ export default function Meeting() {
                                               {minute.agenda}
                                             </Typography>
                                           </Tooltip>
-                                        </TableCell>
-                                        <TableCell>
+                                        </StyledTableCell>
+                                        <StyledTableCell>
                                           <Tooltip title={minute.description}>
                                             <Typography
                                               sx={{
@@ -697,16 +722,16 @@ export default function Meeting() {
                                               {minute.description}
                                             </Typography>
                                           </Tooltip>
-                                        </TableCell>
-                                        <TableCell align="right">
+                                        </StyledTableCell>
+                                        <StyledTableCell align="right">
                                           {minute.presenter}
-                                        </TableCell>
-                                        <TableCell align="right">
+                                        </StyledTableCell>
+                                        <StyledTableCell align="right">
                                           {minute.discussion}
-                                        </TableCell>
-                                        <TableCell align="right">
+                                        </StyledTableCell>
+                                        <StyledTableCell align="right">
                                           {minute.conclusion}
-                                        </TableCell>
+                                        </StyledTableCell>
                                       </TableRow>
                                     ))}
                                 </TableBody>
@@ -714,8 +739,8 @@ export default function Meeting() {
                             </Box>
                           )}
                         </Collapse>
-                      </TableCell>
-                    </TableRow>
+                      </StyledTableCell>
+                    </StyledTableRow>
                   </>
                 );
               })}
@@ -724,11 +749,11 @@ export default function Meeting() {
           <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
             <MenuItem
               onClick={() => {
-                setCallByMeeting(true);
                 handleClose();
+                navigate("conclusion", { replace: true });
               }}
             >
-              Call Meeting
+              Conclusion
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -740,8 +765,9 @@ export default function Meeting() {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                handleDelete();
+                setIsDialogOpen(true);
                 handleClose();
+                mutate();
               }}
             >
               Delete

@@ -45,6 +45,8 @@ import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 import Popover from "@mui/material/Popover";
 import PopupState, { bindTrigger, bindPopover } from "material-ui-popup-state";
+import StyledTableCell from "../components/StyledTableCell";
+import StyledTableRow from "../components/StyledTableRow";
 
 export interface IUser {
   userId: number;
@@ -313,6 +315,7 @@ export default function UserTable() {
       >
         <Button
           sx={{ m: 1 }}
+          size="small"
           variant="contained"
           onClick={() => {
             setIsDialogOpen(true);
@@ -326,6 +329,7 @@ export default function UserTable() {
           {(popupState) => (
             <div>
               <Button
+                size="small"
                 variant="contained"
                 sx={{ marginBottom: "10px" }}
                 {...bindTrigger(popupState)}
@@ -409,7 +413,7 @@ export default function UserTable() {
                             sx={{
                               marginRight: "5px",
                               ...(filterOperator == "is empty" ||
-                                filterOperator == "is not empty"
+                              filterOperator == "is not empty"
                                 ? { display: "none" }
                                 : { display: "inline-block" }),
                             }}
@@ -457,7 +461,7 @@ export default function UserTable() {
                       sx={{
                         marginRight: "5px",
                         ...(filterOperator == "is empty" ||
-                          filterOperator == "is not empty"
+                        filterOperator == "is not empty"
                           ? { display: "none" }
                           : { display: "inline-block" }),
                       }}
@@ -530,7 +534,6 @@ export default function UserTable() {
       )}
       <TableContainer
         sx={{
-          minWidth: 1000,
           margin: "1",
         }}
         component={Paper}
@@ -538,9 +541,9 @@ export default function UserTable() {
         <Table size="small">
           <TableHead>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <StyledTableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableCell
+                  <StyledTableCell
                     key={header.id}
                     sx={{
                       whiteSpace: "nowrap",
@@ -566,20 +569,20 @@ export default function UserTable() {
                         }[header.column.getIsSorted() as string] ?? null}
                       </div>
                     )}
-                  </TableCell>
+                  </StyledTableCell>
                 ))}
-              </TableRow>
+              </StyledTableRow>
             ))}
           </TableHead>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              <StyledTableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <StyledTableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
+                  </StyledTableCell>
                 ))}
-              </TableRow>
+              </StyledTableRow>
             ))}
           </TableBody>
         </Table>

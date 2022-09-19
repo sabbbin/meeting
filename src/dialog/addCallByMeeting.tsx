@@ -36,6 +36,10 @@ import axios from "axios";
 import { IMeeting } from "../Tables/meeting";
 import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import StyledTableCell, {
+  StyledAttendanceCell,
+} from "../components/StyledTableCell";
+import { StyledAttendanceRow } from "../components/StyledTableRow";
 
 const FormDialogPaper = (
   props: OverridableComponent<PaperTypeMap<{}, "div">>
@@ -82,14 +86,21 @@ export default function AddCallByMeeting({
   onDialogClose,
   meeting,
 }: IAddCallByMeeting) {
-  console.log("meeting", meeting);
+  // console.log("meeting", meeting);
+
+  const [showAgenda, setShowAgenda] = useState(-1);
+  const [callMinutesHistoryFlag, setCallMinutesHistoryFlag] = useState(false);
+
   useEffect(() => {
     getUserMeetingType.refetch();
-    console.log("meeting", getUserMeetingType.data);
+    callGetMinutes();
+    // console.log("meeting", getUserMeetingType.data);
 
-    console.log("meeting id", meeting.meetId);
-    console.log("meeting getdata", getDataMinutes);
+    // console.log("meeting id", meeting.meetId);
+    // console.log("meeting getdata", getDataMinutes);
   }, []);
+
+  const [minuteStatus, setMinuteSatus] = useState<boolean>(false);
 
   const formikICallByMeetingForm = useFormik<ICallByMeetingForm>({
     initialValues: {
@@ -104,9 +115,6 @@ export default function AddCallByMeeting({
       console.log("values", values);
     },
   });
-
-  const [showAgenda, setShowAgenda] = useState(-1);
-  const [callMinutesHistoryFlag, setCallMinutesHistoryFlag] = useState(false);
 
   interface IMeetingUser {
     IsSelected: number;
@@ -145,24 +153,28 @@ export default function AddCallByMeeting({
     IGetMinutes[]
   >(
     ["getMinutes"],
-    async () =>
-      await axios
+    async () => {
+      console.log("meeting", meeting.meetId);
+      return await axios
         .get("api/Minute/GetMinute", {
           params: {
-            meetid: meeting.meetId,
+            meetid: meeting.meetId!,
           },
           headers: {
             Authorization: "bearer " + accessToken,
           },
         })
-        .then((res) => res.data),
+        .then((res) => res.data);
+    },
     {
       initialData: [],
+      refetchOnWindowFocus: false,
+      enabled: false,
     }
   );
 
-  const { data: getMinuteAndHistory } = useQuery(
-    ["getMinutesAndHistory", callMinutesHistoryFlag],
+  const { data: getMinuteAndHistory, refetch: callGetMinuteHistory } = useQuery(
+    ["getMinutesAndHistory"],
     () =>
       axios
         .get("api/Minute/GetMinuteAndHistory", {
@@ -174,10 +186,12 @@ export default function AddCallByMeeting({
         .then((res) => res.data),
     {
       initialData: [],
+      refetchOnWindowFocus: false,
+      enabled: false,
     }
   );
 
-  console.log("meeting", meeting);
+  // console.log("meeting", meeting);
 
   return (
     <Dialog
@@ -270,12 +284,19 @@ export default function AddCallByMeeting({
                 maxHeight: 300,
                 marginTop: 5,
                 marginBottom: 5,
-                width: "45%",
+                justifyContent: "center",
+                display: "flex",
 
                 padding: "1px"!,
               }}
             >
-              <Table stickyHeader aria-label="sticky table">
+              <Table
+                stickyHeader
+                aria-label="sticky table"
+                sx={{
+                  width: "50%",
+                }}
+              >
                 <TableHead>
                   <TableRow>
                     <TableCell>
@@ -292,60 +313,137 @@ export default function AddCallByMeeting({
                 </TableHead>
                 <TableBody>
                   {attendMember.map((member, id) => (
-                    <TableRow key={id} hover>
-                      <TableCell>
+                    <StyledAttendanceRow key={id}>
+                      <StyledAttendanceCell>
                         <Checkbox
                           checked={!member.isAbsences}
-                          onClick={() => {
-                            member.isAbsences = !member.isAbsences;
-                            console.log("member", member);
-                            setAttendMember((prev) => {
-                              return [...prev, member];
+                          onChange={() => {
+                            console.log("before member", member.isAbsences);
+
+                            setAttendMember((pre) => {
+                              attendMember[id].isAbsences =
+                                !attendMember[id].isAbsences;
+                              return [...pre];
                             });
                           }}
                         />
-                      </TableCell>
-                      <TableCell>{member.FullName}</TableCell>
-                    </TableRow>
+                      </StyledAttendanceCell>
+                      <StyledAttendanceCell>
+                        {member.FullName}
+                      </StyledAttendanceCell>
+                    </StyledAttendanceRow>
                   ))}
                 </TableBody>
               </Table>
             </TableContainer>
-            <TableContainer
-              sx={{
-                maxHeight: 300,
-                width: "45%",
-                marginTop: 5,
-                marginBottom: 5,
+          </Box>
+
+          <Box>
+            <Formik
+              enableReinitialize
+              initialValues={{ invities: [] }}
+              onSubmit={(values) => {
+                console.log("values", values);
               }}
-            >
-              <Table stickyHeader aria-label="sticky table">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>
-                      Presence(
-                      <DoneIcon
-                        sx={{
-                          fontSize: 12,
-                        }}
-                      />
-                      )
-                    </TableCell>
-                    <TableCell>Externals</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {[1, 2, 3, 4, 6, 6, 4, 3, 3, 4, 43].map((a) => (
-                    <TableRow>
-                      <TableCell>
-                        <CheckBox></CheckBox>
-                      </TableCell>
-                      <TableCell>{a}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+              render={({
+                values,
+                handleReset,
+                setFieldValue,
+                handleSubmit,
+              }) => (
+                <Form>
+                  <FieldArray
+                    name="invities"
+                    render={(arrayHelpers) => (
+                      <div>
+                        <Button
+                          variant="contained"
+                          onClick={() => {
+                            let id = values.invities.length;
+                            arrayHelpers.insert(id, {
+                              name: "",
+                              comments: "",
+                            });
+                          }}
+                        >
+                          Add Invities
+                        </Button>
+                        {values.invities &&
+                          values.invities.length > 0 &&
+                          values.invities.map((invitie, index) => (
+                            <>
+                              <Box
+                                marginTop={1.5}
+                                marginBottom={1.5}
+                                key={index}
+                                display="flex"
+                                justifyContent="space-between"
+                                alignItems="center"
+                                marginLeft={index * 1}
+                              >
+                                <Field
+                                  component={TextField}
+                                  label="Name"
+                                  name={`invities.${index}.name`}
+                                  size="small"
+                                  onChange={(
+                                    v: React.ChangeEvent<HTMLInputElement>
+                                  ) => {
+                                    setFieldValue(
+                                      `invities.${index}.name`,
+                                      v.target.value
+                                    );
+                                  }}
+                                />
+
+                                <Field
+                                  component={TextField}
+                                  multiline
+                                  maxRows={3}
+                                  size="small"
+                                  fullwidth
+                                  label="Comments"
+                                  name={`invities.${index}.comments`}
+                                  onChange={(
+                                    v: React.ChangeEvent<HTMLInputElement>
+                                  ) => {
+                                    setFieldValue(
+                                      `invities.${index}.comments`,
+                                      v.target.value
+                                    );
+                                  }}
+                                />
+
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  onClick={() => arrayHelpers.remove(index)}
+                                >
+                                  Remove
+                                </Button>
+                              </Box>
+                            </>
+                          ))}
+                        {values.invities.length > 0 && (
+                          <Button
+                            variant="contained"
+                            onClick={() => {
+                              handleSubmit();
+                            }}
+                            sx={{
+                              float: "right",
+                              color: "primary",
+                            }}
+                          >
+                            Submit
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  ></FieldArray>
+                </Form>
+              )}
+            />
           </Box>
 
           <Typography
@@ -361,9 +459,9 @@ export default function AddCallByMeeting({
             enableReinitialize
             initialValues={{ forms: getDataMinutes }}
             onSubmit={(values) => {
-              console.log("getData", values);
+              console.log("values", values);
             }}
-            render={({ values, setFieldValue }) => (
+            render={({ values, handleSubmit, handleReset, setFieldValue }) => (
               <Form>
                 <FieldArray
                   name="getDataMinutes"
@@ -377,178 +475,194 @@ export default function AddCallByMeeting({
                             name={`getDateMinutes.${index}`}
                             sx={{
                               padding: 5,
-                              paddingBottom: 10,
+                              paddingBottom: 3,
                               marginBottom: 2,
                               border: "2px solid black",
                               borderRadius: 3,
                             }}
                           >
-                            <Box>
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  justifyContent: "center",
-                                  alignItems: "center",
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                              }}
+                            >
+                              <IconButton
+                                onClick={async () => {
+                                  if (showAgenda !== value.agendaId) {
+                                    await setShowAgenda(value.agendaId);
+                                    callGetMinuteHistory();
+                                    setCallMinutesHistoryFlag(
+                                      !callMinutesHistoryFlag
+                                    );
+                                  } else {
+                                    setShowAgenda(-1);
+                                  }
                                 }}
                               >
-                                <IconButton
-                                  onClick={() => {
-                                    if (showAgenda !== value.agendaId) {
-                                      setShowAgenda(value.agendaId);
-                                      setCallMinutesHistoryFlag(
-                                        !callMinutesHistoryFlag
-                                      );
-                                    } else {
-                                      setShowAgenda(-1);
-                                    }
-                                  }}
-                                >
-                                  {showAgenda != value.agendaId ? (
-                                    <KeyboardArrowDownIcon
-                                      sx={{
-                                        fontSize: 45,
-                                      }}
-                                    />
-                                  ) : (
-                                    <KeyboardArrowUpIcon
-                                      sx={{
-                                        fontSize: 45,
-                                        color: "red",
-                                      }}
-                                    />
-                                  )}
-                                </IconButton>
+                                {showAgenda != value.agendaId ? (
+                                  <KeyboardArrowDownIcon
+                                    sx={{
+                                      fontSize: 50,
+                                      marginRight: 1,
+                                    }}
+                                  />
+                                ) : (
+                                  <KeyboardArrowUpIcon
+                                    sx={{
+                                      fontSize: 50,
+                                      color: "red",
+                                    }}
+                                  />
+                                )}
+                              </IconButton>
 
-                                <Typography variant="subtitle1">
-                                  Title :{value.agenda}
-                                </Typography>
-                              </Box>
                               <Typography
                                 variant="subtitle2"
+                                sx={{
+                                  fontWeight: 600,
+                                }}
+                              >
+                                <b>Title :</b> {value.agenda}
+                              </Typography>
+                            </Box>
+
+                            <Collapse
+                              in={showAgenda == value.agendaId}
+                              timeout="auto"
+                              unmountOnExit
+                              sx={{
+                                marginBottom: 2,
+                                marginLeft: 5,
+                              }}
+                            >
+                              <Typography
+                                variant="caption"
                                 sx={{
                                   display: "block",
                                   marginLeft: 3,
                                   marginBottom: 2,
                                   marginTop: 2,
+                                  fontStyle: "italic",
                                 }}
                               >
-                                Description: {value.description}
+                                <b>Description:</b> {value.description}
                               </Typography>
-
-                              <Collapse
-                                in={showAgenda == value.agendaId}
-                                timeout="auto"
-                                unmountOnExit
+                              {getMinuteAndHistory.length > 0 &&
+                                getMinuteAndHistory.map((val: any) => (
+                                  <Box
+                                    sx={{
+                                      padding: 2,
+                                    }}
+                                  >
+                                    <Box></Box>
+                                    <Typography>
+                                      Date:{" "}
+                                      {dayjs(val.meetDatetime).format(
+                                        "DD/MM/YYYY"
+                                      )}
+                                    </Typography>
+                                    <Typography>
+                                      Discussion : {val.discussion}
+                                    </Typography>
+                                    <Typography>
+                                      Conclusion : {val.conclusion}
+                                    </Typography>
+                                  </Box>
+                                ))}
+                              <Box
                                 sx={{
-                                  marginBottom: 2,
-                                  marginLeft: 5,
+                                  justifyContent: "space-between",
+                                  display: "flex",
+                                  marginBottom: 5,
                                 }}
                               >
-                                {getMinuteAndHistory.length > 0 &&
-                                  getMinuteAndHistory.map((val: any) => (
-                                    <Box
-                                      sx={{
-                                        padding: 2,
-                                      }}
-                                    >
-                                      <Typography>
-                                        Date: {val.meetDatetime}
-                                      </Typography>
-                                      <Typography>
-                                        Discussion : {val.discussion}
-                                      </Typography>
-                                      <Typography>
-                                        Conclusion : {val.conclusion}
-                                      </Typography>
-                                    </Box>
-                                  ))}
-                              </Collapse>
-                            </Box>
-                            <Box
-                              sx={{
-                                justifyContent: "space-between",
-                                display: "flex",
-                                marginBottom: 5,
-                              }}
-                            >
-                              <Typography>
-                                Posted By: {value.postedBy}
-                              </Typography>
-                              <Typography>
-                                Created Date: {value.postedOn}
-                              </Typography>
+                                <Typography>
+                                  Posted By: {value.postedBy}
+                                </Typography>
+                                <Typography>
+                                  Created Date:{" "}
+                                  {dayjs(value.postedOn).format("DD/MM/YYYY")}
+                                </Typography>
 
-                              <Stack
-                                direction="row"
-                                spacing={1}
-                                alignItems="center"
-                              >
-                                <Typography>Close</Typography>
-                                <Switch checked />
-                                <Typography>Open</Typography>
-                              </Stack>
-                            </Box>
-                            <Field
-                              component={TextField}
-                              label="Discussion"
-                              name={`forms.${index}.discussion`}
-                              size="small"
-                              sx={{
-                                marginBottom: 3,
-                              }}
-                              multiline
-                              fullWidth
-                              maxRows={4}
-                              defaultValue={value.discussion}
-                              onChange={(
-                                v: React.ChangeEvent<HTMLInputElement>
-                              ) => {
-                                setFieldValue(
-                                  `forms.${index}.discussion`,
-                                  v.target.value
-                                );
-                              }}
-                            />
-                            <Field
-                              component={TextField}
-                              label="Conclusion"
-                              defaultValue={value.conclusion}
-                              name={`forms.${index}.conclusion`}
-                              fullWidth
-                              multiline
-                              size="small"
-                              sx={{
-                                marginBottom: 3,
-                              }}
-                              maxRows={4}
-                              onChange={(
-                                v: React.ChangeEvent<HTMLInputElement>
-                              ) => {
-                                setFieldValue(
-                                  `forms.${index}.conclusion`,
-                                  v.target.value
-                                );
-                              }}
-                            />
-                            <Field
-                              component={TextField}
-                              label="PresentedBy"
-                              name={`forms.${index}.presentedBy`}
-                              size="small"
-                              sx={{
-                                float: "right",
-                                marginBottom: 1,
-                              }}
-                              defaultValue={value.presenter}
-                              onChange={(
-                                v: React.ChangeEvent<HTMLInputElement>
-                              ) => {
-                                setFieldValue(
-                                  `forms.${index}.presentedBy`,
-                                  v.target.value
-                                );
-                              }}
-                            />
+                                <Stack
+                                  direction="row"
+                                  spacing={1}
+                                  alignItems="center"
+                                >
+                                  <Switch
+                                    checked={!minuteStatus}
+                                    onChange={() =>
+                                      setMinuteSatus(!minuteStatus)
+                                    }
+                                  />
+                                  <Typography>Open</Typography>
+                                </Stack>
+                              </Box>
+                              <Field
+                                component={TextField}
+                                label="Discussion"
+                                name={`forms.${index}.discussion`}
+                                size="small"
+                                sx={{
+                                  marginBottom: 3,
+                                }}
+                                multiline
+                                fullWidth
+                                maxRows={4}
+                                value={value.discussion}
+                                onChange={(
+                                  v: React.ChangeEvent<HTMLInputElement>
+                                ) => {
+                                  setFieldValue(
+                                    `forms.${index}.discussion`,
+                                    v.target.value
+                                  );
+                                }}
+                              />
+                              <Field
+                                component={TextField}
+                                label="Conclusion"
+                                value={value.conclusion}
+                                name={`forms.${index}.conclusion`}
+                                fullWidth
+                                multiline
+                                size="small"
+                                sx={{
+                                  marginBottom: 3,
+                                }}
+                                maxRows={4}
+                                onChange={(
+                                  v: React.ChangeEvent<HTMLInputElement>
+                                ) => {
+                                  setFieldValue(
+                                    `forms.${index}.conclusion`,
+                                    v.target.value
+                                  );
+                                }}
+                              />
+
+                              <Field
+                                component={TextField}
+                                label="PresentedBy"
+                                name={`forms.${index}.presentedBy`}
+                                size="small"
+                                sx={{
+                                  float: "right",
+                                  marginBottom: 1,
+                                }}
+                                defaultValue={value.presenter}
+                                onChange={(
+                                  v: React.ChangeEvent<HTMLInputElement>
+                                ) => {
+                                  setFieldValue(
+                                    `forms.${index}.presentedBy`,
+                                    v.target.value
+                                  );
+                                }}
+                              />
+                            </Collapse>
                           </Field>
                         </div>
                       );
@@ -563,12 +677,21 @@ export default function AddCallByMeeting({
                 >
                   <Button
                     variant="contained"
-                    type="submit"
+                    onClick={() => {
+                      handleSubmit();
+                      handleReset();
+                    }}
                     sx={{ marginRight: 2 }}
                   >
                     submit
                   </Button>
-                  <Button variant="contained" onClick={() => onDialogClose()}>
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      onDialogClose();
+                      handleReset();
+                    }}
+                  >
                     Cancle
                   </Button>
                 </Box>

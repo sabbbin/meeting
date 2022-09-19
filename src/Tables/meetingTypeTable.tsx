@@ -63,6 +63,8 @@ import { DesktopDatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import AddUserToMeetingTypes from "../dialog/addUserToMeetingTypes";
 import PopupState, { bindPopover, bindTrigger } from "material-ui-popup-state";
+import StyledTableRow from "../components/StyledTableRow";
+import StyledTableCell from "../components/StyledTableCell";
 
 export interface IMeetingType {
   MeetTypeId?: number;
@@ -330,6 +332,7 @@ export default function MeetingTypeTable() {
       >
         <Button
           sx={{ m: 1 }}
+          size="small"
           variant="contained"
           onClick={() => {
             setIsDialogOpen(true);
@@ -343,6 +346,7 @@ export default function MeetingTypeTable() {
           {(popupState) => (
             <div>
               <Button
+                size="small"
                 variant="contained"
                 sx={{ marginBottom: "10px" }}
                 {...bindTrigger(popupState)}
@@ -523,9 +527,9 @@ export default function MeetingTypeTable() {
         <Table size="small">
           <TableHead>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <StyledTableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableCell
+                  <StyledTableCell
                     key={header.id}
                     sx={{
                       whiteSpace: "nowrap",
@@ -551,20 +555,20 @@ export default function MeetingTypeTable() {
                         }[header.column.getIsSorted() as string] ?? null}
                       </div>
                     )}
-                  </TableCell>
+                  </StyledTableCell>
                 ))}
-              </TableRow>
+              </StyledTableRow>
             ))}
           </TableHead>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              <StyledTableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <StyledTableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
+                  </StyledTableCell>
                 ))}
-              </TableRow>
+              </StyledTableRow>
             ))}
           </TableBody>
         </Table>
