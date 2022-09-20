@@ -254,6 +254,10 @@ export default function Meeting() {
         header: "Posted On",
         cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY"),
       }),
+      columnHelper.accessor("postedBy", {
+        header: "Posted By",
+        cell: (info) => info.getValue(),
+      }),
       columnHelper.accessor("status", {
         header: "Status",
         cell: (info) => info.getValue(),
@@ -545,6 +549,7 @@ export default function Meeting() {
         }} />)}
 
       {isForPostpond && (<PostpondMeeting
+        pospondMeetId={isForMenu?.meetId}
         initialDate={isForMenu!.meetDatetime}
         refetch={getMeeting}
         open={isForPostpond}

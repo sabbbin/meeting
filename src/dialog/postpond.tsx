@@ -35,6 +35,7 @@ interface PostpondMeetingProps extends DialogProps {
     onSuccessDialog: () => void;
     refetch: () => void;
     initialDate: string | undefined;
+    pospondMeetId: number | undefined,
 }
 
 const PostpondMeeting = ({
@@ -43,6 +44,7 @@ const PostpondMeeting = ({
     open,
     refetch,
     initialDate,
+    pospondMeetId,
 }: PostpondMeetingProps) => {
 
     const validationSchema = yup.object({
@@ -64,7 +66,7 @@ const PostpondMeeting = ({
     const PostpondMeeting = useMutation<unknown, unknown, IPostpond>(
         async (data) =>
             await axios
-                .put("api/Meeting/Postpond", data, {
+                .post("api/Meeting/Pospond", data, {
                     headers: headers,
                 })
                 .then((res) => res.data),
@@ -79,7 +81,7 @@ const PostpondMeeting = ({
 
     const formik = useFormik<IPostpond>({
         initialValues: {
-            meetId: 0,
+            meetId: Number(pospondMeetId),
             newMeetingDatetime: dayjs(initialDate).format(),
             comment: '',
             postedBy: Number(userId),
@@ -99,7 +101,7 @@ const PostpondMeeting = ({
             }}
             open={open}
         >
-            <DialogTitle>Postpond Meeting</DialogTitle>
+            <DialogTitle>Pospond Meeting</DialogTitle>
             <DialogContent >
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DateTimePicker

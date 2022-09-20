@@ -56,7 +56,7 @@ const CancleMeeting = ({
     const CancleMeetingData = useMutation<unknown, unknown, ICancle>(
         async (data) =>
             await axios
-                .put("api/Meeting/Cancle", data, {
+                .post("api/Meeting/Cancel", data, {
                     headers: headers,
                 })
                 .then((res) => res.data),
