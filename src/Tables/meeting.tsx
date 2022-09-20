@@ -55,6 +55,7 @@ import { useMeetingConclusinStore } from "../hooks/zustard";
 import { useNavigate } from "react-router-dom";
 import StyledTableRow from "../components/StyledTableRow";
 import StyledTableCell from "../components/StyledTableCell";
+import PostpondMeeting from "../dialog/postpond";
 
 export interface IMeeting {
   meetId?: number | undefined;
@@ -80,6 +81,7 @@ export default function Meeting() {
   const [page, setPage] = useState(1);
   const [isForMenu, setIsForMenu] = useState<IMeeting | null>();
   const [openMenu, setOpenMenu] = useState(false);
+  const [isForPostpond, setisForPostpond] = useState(false);
   let access_token = localStorage.getItem("access_token");
   const navigate = useNavigate();
 
@@ -438,7 +440,7 @@ export default function Meeting() {
                     </Select>
 
                     {filterField == "meetDatetime" ||
-                    filterField == "postedOn" ? (
+                      filterField == "postedOn" ? (
                       <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DesktopDatePicker
                           label="Select Date"
@@ -453,7 +455,7 @@ export default function Meeting() {
                               sx={{
                                 marginRight: "5px",
                                 ...(filterOperator == "is empty" ||
-                                filterOperator == "is not empty"
+                                  filterOperator == "is not empty"
                                   ? { display: "none" }
                                   : { display: "inline-block" }),
                               }}
@@ -501,7 +503,7 @@ export default function Meeting() {
                         sx={{
                           marginRight: "5px",
                           ...(filterOperator == "is empty" ||
-                          filterOperator == "is not empty"
+                            filterOperator == "is not empty"
                             ? { display: "none" }
                             : { display: "inline-block" }),
                         }}
@@ -530,6 +532,16 @@ export default function Meeting() {
           }}
         />
       )} */}
+      <PostpondMeeting
+        refetch={getMeeting}
+        open={isForPostpond}
+        onDiscardDialog={() => [
+          setisForPostpond(false)
+        ]}
+        onSuccessDialog={() => [
+          setisForPostpond(false)
+        ]}
+      />
 
       {isDialogOpen ? (
         <AddMeetingDialog
@@ -757,6 +769,13 @@ export default function Meeting() {
               }}
             >
               Delete
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                setisForPostpond(true);
+                handleClose();
+              }}>
+              Postpond
             </MenuItem>
           </Menu>
           <TablePagination
