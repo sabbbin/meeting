@@ -146,6 +146,7 @@ const PostpondMeeting = ({
             <DialogContent >
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DateTimePicker
+
                         label='Date/time'
                         value={formik.values.newMeetingDatetime}
                         inputFormat="YYYY-MM-DD  HH:MM:ss A"
@@ -154,6 +155,7 @@ const PostpondMeeting = ({
                         }}
                         renderInput={(params) => (
                             <TextField
+                                sx={{ mt: 1 }}
                                 fullWidth
                                 error={
                                     formik.touched.newMeetingDatetime &&
