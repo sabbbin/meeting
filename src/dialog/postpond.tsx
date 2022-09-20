@@ -114,6 +114,7 @@ const PostpondMeeting = ({
                             formik.setFieldValue("newMeetingDatetime", newValue);
 
                         }}
+                        minDate={new Date(initialDate!)}
                         renderInput={(params) => (
                             <TextField
                                 sx={{ mt: 1 }}
