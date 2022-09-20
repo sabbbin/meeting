@@ -8,46 +8,38 @@ import {
     Paper,
     PaperTypeMap,
     TextField,
-
 } from "@mui/material";
+
 import { useFormik } from "formik";
+import * as yup from "yup";
 import { OverridableComponent } from "@mui/material/OverridableComponent";
 import { useMutation } from "@tanstack/react-query";
-import dayjs from "dayjs";
+
 import axios from "axios";
-import * as yup from "yup";
-import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 
 const FormDialogPaper = (
     props: OverridableComponent<PaperTypeMap<{}, "div">>
 ) => <Paper {...(props as any)} as="form" />;
 
-interface IPostpond {
+interface ICancle {
     meetId: number,
-    newMeetingDatetime: string,
     comment?: string,
     postedBy: number
 }
-interface PostpondMeetingProps extends DialogProps {
+interface CancleMeetingProps extends DialogProps {
     onDiscardDialog: () => void;
     onSuccessDialog: () => void;
-    refetch: () => void;
-    initialDate: string | undefined;
 }
 
-const PostpondMeeting = ({
+const CancleMeeting = ({
     onDiscardDialog,
     onSuccessDialog,
     open,
-    refetch,
-    initialDate,
-}: PostpondMeetingProps) => {
+}: CancleMeetingProps) => {
 
     const validationSchema = yup.object({
         meetId: yup.number(),
-        newMeetingDatetime: yup.string(),
         comment: yup.string().optional(),
         postedBy: yup.number(),
     });
@@ -61,32 +53,31 @@ const PostpondMeeting = ({
         Authorization: "Bearer " + accessToken,
     };
 
-    const PostpondMeeting = useMutation<unknown, unknown, IPostpond>(
+    const CancleMeetingData = useMutation<unknown, unknown, ICancle>(
         async (data) =>
             await axios
-                .put("api/Meeting/Postpond", data, {
+                .put("api/Meeting/Cancle", data, {
                     headers: headers,
                 })
                 .then((res) => res.data),
         {
             onSuccess() {
                 onSuccessDialog()
-                refetch()
+
             },
         }
     );
 
 
-    const formik = useFormik<IPostpond>({
+    const formik = useFormik<ICancle>({
         initialValues: {
             meetId: 0,
-            newMeetingDatetime: dayjs(initialDate).format(),
             comment: '',
             postedBy: Number(userId),
         },
         validationSchema: validationSchema,
         onSubmit: (values) => {
-            PostpondMeeting.mutate(values);
+            CancleMeetingData.mutate(values);
         },
     });
 
@@ -99,35 +90,8 @@ const PostpondMeeting = ({
             }}
             open={open}
         >
-            <DialogTitle>Postpond Meeting</DialogTitle>
+            <DialogTitle>Cancle Meeting</DialogTitle>
             <DialogContent >
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DateTimePicker
-
-                        label='Date/time'
-                        value={formik.values.newMeetingDatetime}
-                        inputFormat="MMM D, YYYY h:mm A"
-                        onChange={(newValue) => {
-
-                            formik.setFieldValue("newMeetingDatetime", newValue);
-
-                        }}
-                        renderInput={(params) => (
-                            <TextField
-                                sx={{ mt: 1 }}
-                                fullWidth
-                                error={
-                                    formik.touched.newMeetingDatetime &&
-                                    Boolean(formik.errors.newMeetingDatetime)
-                                }
-                                helperText={
-                                    formik.touched.newMeetingDatetime && formik.errors.newMeetingDatetime
-                                }
-                                {...params}
-                            />
-                        )}
-                    />
-                </LocalizationProvider>
                 <TextField
                     margin="dense"
                     id="comment"
@@ -151,4 +115,4 @@ const PostpondMeeting = ({
     );
 };
 
-export default PostpondMeeting;
+export default CancleMeeting;

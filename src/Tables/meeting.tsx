@@ -56,6 +56,7 @@ import { useNavigate } from "react-router-dom";
 import StyledTableRow from "../components/StyledTableRow";
 import StyledTableCell from "../components/StyledTableCell";
 import PostpondMeeting from "../dialog/postpond";
+import CancleMeeting from "../dialog/cancle";
 
 export interface IMeeting {
   meetId?: number | undefined;
@@ -82,6 +83,7 @@ export default function Meeting() {
   const [isForMenu, setIsForMenu] = useState<IMeeting | null>();
   const [openMenu, setOpenMenu] = useState(false);
   const [isForPostpond, setisForPostpond] = useState(false);
+  const [isForCancle, setIsForCancle] = useState(false);
   let access_token = localStorage.getItem("access_token");
   const navigate = useNavigate();
 
@@ -237,11 +239,11 @@ export default function Meeting() {
       //   cell: (info) => info.getValue(),
       // }),
       columnHelper.accessor("meetDatetime", {
-        header: "Meet Date",
-        cell: (info) => dayjs(info.getValue()).format("DD/MM/YYYY"),
+        header: "Date/time",
+        cell: (info) => dayjs(info.getValue()).format("MMM D, YYYY h:mm A"),
       }),
       columnHelper.accessor("typeName", {
-        header: "Meeting Type",
+        header: "Type",
         cell: (info) => info.getValue(),
       }),
       columnHelper.accessor("location", {
@@ -258,10 +260,10 @@ export default function Meeting() {
       }),
       columnHelper.accessor((row) => row, {
         header: "Actions",
-        cell: (info) => (
-          <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
-            <MoreVertIcon />
-          </IconButton>
+        cell: (info) => ((info.getValue().status === "Concluded" || info.getValue().status === "Cancel") ? null : (<IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
+          <MoreVertIcon />
+        </IconButton>)
+
         ),
       }),
     ],
@@ -532,16 +534,27 @@ export default function Meeting() {
           }}
         />
       )} */}
-      <PostpondMeeting
+
+      {isForCancle && (<CancleMeeting
+        open={isForCancle}
+        onDiscardDialog={() => {
+          setIsForCancle(false)
+        }}
+        onSuccessDialog={() => {
+          setIsForCancle(false)
+        }} />)}
+
+      {isForPostpond && (<PostpondMeeting
+        initialDate={isForMenu!.meetDatetime}
         refetch={getMeeting}
         open={isForPostpond}
-        onDiscardDialog={() => [
+        onDiscardDialog={() => {
           setisForPostpond(false)
-        ]}
-        onSuccessDialog={() => [
+        }}
+        onSuccessDialog={() => {
           setisForPostpond(false)
-        ]}
-      />
+        }}
+      />)}
 
       {isDialogOpen ? (
         <AddMeetingDialog
@@ -746,37 +759,43 @@ export default function Meeting() {
             </TableBody>
           </Table>
           <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
-            <MenuItem
+            {(isForMenu?.status === 'Called' || isForMenu?.status === 'Pospond') ? (<MenuItem
               onClick={() => {
                 handleClose();
                 navigate("conclusion", { replace: true });
               }}
             >
-              Conclusion
-            </MenuItem>
-            <MenuItem
+              Conclude
+            </MenuItem>) : (null)}
+            {isForMenu?.status === 'New' ? (<MenuItem
               onClick={() => {
                 setIsDialogOpen(true);
                 handleClose();
               }}
             >
               Edit
-            </MenuItem>
-            <MenuItem
+            </MenuItem>) : (null)}
+            {isForMenu?.status === 'New' ? (<MenuItem
               onClick={() => {
                 handleDelete();
                 handleClose();
               }}
             >
               Delete
-            </MenuItem>
-            <MenuItem
+            </MenuItem>) : (null)}
+            {(isForMenu?.status === 'Called' || isForMenu?.status === 'Pospond') ? (<MenuItem
               onClick={() => {
                 setisForPostpond(true);
                 handleClose();
               }}>
               Postpond
-            </MenuItem>
+            </MenuItem>) : null}
+            {(isForMenu?.status === 'Called' || isForMenu?.status === 'Pospond') ? (<MenuItem onClick={() => {
+              setIsForCancle(true);
+              handleClose();
+            }}>
+              Cancle
+            </MenuItem>) : (null)}
           </Menu>
           <TablePagination
             width="140px"
