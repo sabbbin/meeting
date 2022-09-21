@@ -321,9 +321,10 @@ export default function AddMeetingDialog({
         <CardContent>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DateTimePicker
+
               label="Select Date and time"
               value={formik.values.meetDatetime}
-              inputFormat="YYYY-MM-DD    HH:MM:ss A"
+              inputFormat="MMM D, YYYY h:mm A"
               onChange={(newValue) => {
                 formik.setFieldValue("meetDatetime", newValue);
               }}

@@ -425,7 +425,7 @@ export default function AgendaTable() {
                             sx={{
                               marginRight: "5px",
                               ...(filterOperator == "is empty" ||
-                              filterOperator == "is not empty"
+                                filterOperator == "is not empty"
                                 ? { display: "none" }
                                 : { display: "inline-block" }),
                             }}
@@ -473,7 +473,7 @@ export default function AgendaTable() {
                       sx={{
                         marginRight: "5px",
                         ...(filterOperator == "is empty" ||
-                        filterOperator == "is not empty"
+                          filterOperator == "is not empty"
                           ? { display: "none" }
                           : { display: "inline-block" }),
                       }}

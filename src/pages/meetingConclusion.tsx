@@ -533,7 +533,7 @@ export default function MeetingConclusion() {
                     <DateTimePicker
                       label="Select Date and time"
                       value={formikICallByMeetingForm.values.meetingDate}
-                      inputFormat="YYYY-MM-DD    HH:MM:ss A"
+                      inputFormat="MMM D, YYYY h:mm A"
                       onChange={(newValue) => {
                         formikICallByMeetingForm.setFieldValue(
                           "meetingDate",
