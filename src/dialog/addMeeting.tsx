@@ -243,9 +243,13 @@ export default function AddMeetingDialog({
 
   let meetTypeId = formik.values.meetTypeId;
 
+  let meetId = formik.values.meetId;
+
+
   const { data: agenda, refetch: agendaRefetch } = getAgenda(meetTypeId, {
     params: {
       meetTypeId: meetTypeId,
+      meetId: meetId,
     },
     headers: {
       Authorization: "Bearer " + access_token,
@@ -377,8 +381,8 @@ export default function AddMeetingDialog({
             }}
           >
             {userMeetingtypeData.map((meetType: any, index: number) => (
-              <MenuItem key={index} value={meetType.MeetTypeId}>
-                {meetType.TypeName}
+              <MenuItem key={index} value={meetType.meetTypeId}>
+                {meetType.typeName}
               </MenuItem>
             ))}
           </TextField>

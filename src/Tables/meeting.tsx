@@ -72,6 +72,9 @@ export interface IMeeting {
   totalRows?: number;
 }
 
+
+
+
 const columnHelper = createColumnHelper<IMeeting>();
 
 export default function Meeting() {
@@ -169,6 +172,31 @@ export default function Meeting() {
       ...axiosConfig,
     }
   );
+
+  type callId = number;
+
+  const { mutate: callMeetingMutatae } = useMutation<unknown, unknown, callId>(
+    async (data) =>
+      await axios.post("/api/Meeting/Call", data, {
+        headers: {
+          Authorization: "Bearer " + access_token,
+        },
+        params: {
+          meetId: data
+        }
+      }).then((res) => res.data),
+    {
+      onSuccess() {
+        getMeeting();
+      }
+    }
+  )
+
+  const handleCallMeeting = () => {
+    const callId = isForMenu?.meetId;
+    callMeetingMutatae(callId!);
+  }
+
 
   const filterOptions = [
     {
@@ -292,6 +320,7 @@ export default function Meeting() {
       },
     }
   );
+
 
   const handleDelete = () => {
     const deleteId = isForMenu?.meetId;
@@ -764,6 +793,13 @@ export default function Meeting() {
             </TableBody>
           </Table>
           <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
+            {isForMenu?.status === 'New' ? (<MenuItem onClick={() => {
+              handleClose();
+              handleCallMeeting()
+
+            }}>
+              Call</MenuItem>) : (null)}
+
             {(isForMenu?.status === 'Called' || isForMenu?.status === 'Pospond') ? (<MenuItem
               onClick={() => {
                 handleClose();
