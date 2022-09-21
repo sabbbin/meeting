@@ -594,6 +594,7 @@ export default function Meeting() {
 
       {isDialogOpen ? (
         <AddMeetingDialog
+          checkboxMeetId={isForMenu?.meetId}
           refetch={getMeeting}
           open={isDialogOpen}
           toEditAddMeeting={isForMenu}

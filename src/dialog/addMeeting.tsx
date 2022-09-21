@@ -36,7 +36,7 @@ import dayjs from "dayjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import useUserMeetingType from "../hooks/useUserMeetingType";
-import getAgenda from "./getAgenda";
+import getAgenda, { IGetAgenda } from "./getAgenda";
 import { width } from "@mui/system";
 import {
   createColumnHelper,
@@ -64,40 +64,48 @@ interface AddMeeting extends DialogProps {
   onAddMeetingSuccessDialog: () => void;
   toEditAddMeeting?: IMeeting | null;
   refetch: () => void;
+  checkboxMeetId: number | undefined;
   // toEditAgenda: AgendaRow;
 
 }
 
 export interface AgendaRow {
-  meetId: number | undefined;
-  agendaIds: string[] | undefined;
+  meetId?: number | undefined;
+  agendaId: string[] | undefined;
 }
-interface IGetAgenda {
-  isSelected: boolean;
-  agendaId: string;
-  agenda: string;
-  description: string;
-  postedBy: number;
-  postedOn?: number;
+
+interface FormData {
+
+  meetId: number | undefined,
+  meetDatetime: string,
+  meetTypeId: number | undefined,
+  location: string | undefined,
+  calledBy: string | undefined,
+  postedBy?: number,
+
 }
 
 const columnHelper = createColumnHelper<IGetAgenda>();
 
-const validationSchema = yup.object({
+const validationSchemaupdate = yup.object({
   meetId: yup.number(),
   meetDatetime: yup.string(),
   meetTypeId: yup.number().required("id req"),
   location: yup.string().required("Please provide a location"),
   calledBy: yup.string().required("Please provide a Name"),
-  postedBy: yup.number().optional(),
 });
+
+const validationSchema = validationSchemaupdate.shape({
+  postedBy: yup.number().optional(),
+})
+
 
 // const agendaValidationSchema = yup.object({
 //   meetId: yup.number().required("required"),
 //   agendaIds: yup.array().required("required"),
 // });
 
-type FormData = yup.TypeOf<typeof validationSchema>;
+
 
 const FormDialogPaper = (
   props: OverridableComponent<PaperTypeMap<{}, "div">>
@@ -107,12 +115,13 @@ export default function AddMeetingDialog({
   onAddMeetingSuccessDialog,
   onAddMeetingDiscardDialog,
   toEditAddMeeting: toEdit,
+  checkboxMeetId,
   refetch,
 }: AddMeeting) {
 
+  const [isCheckboxSelected, setIsCheckboxSelected] = useState([]);
 
   let userId = localStorage.getItem("userId");
-
 
   let access_token = localStorage.getItem("access_token");
 
@@ -120,28 +129,6 @@ export default function AddMeetingDialog({
     Authorization: "Bearer " + access_token,
   };
 
-  useEffect(() => {
-    if (toEdit) {
-      formik.setValues({
-        meetId: toEdit?.meetId!,
-        meetDatetime: dayjs(toEdit?.meetDatetime).format("YYYY-MM-DD"),
-        meetTypeId: toEdit?.meetTypeId,
-        location: toEdit?.location,
-        calledBy: toEdit?.calledBy,
-        postedBy: toEdit?.postedBy,
-      });
-    }
-  }, [toEdit]);
-
-  // useEffect(() => {
-  //   if (toEditAgenda) {
-  //     agendaFormik.setValues({
-  //       meetId: toEdit.meetId,
-  //       agendaIds: toEdit.agendaIds,
-
-  //     })
-  //   }
-  // })
 
 
   const UpdateMeetingData = useMutation<number, unknown, IMeeting>(
@@ -189,6 +176,9 @@ export default function AddMeetingDialog({
       await axios
         .post("api/Minute", data, {
           headers: headers,
+          params: {
+            meetId: Number(checkboxMeetId)
+          }
         })
         .then((res) => res.data),
     {
@@ -208,7 +198,7 @@ export default function AddMeetingDialog({
       calledBy: "",
       postedBy: Number(userId),
     },
-    validationSchema: validationSchema,
+    validationSchema: toEdit ? validationSchemaupdate : validationSchema,
     onSubmit: (values) => {
       console.log(values);
       if (toEdit) {
@@ -220,13 +210,11 @@ export default function AddMeetingDialog({
     },
   });
 
-  console.log(formik.errors);
 
 
   const agendaFormik = useFormik<AgendaRow>({
     initialValues: {
-      meetId: 0,
-      agendaIds: [],
+      agendaId: [],
     },
     onSubmit: () => { },
   });
@@ -246,7 +234,7 @@ export default function AddMeetingDialog({
   let meetId = formik.values.meetId;
 
 
-  const { data: agenda, refetch: agendaRefetch } = getAgenda(meetTypeId, {
+  const { data: agendas, refetch: agendaRefetch } = getAgenda(meetTypeId, {
     params: {
       meetTypeId: meetTypeId,
       meetId: meetId,
@@ -255,6 +243,9 @@ export default function AddMeetingDialog({
       Authorization: "Bearer " + access_token,
     },
   });
+
+
+
 
   const columns = [
     columnHelper.accessor("agenda", {
@@ -299,7 +290,7 @@ export default function AddMeetingDialog({
   ];
 
   const table = useReactTable({
-    data: agenda,
+    data: agendas,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -307,6 +298,38 @@ export default function AddMeetingDialog({
   const handleClose = () => {
     onAddMeetingDiscardDialog();
   };
+
+  useEffect(() => {
+    if (toEdit) {
+      formik.setValues({
+        meetId: toEdit?.meetId!,
+        meetDatetime: dayjs(toEdit?.meetDatetime).format("YYYY-MM-DD"),
+        meetTypeId: toEdit?.meetTypeId,
+        location: toEdit?.location,
+        calledBy: toEdit?.calledBy,
+
+      });
+    }
+  }, [toEdit]);
+
+  // useEffect(() => {
+  //   if (toEditAgenda) {
+  //     agendaFormik.setValues({
+  //       meetId: toEdit.meetId,
+  //       agendaIds: toEdit.agendaIds,
+
+  //     })
+  //   }
+  // })
+
+
+  useEffect(() => {
+    if (toEdit && agendas) {
+      agendaFormik.setFieldValue("agendaId", agendas.filter((agenda: IGetAgenda) => agenda.isSelected).map((filteredAgenda: IGetAgenda) => (
+        filteredAgenda.agendaId
+      ) as never) as never[])
+    }
+  }, [agendas, toEdit]);
 
 
   return (
@@ -421,9 +444,12 @@ export default function AddMeetingDialog({
                     <TableRow key={row.id}>
                       <TableCell>
                         <Checkbox
-                          name="agendaIds"
+                          name="agendaId"
                           value={row.original.agendaId}
                           onChange={agendaFormik.handleChange}
+                          checked={agendaFormik.values.agendaId?.includes(row.original.agendaId)}
+
+
                         />
                       </TableCell>
                       {row.getVisibleCells().map((cell) => (
