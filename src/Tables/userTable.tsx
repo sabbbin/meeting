@@ -83,7 +83,7 @@ export default function UserTable() {
       pageSize: 25,
     });
 
-  const [isforMenu, setisforMenu] = useState<IUser | null>();
+  const [isforMenu, setIsForMenu] = useState<IUser | null>();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
   const [isChangeStatus, setisChangeStatus] = useState(false);
@@ -97,7 +97,7 @@ export default function UserTable() {
     user: IUser
   ) => {
     setAnchorEl(event.currentTarget);
-    setisforMenu(user);
+    setIsForMenu(user);
     setOpenMenu(true);
   };
 
@@ -486,11 +486,11 @@ export default function UserTable() {
           open={isDialogOpen}
           onSuccessDialog={() => {
             enqueueSnackbar("Success", { variant: "success" });
-            setisforMenu(null);
+            setIsForMenu(null);
             setIsDialogOpen(false);
           }}
           onDiscardDialog={() => {
-            setisforMenu(null);
+            setIsForMenu(null);
             setIsDialogOpen(false);
           }}
         />

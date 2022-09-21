@@ -44,7 +44,7 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { number } from "yup";
 import AgendaTable from "./agendaTable";
-import AddCallByMeeting from "../dialog/addCallByMeeting";
+import AddCallByMeeting from "../dialog/meetingPreviewConclude";
 import PopupState, { bindPopover, bindTrigger } from "material-ui-popup-state";
 import { ValuesType } from "utility-types";
 import { FilterType } from "../filter";
@@ -156,6 +156,9 @@ export default function Meeting() {
       Authorization: "Bearer " + accessToken,
     },
   };
+  useEffect(() => {
+    getMeeting();
+  }, []);
   const { data: meetingData, refetch: getMeeting } = useMeeting(
     pagination.pageNumber,
     pagination.pageSize,
