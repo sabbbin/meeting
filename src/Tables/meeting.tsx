@@ -177,7 +177,7 @@ export default function Meeting() {
 
   const { mutate: callMeetingMutatae } = useMutation<unknown, unknown, callId>(
     async (data) =>
-      await axios.post("/api/Meeting/Call", data, {
+      await axios.post("/api/Meeting/Call", "", {
         headers: {
           Authorization: "Bearer " + access_token,
         },
@@ -187,6 +187,7 @@ export default function Meeting() {
       }).then((res) => res.data),
     {
       onSuccess() {
+
         getMeeting();
       }
     }
@@ -799,7 +800,6 @@ export default function Meeting() {
             {isForMenu?.status === 'New' ? (<MenuItem onClick={() => {
               handleClose();
               handleCallMeeting()
-
             }}>
               Call</MenuItem>) : (null)}
 
