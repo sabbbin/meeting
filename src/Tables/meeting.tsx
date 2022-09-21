@@ -56,7 +56,7 @@ import { useNavigate } from "react-router-dom";
 import StyledTableRow from "../components/StyledTableRow";
 import StyledTableCell from "../components/StyledTableCell";
 import PostpondMeeting from "../dialog/postpond";
-import CancleMeeting from "../dialog/cancle";
+import CancleMeeting from "../dialog/cancleMeeting";
 
 export interface IMeeting {
   meetId?: number | undefined;
@@ -569,6 +569,8 @@ export default function Meeting() {
       )} */}
 
       {isForCancle && (<CancleMeeting
+        cancleMeetId={isForMenu?.meetId}
+        refetch={getMeeting}
         open={isForCancle}
         onDiscardDialog={() => {
           setIsForCancle(false)

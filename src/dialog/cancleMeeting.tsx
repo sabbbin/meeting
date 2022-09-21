@@ -30,11 +30,15 @@ interface ICancle {
 interface CancleMeetingProps extends DialogProps {
     onDiscardDialog: () => void;
     onSuccessDialog: () => void;
+    refetch: () => void;
+    cancleMeetId: number | undefined,
 }
 
 const CancleMeeting = ({
     onDiscardDialog,
     onSuccessDialog,
+    cancleMeetId,
+    refetch,
     open,
 }: CancleMeetingProps) => {
 
@@ -62,8 +66,8 @@ const CancleMeeting = ({
                 .then((res) => res.data),
         {
             onSuccess() {
-                onSuccessDialog()
-
+                onSuccessDialog();
+                refetch();
             },
         }
     );
@@ -71,7 +75,7 @@ const CancleMeeting = ({
 
     const formik = useFormik<ICancle>({
         initialValues: {
-            meetId: 0,
+            meetId: Number(cancleMeetId),
             comment: '',
             postedBy: Number(userId),
         },
