@@ -255,15 +255,6 @@ export default function MeetingTypeTable() {
     }
   );
 
-  // const { data: meetingTypeCount } = useMeetingTypeCount(userIdLocal, {
-  //   params: {
-  //     userId: userIdLocal,
-  //   },
-  //   headers: {
-  //     Authorization: "Bearer " + accessToken,
-  //   },
-  // });
-
   const handleDelete = (value: any) => {
     const deleteId = isforMenu?.meetTypeId!;
     deleteMutatae(deleteId);
@@ -342,7 +333,7 @@ export default function MeetingTypeTable() {
             handleCloseMenu();
           }}
         >
-          Add User
+          Add MeetingTypes
         </Button>
 
         <PopupState variant="popover" popupId="demo-popup-popover">

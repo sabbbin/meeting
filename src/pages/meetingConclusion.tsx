@@ -1,4 +1,5 @@
-import { AttachEmail, CheckBox, TableRows } from "@mui/icons-material";
+import { AttachEmail, CheckBox, TableRows, YouTube } from "@mui/icons-material";
+import * as yup from "yup";
 import {
   Box,
   Button,
@@ -28,7 +29,15 @@ import {
 } from "@mui/material";
 import { OverridableComponent } from "@mui/material/OverridableComponent";
 import dayjs from "dayjs";
-import { Field, FieldArray, Form, Formik, useFormik } from "formik";
+import {
+  ErrorMessage,
+  Field,
+  FieldArray,
+  Form,
+  Formik,
+  FormikErrors,
+  useFormik,
+} from "formik";
 import React, { useEffect, useState } from "react";
 import Switch from "@mui/material/Switch";
 import DoneIcon from "@mui/icons-material/Done";
@@ -73,6 +82,11 @@ export interface IGetUserTypeByMeeting {
   FullName: string;
   isPresent?: boolean;
   meetId?: number;
+}
+export interface IInvities {
+  meetId: number;
+  invities: string;
+  description: string;
 }
 
 export interface IMeetingConclude {
@@ -133,13 +147,11 @@ export default function MeetingConclusion() {
     // console.log("meeting getdata", getDataMinutes);
   }, []);
 
-  const [invities, setInvities] = useState([]);
+  const [invities, setInvities] = useState<IInvities[]>([]);
 
   const formikMeetingBasicInfo = useFormik<IMeetingBasicInfo>({
     initialValues: {
-      meetDatetime: dayjs(meeting.meetDatetime).format(
-        "YYYY-MM-DD    HH:MM:ss A"
-      ),
+      meetDatetime: meeting.meetDatetime!.toString(),
 
       location: meeting.location!,
       meetingTypes: meeting.typeName!,
@@ -147,11 +159,15 @@ export default function MeetingConclusion() {
       meetId: meeting.meetId!,
       meetTypeId: meeting.meetTypeId!,
     },
+    validationSchema() {
+      yup.object().shape({
+        location: yup.string().required("required"),
+      });
+    },
     onSubmit: (values) => {
       console.log("values", values);
     },
   });
-  console.log("meeting,  ", meeting);
 
   const [attendMember, setAttendMember] = useState<IGetUserTypeByMeeting[]>([]);
   let accessToken = localStorage.getItem("access_token");
@@ -229,7 +245,7 @@ export default function MeetingConclusion() {
       enabled: false,
     }
   );
-
+  console.log("abc", formikMeetingBasicInfo);
   return (
     <>
       <Toolbar />
@@ -268,6 +284,18 @@ export default function MeetingConclusion() {
                 <Formik
                   enableReinitialize
                   initialValues={{ forms: getDataMinutes }}
+                  validationSchema={yup.object().shape({
+                    forms: yup.array().of(
+                      yup
+                        .object()
+                        .shape({
+                          discussion: yup.string().required("Required"),
+                          conclusion: yup.string().required("Required"),
+                          presentedBy: yup.string().required("Required"),
+                        })
+                        .required()
+                    ),
+                  })}
                   onSubmit={async (values) => {
                     let filterFormValue = values.forms.reduce(
                       (initial: any, val) => {
@@ -306,6 +334,8 @@ export default function MeetingConclusion() {
                     handleSubmit,
                     handleReset,
                     setFieldValue,
+                    errors,
+                    touched,
                   }) => (
                     <Form>
                       <FieldArray
@@ -322,7 +352,10 @@ export default function MeetingConclusion() {
                                     padding: 5,
                                     paddingBottom: 3,
                                     marginBottom: 2,
-                                    border: "2px solid black",
+                                    border: errors.forms
+                                      ? "2px solid red"
+                                      : "2px solid black",
+
                                     borderRadius: 3,
                                   }}
                                 >
@@ -449,7 +482,7 @@ export default function MeetingConclusion() {
                                             );
                                           }}
                                         />
-                                        <Typography>Open</Typography>
+                                        <Typography>Close</Typography>
                                       </Stack>
                                     </Box>
                                     <Field
@@ -460,10 +493,23 @@ export default function MeetingConclusion() {
                                       sx={{
                                         marginBottom: 3,
                                       }}
-                                      required
                                       multiline
                                       fullWidth
                                       maxRows={4}
+                                      error={
+                                        errors.forms &&
+                                        (
+                                          errors.forms[
+                                            index
+                                          ] as FormikErrors<IGetMinutes>
+                                        ).discussion &&
+                                        touched.forms &&
+                                        (
+                                          touched.forms[
+                                            index
+                                          ] as FormikErrors<IGetMinutes>
+                                        )?.discussion
+                                      }
                                       value={value.discussion}
                                       onChange={(
                                         v: React.ChangeEvent<HTMLInputElement>
@@ -474,9 +520,23 @@ export default function MeetingConclusion() {
                                         );
                                       }}
                                     />
+
                                     <Field
                                       component={TextField}
-                                      required
+                                      error={
+                                        errors.forms &&
+                                        (
+                                          errors.forms[
+                                            index
+                                          ] as FormikErrors<IGetMinutes>
+                                        ).conclusion &&
+                                        touched.forms &&
+                                        (
+                                          touched.forms[
+                                            index
+                                          ] as FormikErrors<IGetMinutes>
+                                        )?.conclusion
+                                      }
                                       label="Conclusion"
                                       value={value.conclusion}
                                       name={`forms.${index}.conclusion`}
@@ -500,7 +560,20 @@ export default function MeetingConclusion() {
                                     <Field
                                       component={TextField}
                                       label="PresentedBy"
-                                      required
+                                      error={
+                                        errors.forms &&
+                                        (
+                                          errors.forms[
+                                            index
+                                          ] as FormikErrors<IGetMinutes>
+                                        ).presentedBy &&
+                                        touched.forms &&
+                                        (
+                                          touched.forms[
+                                            index
+                                          ] as FormikErrors<IGetMinutes>
+                                        )?.presentedBy
+                                      }
                                       name={`forms.${index}.presentedBy`}
                                       size="small"
                                       sx={{
@@ -585,25 +658,34 @@ export default function MeetingConclusion() {
                     size="small"
                     autoFocus
                     fullWidth
+                    required
                     name="location"
                     value={formikMeetingBasicInfo.values.location}
                     onChange={formikMeetingBasicInfo.handleChange}
-                    error={
-                      formikMeetingBasicInfo.touched.location &&
-                      Boolean(formikMeetingBasicInfo.errors.location)
-                    }
+                    error={formikMeetingBasicInfo.values.location == ""}
                     helperText={
-                      formikMeetingBasicInfo.touched.location &&
-                      formikMeetingBasicInfo.errors.location
+                      formikMeetingBasicInfo.values.location == "" &&
+                      "select location"
                     }
+                    // error={
+                    //   formikMeetingBasicInfo.touched.location &&
+                    //   Boolean(formikMeetingBasicInfo.errors.location)
+                    // }
+                    // helperText={
+                    //   formikMeetingBasicInfo.touched.location &&
+                    //   formikMeetingBasicInfo.errors.location
+                    // }
                   />
                 </Item>
 
                 <Item>
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DateTimePicker
+                      disablePast
                       label="Meeting Date and Time"
-                      value={formikMeetingBasicInfo.values.meetDatetime}
+                      value={dayjs(
+                        formikMeetingBasicInfo.values.meetDatetime
+                      ).format("MMM D, YYYY h:mm A")}
                       inputFormat="MMM D, YYYY h:mm A"
                       onChange={(newValue) => {
                         formikMeetingBasicInfo.setFieldValue(
@@ -676,8 +758,6 @@ export default function MeetingConclusion() {
                             <Checkbox
                               checked={member.isPresent}
                               onChange={() => {
-                                console.log("before member", member.isPresent);
-
                                 setAttendMember((pre) => {
                                   attendMember[id].isPresent =
                                     !attendMember[id].isPresent;
@@ -711,14 +791,35 @@ export default function MeetingConclusion() {
               >
                 <Formik
                   enableReinitialize
-                  initialValues={{ invities: [] }}
+                  initialValues={{ invities: [] as unknown as IInvities[] }}
                   onSubmit={(values) => {
                     setInvities([...values.invities]);
                   }}
+                  // validationSchema={yup.object().shape({
+                  //   forms: yup.array().of(
+                  //     yup
+                  //       .object()
+                  //       .shape({
+                  //         discussion: yup.string().required("Required"),
+                  //         conclusion: yup.string().required("Required"),
+                  //         presentedBy: yup.string().required("Required"),
+                  //       })
+                  //       .required()
+                  //   ),
+                  // })}
+                  validationSchema={yup.object().shape({
+                    invities: yup.array().of(
+                      yup.object().shape({
+                        invitie: yup.string().required("required"),
+                        description: yup.string().required("required"),
+                      })
+                    ),
+                  })}
                   render={({
                     values,
-                    handleReset,
+                    errors,
                     setFieldValue,
+                    touched,
                     handleSubmit,
                   }) => (
                     <Form>
@@ -755,6 +856,20 @@ export default function MeetingConclusion() {
                                     label="Invitie"
                                     name={`invities.${index}.invitie`}
                                     size="small"
+                                    error={
+                                      errors.invities &&
+                                      (
+                                        errors.invities[
+                                          index
+                                        ] as FormikErrors<IInvities>
+                                      )?.invitie &&
+                                      touched.invities &&
+                                      (
+                                        touched.invities[
+                                          index
+                                        ] as FormikErrors<IInvities>
+                                      )?.invitie
+                                    }
                                     onChange={(
                                       v: React.ChangeEvent<HTMLInputElement>
                                     ) => {
@@ -775,6 +890,20 @@ export default function MeetingConclusion() {
                                     maxRows={3}
                                     size="small"
                                     fullwidth
+                                    error={
+                                      errors.invities &&
+                                      (
+                                        errors.invities[
+                                          index
+                                        ] as FormikErrors<IInvities>
+                                      )?.description &&
+                                      touched.invities &&
+                                      (
+                                        touched.invities[
+                                          index
+                                        ] as FormikErrors<IInvities>
+                                      )?.description
+                                    }
                                     label="Description"
                                     name={`invities.${index}.description`}
                                     onChange={(

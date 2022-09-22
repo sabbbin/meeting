@@ -142,12 +142,12 @@ export default function AgendaTable() {
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor("fullName", {
-        header: "Posted By",
+        header: "PostedBy",
         cell: (info) => info.getValue(),
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.postedOn, {
-        header: "Posted On",
+        header: "PostedOn",
         cell: (info) => dayjs(info.getValue()).format("YYYY-MM-DD"),
         footer: (info) => info.column.id,
       }),
@@ -206,7 +206,7 @@ export default function AgendaTable() {
 
   const [sortCol, setSortCol] = useState<SortingState>([
     {
-      id: "Posted On",
+      id: "PostedOn",
       desc: true,
     },
   ]);
@@ -220,7 +220,7 @@ export default function AgendaTable() {
       searchVal?: string;
       operators?: string;
       sortCol?: string;
-      sortOrder?: boolean;
+      sortOrder?: string;
     };
     headers: {
       Authorization: string;
@@ -232,7 +232,7 @@ export default function AgendaTable() {
       pageNo: pagination.pageNumber + 1,
       userId: userId,
       sortCol: sortCol[0]?.id || "typeName",
-      sortOrder: sortCol[0]?.desc || true,
+      sortOrder: sortCol[0]?.desc ? "desc" : "asc",
     },
     headers: {
       Authorization: "Bearer " + accessToken,
@@ -426,7 +426,7 @@ export default function AgendaTable() {
                             sx={{
                               marginRight: "5px",
                               ...(filterOperator == "is empty" ||
-                                filterOperator == "is not empty"
+                              filterOperator == "is not empty"
                                 ? { display: "none" }
                                 : { display: "inline-block" }),
                             }}
@@ -474,7 +474,7 @@ export default function AgendaTable() {
                       sx={{
                         marginRight: "5px",
                         ...(filterOperator == "is empty" ||
-                          filterOperator == "is not empty"
+                        filterOperator == "is not empty"
                           ? { display: "none" }
                           : { display: "inline-block" }),
                       }}

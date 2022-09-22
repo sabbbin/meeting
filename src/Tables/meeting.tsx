@@ -122,6 +122,7 @@ export default function Meeting() {
     setAnchorEl(event.currentTarget);
 
     setIsForMenu(meeting);
+    console.log("meeting abc", meeting);
     deleteMeeting();
     storeMeeting(meeting);
     setOpenMenu(true);
