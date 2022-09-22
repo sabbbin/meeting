@@ -299,24 +299,17 @@ export default function MeetingConclusion() {
                   onSubmit={async (values) => {
                     let filterFormValue = values.forms.reduce(
                       (initial: any, val) => {
-                        if (
-                          val.discussion != "" &&
-                          val.conclusion != "" &&
-                          val.presentedBy != ""
-                        ) {
-                          return [
-                            ...initial,
-                            {
-                              closeAgenda: val.closeAgenda,
-                              agenda: val.agenda,
-                              minuteId: val.minuteId,
-                              presentedBy: val.presentedBy,
-                              discussion: val.discussion,
-                              conclusion: val.conclusion,
-                            },
-                          ];
-                        }
-                        return initial;
+                        return [
+                          ...initial,
+                          {
+                            closeAgenda: val.closeAgenda,
+                            agenda: val.agenda,
+                            minuteId: val.minuteId,
+                            presentedBy: val.presentedBy,
+                            discussion: val.discussion,
+                            conclusion: val.conclusion,
+                          },
+                        ];
                       },
                       []
                     );
