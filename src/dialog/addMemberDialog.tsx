@@ -155,7 +155,7 @@ export default function AddMemberDialog({
   const UpdateMember = (e: any) => {
     e.preventDefault();
     let temp = {
-      meetTypeIds: meetingField.map((m) => m.meetTypeId),
+      meetTypeId: meetingField.map((m) => m.meetTypeId),
     };
 
     console.log("tempt", meetingField);
