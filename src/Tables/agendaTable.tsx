@@ -60,7 +60,42 @@ export interface IAgenda {
   totalRows?: number;
 }
 
+interface IaxiosConfig {
+  params: {
+    userId: string | null;
+    pageSize: number;
+    pageNo: number;
+    searchCol?: string;
+    searchVal?: string;
+    operators?: string;
+    sortCol?: string;
+    sortOrder?: boolean;
+  };
+  headers: {
+    Authorization: string;
+  };
+}
 const columnHelper = createColumnHelper<IAgenda>();
+
+
+const filterOptions = [
+  {
+    field: "typeName",
+    options: FilterType.StringFilterType,
+  },
+  {
+    field: "Agenda",
+    options: FilterType.StringFilterType,
+  },
+  {
+    field: "Description",
+    options: FilterType.StringFilterType,
+  },
+  {
+    field: "PostedOn",
+    options: FilterType.DateFilterType,
+  },
+] as const;
 
 export default function AgendaTable() {
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
@@ -92,6 +127,17 @@ export default function AgendaTable() {
       pageNumber: 0,
       pageSize: 10,
     });
+
+  const getStatusID = (statusId: number) => {
+    switch (statusId) {
+      case 6://new agenda status
+        return "info";
+      case 7:// open agenda
+        return "success";
+      case 8://closed agenda
+        return "default";
+    }
+  }
 
   const columns = useMemo(
     () => [
@@ -136,9 +182,13 @@ export default function AgendaTable() {
         ),
         footer: (info) => info.column.id,
       }),
-      columnHelper.accessor("statusName", {
+      columnHelper.accessor((row) => row, {
         header: "Status",
-        cell: (info) => info.getValue(),
+        cell: (info) => (<Chip
+          size="small"
+          label={info.getValue().statusName}
+          color={getStatusID(info.getValue().statusId)}
+        />),
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor("fullName", {
@@ -155,11 +205,10 @@ export default function AgendaTable() {
         header: "Actions",
         enableSorting: false,
         cell: (info) =>
-          info.getValue().statusId === 7 && (
+          (info.getValue().statusId === 6 && info.getValue().postedBy === Number(localStorage.getItem("userId"))) ? (
             <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
               <MoreVertIcon />
-            </IconButton>
-          ),
+            </IconButton>) : (null),
       }),
     ],
     []
@@ -167,32 +216,6 @@ export default function AgendaTable() {
 
   //filter options for agenda
 
-  const filterOptions = [
-    {
-      field: "typeName",
-      options: FilterType.StringFilterType,
-    },
-    {
-      field: "Agenda",
-      options: FilterType.StringFilterType,
-    },
-    {
-      field: "Description",
-      options: FilterType.StringFilterType,
-    },
-    // {
-    //   field: "Status",
-    //   options: FilterType.StringFilterType,
-    // },
-    // {
-    //   field: "PostedBy",
-    //   options: FilterType.StringFilterType,
-    // },
-    {
-      field: "PostedOn",
-      options: FilterType.DateFilterType,
-    },
-  ] as const;
 
   const [filterField, setFilterField] =
     useState<ValuesType<typeof filterOptions>["field"]>("typeName");
@@ -211,38 +234,18 @@ export default function AgendaTable() {
     },
   ]);
 
-  interface IaxiosConfig {
-    params: {
-      userId: string | null;
-      pageSize: number;
-      pageNo: number;
-      searchCol?: string;
-      searchVal?: string;
-      operators?: string;
-      sortCol?: string;
-      sortOrder?: boolean;
-    };
-    headers: {
-      Authorization: string;
-    };
-  }
   let axiosConfig: IaxiosConfig = {
     params: {
       pageSize: pagination.pageSize,
       pageNo: pagination.pageNumber + 1,
       userId: userId,
-      sortCol: sortCol[0]?.id || "typeName",
+      sortCol: sortCol[0]?.id.replace(/\s/g, '') || "typeName",
       sortOrder: sortCol[0]?.desc || true,
     },
     headers: {
       Authorization: "Bearer " + accessToken,
     },
   };
-
-  // if (filterField) {
-  //   (axiosConfig.params["searchCol"] = filterField),
-  //     (axiosConfig.params["searchVal"] = searchValue);
-  // }
 
   const { data: meetingAgendaData, refetch } = useAgenda(
     pagination.pageSize,
@@ -252,21 +255,12 @@ export default function AgendaTable() {
     { ...axiosConfig }
   );
 
-  // const { data: meetingTypeCount } = useAgendaCount(userId, {
-  //   params: {
-  //     userId: userId,
-  //   },
-  //   headers: {
-  //     Authorization: "Bearer " + accessToken,
-  //   },
-  // });
 
-  type deleteId = string;
-  const { mutate: deleteMutatae } = useMutation<unknown, unknown, deleteId>(
+  const { mutate: deleteMutatae } = useMutation<unknown, unknown, string>(
     (deleteId) =>
       axios
         .delete("/api/Agenda/", {
-          params: { agendaId: isforAgenda?.agendaId },
+          params: { agendaId: deleteId, userId: userId },
           headers: {
             "Content-Type": "application/json",
             Authorization: "Bearer " + accessToken,
@@ -280,10 +274,8 @@ export default function AgendaTable() {
     }
   );
 
-  const handleDelete = () => {
-    const deleteId = isforAgenda?.agendaId;
-    deleteMutatae(deleteId!);
-  };
+  const handleDelete = () => deleteMutatae(isforAgenda?.agendaId!);
+
 
   const table = useReactTable({
     data: meetingAgendaData,

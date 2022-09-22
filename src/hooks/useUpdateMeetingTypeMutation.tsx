@@ -10,7 +10,7 @@ export const useUpdateMeetingTypeMutation = (
   useMutation<unknown, unknown, IAgenda>(
     async (data) =>
       await axios
-        .put("api/MeetingAgenda", data, axiosConfig)
+        .put("api/Agenda", data, axiosConfig)
         .then((res) => res.data),
     {
       onSuccess() {

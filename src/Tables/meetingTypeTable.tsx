@@ -342,7 +342,7 @@ export default function MeetingTypeTable() {
             handleCloseMenu();
           }}
         >
-          Add User
+          Add Meeting Type
         </Button>
 
         <PopupState variant="popover" popupId="demo-popup-popover">
@@ -433,7 +433,7 @@ export default function MeetingTypeTable() {
                             sx={{
                               marginRight: "5px",
                               ...(filterOperator == "is empty" ||
-                              filterOperator == "is not empty"
+                                filterOperator == "is not empty"
                                 ? { display: "none" }
                                 : { display: "inline-block" }),
                             }}
@@ -481,7 +481,7 @@ export default function MeetingTypeTable() {
                       sx={{
                         marginRight: "5px",
                         ...(filterOperator == "is empty" ||
-                        filterOperator == "is not empty"
+                          filterOperator == "is not empty"
                           ? { display: "none" }
                           : { display: "inline-block" }),
                       }}
@@ -621,7 +621,7 @@ export default function MeetingTypeTable() {
               handleCloseMenu();
             }}
           >
-            View User
+            Add User
           </MenuItem>
           <MenuItem
             onClick={() => {

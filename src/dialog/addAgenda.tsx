@@ -55,6 +55,8 @@ export default function AddAgendaDialog({
 }: AddAgendaProps) {
   let accessToken = localStorage.getItem("access_token");
 
+  let userId = localStorage.getItem("userId");
+
   let axiosConfig: AxiosRequestConfig = {
     headers: {
       Authorization: "Bearer " + accessToken,
@@ -81,7 +83,7 @@ export default function AddAgendaDialog({
   const updateMeetingTypeMutation = useUpdateMeetingTypeMutation(
     {
       ...axiosConfig,
-      params: { agendaId: toEdit?.agendaId },
+      params: { agendaId: toEdit?.agendaId, userId: userId },
     },
     refetch,
     onSuccessDialog
@@ -105,12 +107,12 @@ export default function AddAgendaDialog({
   //   }
   // );
 
-  let userId = localStorage.getItem("userId");
 
   const { data: userMeetingtypeData } = useUserMeetingType(userId, {
     ...axiosConfig,
     params: {
       userId: userId,
+
     },
   });
 
@@ -189,8 +191,8 @@ export default function AddAgendaDialog({
           }}
         >
           {userMeetingtypeData.map((meetType: any, index: number) => (
-            <MenuItem key={index} value={meetType.MeetTypeId}>
-              {meetType.TypeName}
+            <MenuItem key={index} value={meetType.meetTypeId}>
+              {meetType.typeName}
             </MenuItem>
           ))}
         </TextField>

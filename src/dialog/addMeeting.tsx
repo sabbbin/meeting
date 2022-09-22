@@ -13,6 +13,7 @@ import {
   DialogTitle,
   Divider,
   FormControlLabel,
+  Grid,
   MenuItem,
   Paper,
   PaperTypeMap,
@@ -245,7 +246,7 @@ export default function AddMeetingDialog({
     initialValues: {
       agendaId: [],
     },
-    onSubmit: () => {},
+    onSubmit: () => { },
   });
 
   const { data: userMeetingtypeData, refetch: meetingTypeRefetch } =
@@ -361,16 +362,25 @@ export default function AddMeetingDialog({
   }, [agendas, toEdit]);
 
   return (
-    <Card>
-      <Box
-        component={FormDialogPaper as never}
-        onSubmit={formik.handleSubmit as never}
-      >
-        <DialogTitle sx={{ textAlign: "center", fontSize: "25px" }}>
-          <b>{!!toEdit ? "Update" : "Add"} Meeting</b>
-        </DialogTitle>
-        <CardContent>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
+
+    <Box
+      sx={{
+        maxWidth: 800,
+        alignItems: 'center',
+        marginX: 'auto'
+      }}
+      component={FormDialogPaper as never}
+      onSubmit={formik.handleSubmit as never}
+    >
+      <DialogTitle sx={{ textAlign: "center", fontSize: "25px" }}>
+        <b>{!!toEdit ? "Update" : "Add"} Meeting</b>
+      </DialogTitle>
+      <CardContent sx={{
+        display: 'flex',
+        justifyContent: 'space-between'
+      }}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}> <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DateTimePicker
               label="Select Date and time"
               value={formik.values.meetDatetime}
@@ -380,6 +390,9 @@ export default function AddMeetingDialog({
               }}
               renderInput={(params) => (
                 <TextField
+                  sx={{
+                    m: 1
+                  }}
                   fullWidth
                   error={
                     formik.touched.meetDatetime &&
@@ -393,124 +406,137 @@ export default function AddMeetingDialog({
               )}
             />
           </LocalizationProvider>
-          <TextField
-            label="Location"
-            autoFocus
-            margin="dense"
-            name="location"
-            value={formik.values.location}
-            onChange={formik.handleChange}
-            error={formik.touched.location && Boolean(formik.errors.location)}
-            helperText={formik.touched.location && formik.errors.location}
-            fullWidth
-            variant="standard"
-          />
-          <TextField
-            label="CalledBy"
-            autoFocus
-            margin="dense"
-            name="calledBy"
-            value={formik.values.calledBy}
-            onChange={formik.handleChange}
-            error={formik.touched.calledBy && Boolean(formik.errors.calledBy)}
-            helperText={formik.touched.calledBy && formik.errors.calledBy}
-            fullWidth
-            variant="standard"
-          />
-          <TextField
-            select
-            fullWidth
-            name="meetTypeId"
-            id="meetTypeId"
-            margin="dense"
-            label="Meeting Type"
-            variant="standard"
-            value={formik.values.meetTypeId}
-            SelectProps={{
-              value: formik.values.meetTypeId,
-              onChange: formik.handleChange,
-            }}
-          >
-            {userMeetingtypeData.map((meetType: any, index: number) => (
-              <MenuItem key={index} value={meetType.meetTypeId}>
-                {meetType.typeName}
-              </MenuItem>
-            ))}
-          </TextField>
-          {formik.values.meetTypeId ? (
-            <Card sx={{ marginTop: 2.5 }}>
-              <Typography sx={{ m: 1, textAlign: "center" }}>
-                <b>Add Agendas</b>
-              </Typography>
-              <Divider />
-              <Table>
-                <TableHead>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      <TableCell></TableCell>
-                      {headerGroup.headers.map((header) => (
-                        <TableCell
-                          sx={{
-                            fontWeight: "600",
-                          }}
-                          key={header.id}
-                        >
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
+            <TextField
+              fullWidth
+              variant="outlined"
+              label="Location"
+              autoFocus
+              margin="dense"
+              name="location"
+              value={formik.values.location}
+              onChange={formik.handleChange}
+              error={formik.touched.location && Boolean(formik.errors.location)}
+              helperText={formik.touched.location && formik.errors.location}
+
+            />
+            <TextField
+              sx={{
+                m: 1
+              }}
+              fullWidth
+              label="CalledBy"
+              variant="outlined"
+              autoFocus
+              margin="dense"
+              name="calledBy"
+              value={formik.values.calledBy}
+              onChange={formik.handleChange}
+              error={formik.touched.calledBy && Boolean(formik.errors.calledBy)}
+              helperText={formik.touched.calledBy && formik.errors.calledBy}
+
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+
+            <TextField
+              select
+              variant="outlined"
+              name="meetTypeId"
+              id="meetTypeId"
+              margin="dense"
+              label="Meeting Type"
+              fullWidth
+              value={formik.values.meetTypeId}
+              SelectProps={{
+                value: formik.values.meetTypeId,
+                onChange: formik.handleChange,
+              }}
+            >
+              {userMeetingtypeData.map((meetType: any, index: number) => (
+                <MenuItem key={index} value={meetType.meetTypeId}>
+                  {meetType.typeName}
+                </MenuItem>
+              ))}
+            </TextField>
+            {formik.values.meetTypeId ? (
+              <Card sx={{ marginTop: 2.5 }}>
+                <Typography sx={{ m: 1, textAlign: "center" }}>
+                  <b>Add Agendas</b>
+                </Typography>
+                <Divider />
+                <Table>
+                  <TableHead>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow key={headerGroup.id}>
+                        <TableCell></TableCell>
+                        {headerGroup.headers.map((header) => (
+                          <TableCell
+                            sx={{
+                              fontWeight: "600",
+                            }}
+                            key={header.id}
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
                                 header.column.columnDef.header,
                                 header.getContext()
                               )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableHead>
+                  <TableBody>
+                    {table.getRowModel().rows.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell>
+                          <Checkbox
+                            name="agendaId"
+                            value={row.original.agendaId}
+                            onChange={agendaFormik.handleChange}
+                            checked={agendaFormik.values.agendaId?.includes(
+                              row.original.agendaId
+                            )}
+                          />
                         </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableHead>
-                <TableBody>
-                  {table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>
-                        <Checkbox
-                          name="agendaId"
-                          value={row.original.agendaId}
-                          onChange={agendaFormik.handleChange}
-                          checked={agendaFormik.values.agendaId?.includes(
-                            row.original.agendaId
-                          )}
-                        />
-                      </TableCell>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell
-                          sx={{
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            "&:hover": {
-                              overflow: "visible",
-                            },
-                          }}
-                          key={cell.id}
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          ) : null}
-        </CardContent>
-        <CardActions>
-          <Button type="submit" variant="contained">
-            Submit
-          </Button>
-          <Button onClick={handleClose}>Cancel</Button>
-        </CardActions>
-      </Box>
-    </Card>
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell
+                            sx={{
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              "&:hover": {
+                                overflow: "visible",
+                              },
+                            }}
+                            key={cell.id}
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            ) : null}</Grid>
+        </Grid>
+
+
+
+      </CardContent>
+      <CardActions>
+        <Button type="submit" variant="contained">
+          Submit
+        </Button>
+        <Button onClick={handleClose}>Cancel</Button>
+      </CardActions>
+    </Box>
+
   );
 }

@@ -12,7 +12,7 @@ function useAgenda(
   axiosConfig: AxiosRequestConfig
 ) {
   return useQuery<IAgenda[]>(
-    ["Agenda", pageSize, pageNumber, userId, sortCol, axiosConfig],
+    ["Agenda", pageSize, pageNumber, userId, sortCol],
     () => axios.get("api/Agenda", axiosConfig).then((res) => res.data),
     { initialData: [] }
   );
