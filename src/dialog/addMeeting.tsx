@@ -25,7 +25,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { IMeeting } from "../Tables/meeting";
+import { IMeeting, IPostMeeting } from "../Tables/meeting";
 import * as yup from "yup";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useFormControlUnstyledContext } from "@mui/base";
@@ -34,7 +34,7 @@ import { Info, MeetingRoomRounded } from "@mui/icons-material";
 import { OverridableComponent } from "@mui/material/OverridableComponent";
 import dayjs from "dayjs";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 import useUserMeetingType from "../hooks/useUserMeetingType";
 import getAgenda from "./getAgenda";
 import { width } from "@mui/system";
@@ -44,13 +44,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { IAgenda } from "../Tables/agendaTable";
-import {
-  DataGrid,
-  GridColDef,
-  gridColumnsTotalWidthSelector,
-  GridValueGetterParams,
-} from "@mui/x-data-grid";
+
 import { IMeetingType } from "../Tables/meetingTypeTable";
 import {
   DateTimePicker,
@@ -58,27 +52,32 @@ import {
   LocalizationProvider,
 } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { usePostMeetingAndMInutes } from "../hooks/usePostMeetingAndMInutes";
+import { useUpdateMeetingAndMinutes } from "../hooks/useUpdateMeetingAndMInutes";
+import { useMergeMinute } from "../hooks/useMergeMinutes";
 
 interface AddMeeting extends DialogProps {
   onAddMeetingDiscardDialog: () => void;
   onAddMeetingSuccessDialog: () => void;
   toEditAddMeeting?: IMeeting | null;
   refetch: () => void;
-  // toEditAgenda: AgendaRow;
-
+  // toEditAgenda: IPostMinutes;
 }
 
-export interface AgendaRow {
-  meetId: number | undefined;
-  agendaIds: string[] | undefined;
+export interface IPostMinutes {
+  agendaId: string[] | undefined;
 }
-interface IGetAgenda {
+export interface IGetAgenda {
   isSelected: boolean;
   agendaId: string;
   agenda: string;
   description: string;
   postedBy: number;
   postedOn?: number;
+}
+export interface IPostMeetingAndMinute {
+  meeting: IPostMeeting;
+  minutes: IPostMinutes;
 }
 
 const columnHelper = createColumnHelper<IGetAgenda>();
@@ -109,15 +108,12 @@ export default function AddMeetingDialog({
   toEditAddMeeting: toEdit,
   refetch,
 }: AddMeeting) {
-
-
   let userId = localStorage.getItem("userId");
-
-
-  let access_token = localStorage.getItem("access_token");
+  const [meetIdRes, setMeetIdRes] = useState<number | null>();
+  let accessToken = localStorage.getItem("access_token");
 
   const headers = {
-    Authorization: "Bearer " + access_token,
+    Authorization: "Bearer " + accessToken,
   };
 
   useEffect(() => {
@@ -142,49 +138,86 @@ export default function AddMeetingDialog({
   //     })
   //   }
   // })
-
-
-  const UpdateMeetingData = useMutation<number, unknown, IMeeting>(
-    async (data) =>
-      await axios
-        .put("api/Meeting", data, {
-          headers: headers,
+  let axiosConfig: AxiosRequestConfig = {
+    headers: {
+      Authorization: "bearer " + accessToken,
+    },
+  };
+  useEffect(() => {
+    if (meetIdRes) {
+      axios
+        .post("/api/Minute", agendaFormik.values, {
+          ...axiosConfig,
+          params: {
+            meetId: meetIdRes,
+          },
         })
-        .then((res) => res.data),
-    {
-      onSuccess(data) {
-        if (data) {
-          agendaFormik.setFieldValue("meetId", data);
-        }
-        agendaFormik.values.meetId = data;
-        MergeMeetingMinute.mutate(agendaFormik.values);
-        onAddMeetingSuccessDialog();
-        refetch();
-      },
-    })
-
-  const CreateMeetingData = useMutation<number, unknown, IMeeting>(
-    async (data) =>
-      await axios
-        .post("api/Meeting", data, {
-          headers: headers,
-        })
-        .then((res) => res.data),
-    {
-      onSuccess(data) {
-        if (data) {
-          console.log("data", data);
-          agendaFormik.setFieldValue("meetId", data);
-        }
-        agendaFormik.values.meetId = data;
-        MergeMeetingMinute.mutate(agendaFormik.values);
-        onAddMeetingSuccessDialog();
-        refetch();
-      },
+        .then((res) => {
+          if (res.data == "Successfully Merged.") {
+            setMeetIdRes(null);
+            onAddMeetingSuccessDialog();
+            refetch();
+          }
+        });
     }
-  );
+  }, [meetIdRes]);
 
-  const MergeMeetingMinute = useMutation<unknown, unknown, AgendaRow>(
+  const UpdateMeetingData = useUpdateMeetingAndMinutes(
+    axiosConfig,
+    onAddMeetingSuccessDialog,
+    refetch
+  );
+  //   useMutation<number, unknown, IMeeting>(
+  //   async (data) =>
+  //     await axios
+  //       .put("api/Meeting", data, {
+  //         headers: headers,
+  //       })
+  //       .then((res) => res.data),
+  //   {
+  //     onSuccess(data) {
+  //       if (data) {
+  //         agendaFormik.setFieldValue("meetId", data);
+  //       }
+  //       agendaFormik.values.meetId = data;
+  //       postMinute.mutate(agendaFormik.values);
+  //       onAddMeetingSuccessDialog();
+  //       refetch();
+  //     },
+  //   }
+  // );
+
+  const postMeetingAndMinutes = usePostMeetingAndMInutes(
+    axiosConfig,
+    onAddMeetingSuccessDialog,
+    refetch
+  );
+  //   useMutation<
+  //   number,
+  //   unknown,
+  //   IPostMeetingAndMinute
+  // >(
+  //   async (data) =>
+  //     await axios
+  //       .post("api/Meeting", data, {
+  //         headers: headers,
+  //       })
+  //       .then((res) => res.data),
+  //   {
+  //     onSuccess(data) {
+  //       if (data) {
+  //         console.log("data", data);
+  //         agendaFormik.setFieldValue("meetId", data);
+  //       }
+  //       agendaFormik.values.meetId = data;
+  //       postMinute.mutate(agendaFormik.values);
+  //       onAddMeetingSuccessDialog();
+  //       refetch();
+  //     },
+  //   }
+  // );
+
+  const postMinute = useMutation<unknown, unknown, IPostMinutes>(
     async (data) =>
       await axios
         .post("api/Minute", data, {
@@ -213,42 +246,48 @@ export default function AddMeetingDialog({
       console.log(values);
       if (toEdit) {
         let tempdata = { ...toEdit, ...values };
-        UpdateMeetingData.mutate(tempdata);
+        UpdateMeetingData.mutate({
+          meeting: tempdata,
+          minutes: agendaFormik.values,
+        });
       } else {
-        CreateMeetingData.mutate(values);
+        postMeetingAndMinutes.mutate(values, {
+          onSuccess(resMeetId) {
+            setMeetIdRes(resMeetId);
+          },
+        });
       }
     },
   });
 
   console.log(formik.errors);
 
-
-  const agendaFormik = useFormik<AgendaRow>({
+  const agendaFormik = useFormik<IPostMinutes>({
     initialValues: {
-      meetId: 0,
-      agendaIds: [],
+      agendaId: [],
     },
-    onSubmit: () => { },
+    onSubmit: () => {},
   });
 
-
-  const { data: userMeetingtypeData, refetch: meetingTypeRefetch } = useUserMeetingType(userId, {
-    params: {
-      userId: userId,
-    },
-    headers: {
-      Authorization: "Bearer " + access_token,
-    },
-  });
+  const { data: userMeetingtypeData, refetch: meetingTypeRefetch } =
+    useUserMeetingType(userId, {
+      params: {
+        userId: userId,
+      },
+      headers: {
+        Authorization: "bearer " + accessToken,
+      },
+    });
 
   let meetTypeId = formik.values.meetTypeId;
 
   const { data: agenda, refetch: agendaRefetch } = getAgenda(meetTypeId, {
     params: {
       meetTypeId: meetTypeId,
+      meetId: formik.values.meetId,
     },
     headers: {
-      Authorization: "Bearer " + access_token,
+      Authorization: "Bearer " + accessToken,
     },
   });
 
@@ -303,7 +342,6 @@ export default function AddMeetingDialog({
   const handleClose = () => {
     onAddMeetingDiscardDialog();
   };
-
 
   return (
     <Card>
@@ -377,8 +415,8 @@ export default function AddMeetingDialog({
             }}
           >
             {userMeetingtypeData.map((meetType: any, index: number) => (
-              <MenuItem key={index} value={meetType.MeetTypeId}>
-                {meetType.TypeName}
+              <MenuItem key={index} value={meetType.meetTypeId}>
+                {meetType.typeName}
               </MenuItem>
             ))}
           </TextField>
@@ -403,9 +441,9 @@ export default function AddMeetingDialog({
                           {header.isPlaceholder
                             ? null
                             : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
                         </TableCell>
                       ))}
                     </TableRow>
@@ -416,7 +454,7 @@ export default function AddMeetingDialog({
                     <TableRow key={row.id}>
                       <TableCell>
                         <Checkbox
-                          name="agendaIds"
+                          name="agendaId"
                           value={row.original.agendaId}
                           onChange={agendaFormik.handleChange}
                         />

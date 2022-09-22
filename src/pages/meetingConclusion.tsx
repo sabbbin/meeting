@@ -188,13 +188,13 @@ export default function MeetingConclusion() {
   const { data: getDataMinutes, refetch: callGetMinutes } = useQuery<
     IGetMinutes[]
   >(
-    ["getMinutes"],
+    ["getMinutes", meeting.meetId],
     async () => {
       console.log("meeting", meeting.meetId);
       return await axios
         .get("/api/Minute/GetMinute", {
           params: {
-            meetid: meeting.meetId!,
+            meetId: meeting.meetId!,
           },
           headers: {
             Authorization: "bearer " + accessToken,
@@ -460,6 +460,7 @@ export default function MeetingConclusion() {
                                       sx={{
                                         marginBottom: 3,
                                       }}
+                                      required
                                       multiline
                                       fullWidth
                                       maxRows={4}
@@ -475,6 +476,7 @@ export default function MeetingConclusion() {
                                     />
                                     <Field
                                       component={TextField}
+                                      required
                                       label="Conclusion"
                                       value={value.conclusion}
                                       name={`forms.${index}.conclusion`}
@@ -498,6 +500,7 @@ export default function MeetingConclusion() {
                                     <Field
                                       component={TextField}
                                       label="PresentedBy"
+                                      required
                                       name={`forms.${index}.presentedBy`}
                                       size="small"
                                       sx={{
@@ -601,7 +604,7 @@ export default function MeetingConclusion() {
                     <DateTimePicker
                       label="Meeting Date and Time"
                       value={formikMeetingBasicInfo.values.meetDatetime}
-                      inputFormat="YYYY-MM-DD    HH:MM:ss A"
+                      inputFormat="MMM D, YYYY h:mm A"
                       onChange={(newValue) => {
                         formikMeetingBasicInfo.setFieldValue(
                           "meetDatetime",

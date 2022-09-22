@@ -61,8 +61,6 @@ export default function AddMeetingTypeDialog({
     Authorization: "Bearer " + accessToken,
   };
 
-
-
   const CreateMeetingTypeMutation = useMutation<unknown, unknown, FormData>(
     async (data) =>
       await axios
@@ -78,19 +76,16 @@ export default function AddMeetingTypeDialog({
     }
   );
 
-
   const UpdateMeetingTypeMutation = useMutation<unknown, unknown, FormData>(
     async (data: any) =>
       await axios
-        .put("api/MeetingType", data,
-          {
-            params: { meetTypeId: toEdit.MeetTypeId },
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + accessToken,
-            },
-          }
-        )
+        .put("api/MeetingType", data, {
+          params: { meetTypeId: toEdit.meetTypeId },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + accessToken,
+          },
+        })
         .then((res) => res.data),
     {
       onSuccess() {
@@ -117,7 +112,6 @@ export default function AddMeetingTypeDialog({
       alias: "",
       isEnable: true,
       orderIdx: 0,
-
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
@@ -134,7 +128,6 @@ export default function AddMeetingTypeDialog({
         alias: toEdit?.alias,
         orderIdx: toEdit?.orderIdx,
         isEnable: toEdit?.isEnable,
-
       });
   }, [toEdit]);
 

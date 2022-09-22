@@ -60,14 +60,21 @@ export interface IMeeting {
   meetId?: number | undefined;
   meetDatetime: string | undefined;
   meetTypeId: number | undefined;
+  typeName?: string;
   location: string | undefined;
   calledBy: string | undefined;
+  postedBy?: number | undefined;
   postedOn?: Date;
   status?: string;
-  typeName?: string;
-  postedBy?: number | undefined;
   agendaIds?: string[] | undefined;
   totalRows?: number;
+}
+export interface IPostMeeting {
+  meetDatetime: string | undefined;
+  meetTypeId: number | undefined;
+  location: string | undefined;
+  calledBy: string | undefined;
+  postedBy: number | undefined;
 }
 
 const columnHelper = createColumnHelper<IMeeting>();

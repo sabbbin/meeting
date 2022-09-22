@@ -69,6 +69,11 @@ export default function MeetingPreviewConclude({
     unknown
   >((data) => {
     return axios.put("/api/Meeting/Conclude", data, {
+      params: {
+        meetId: meetingBasicInfo.meetId,
+        meetDatetime: dayjs(meetingBasicInfo.meetDatetime).format(),
+        location: meetingBasicInfo.location,
+      },
       headers: {
         Authorization: "bearer " + accessToken,
       },
@@ -115,12 +120,12 @@ export default function MeetingPreviewConclude({
       },
       []
     );
-    let { meetingTypes, ...rest } = meetingBasicInfo;
+    // let { meetingTypes, ...rest } = meetingBasicInfo;
 
     if (sendReadyMeetingAttendanc)
       mutateAttendancePost.mutateAsync(sendReadyMeetingAttendanc);
 
-    if (rest) mutateMeetingPut.mutateAsync(rest);
+    // if (rest) mutateMeetingPut.mutateAsync(rest);
     if (invities.length > 0) mutateMeetingInvities.mutateAsync(invities);
     navigate("/meeting");
   };

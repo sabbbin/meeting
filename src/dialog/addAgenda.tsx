@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import { OverridableComponent } from "@mui/material/OverridableComponent";
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 import { useFormik } from "formik";
 import { useEffect, useState } from "react";
 import { IUser } from "../Tables/userTable";
@@ -21,6 +21,8 @@ import useMeetingType from "../hooks/useMeetingType";
 import { IAgenda } from "../Tables/agendaTable";
 import useUserMeetingType from "../hooks/useUserMeetingType";
 import { ContentPasteSearchOutlined } from "@mui/icons-material";
+import { useCreateMeetingTypeMutation } from "../hooks/useCreateMeetingTypeMutation";
+import { useUpdateMeetingTypeMutation } from "../hooks/useUpdateMeetingTypeMutation";
 
 interface AddAgendaProps extends DialogProps {
   onDiscardDialog: () => void;
@@ -29,6 +31,11 @@ interface AddAgendaProps extends DialogProps {
   refetch: () => void;
 }
 
+export interface CreateAgenda {
+  agenda: string;
+  meetTypeId: number;
+  description: string;
+}
 const FormDialogPaper = (
   props: OverridableComponent<PaperTypeMap<{}, "div">>
 ) => <Paper {...(props as any)} as="form" />;
@@ -48,14 +55,10 @@ export default function AddAgendaDialog({
 }: AddAgendaProps) {
   let accessToken = localStorage.getItem("access_token");
 
-  const headers = {
-    Authorization: "Bearer " + accessToken,
-  };
-
-  type CreateAgenda = {
-    agenda: string;
-    meetTypeId: number;
-    description: string;
+  let axiosConfig: AxiosRequestConfig = {
+    headers: {
+      Authorization: "Bearer " + accessToken,
+    },
   };
 
   useEffect(() => {
@@ -69,48 +72,45 @@ export default function AddAgendaDialog({
     }
   }, [toEdit]);
 
-  const CreateMeetingTypeMutation = useMutation<unknown, unknown, CreateAgenda>(
-    async (data) =>
-      await axios
-        .post("api/MeetingAgenda", data, {
-          headers: headers,
-        })
-        .then((res) => res.data),
-    {
-      onSuccess() {
-        refetch();
-        onSuccessDialog();
-      },
-    }
+  const createMeetingTypeMutation = useCreateMeetingTypeMutation(
+    axiosConfig,
+    refetch,
+    onSuccessDialog
   );
 
-  const UpdateMeetingTypeMutation = useMutation<unknown, unknown, IAgenda>(
-    async (data) =>
-      await axios
-        .put("api/MeetingAgenda", data, {
-          params: { agendaId: toEdit?.agendaId },
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + accessToken,
-          },
-        })
-        .then((res) => res.data),
+  const updateMeetingTypeMutation = useUpdateMeetingTypeMutation(
     {
-      onSuccess() {
-        refetch();
-        onSuccessDialog();
-      },
-    }
+      ...axiosConfig,
+      params: { agendaId: toEdit?.agendaId },
+    },
+    refetch,
+    onSuccessDialog
   );
+  //useMutation<unknown, unknown, IAgenda>(
+  //   async (data) =>
+  //     await axios
+  //       .put("api/MeetingAgenda", data, {
+  //         params: { agendaId: toEdit?.agendaId },
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: "Bearer " + accessToken,
+  //         },
+  //       })
+  //       .then((res) => res.data),
+  //   {
+  //     onSuccess() {
+  //       refetch();
+  //       onSuccessDialog();
+  //     },
+  //   }
+  // );
 
   let userId = localStorage.getItem("userId");
 
   const { data: userMeetingtypeData } = useUserMeetingType(userId, {
+    ...axiosConfig,
     params: {
       userId: userId,
-    },
-    headers: {
-      Authorization: "Bearer " + accessToken,
     },
   });
 
@@ -126,9 +126,9 @@ export default function AddAgendaDialog({
     onSubmit: (values) => {
       if (toEdit) {
         let tempdata = { ...toEdit, ...values };
-        UpdateMeetingTypeMutation.mutate(tempdata);
+        updateMeetingTypeMutation.mutate(tempdata);
       } else {
-        CreateMeetingTypeMutation.mutate(values);
+        createMeetingTypeMutation.mutate(values);
       }
     },
   });
