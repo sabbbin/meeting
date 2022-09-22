@@ -92,7 +92,6 @@ interface IGetMinutes {
   conclusion: string;
 }
 
-
 const columnHelper = createColumnHelper<IMeeting>();
 
 export default function Meeting() {
@@ -104,7 +103,6 @@ export default function Meeting() {
   const [isForCancle, setIsForCancle] = useState(false);
   let access_token = localStorage.getItem("access_token");
   const navigate = useNavigate();
-
 
   const [sortCol, setSortCol] = useState<SortingState>([
     {
@@ -194,27 +192,27 @@ export default function Meeting() {
 
   const { mutate: callMeetingMutatae } = useMutation<unknown, unknown, callId>(
     async (data) =>
-      await axios.post("/api/Meeting/Call", "", {
-        headers: {
-          Authorization: "Bearer " + access_token,
-        },
-        params: {
-          meetId: data
-        }
-      }).then((res) => res.data),
+      await axios
+        .post("/api/Meeting/Call", "", {
+          headers: {
+            Authorization: "Bearer " + access_token,
+          },
+          params: {
+            meetId: data,
+          },
+        })
+        .then((res) => res.data),
     {
       onSuccess() {
-
         getMeeting();
-      }
+      },
     }
-  )
+  );
 
   const handleCallMeeting = () => {
     const callId = isForMenu?.meetId;
     callMeetingMutatae(callId!);
-  }
-
+  };
 
   const filterOptions = [
     {
@@ -310,19 +308,14 @@ export default function Meeting() {
       }),
       columnHelper.accessor((row) => row, {
         header: "Actions",
-<<<<<<< HEAD
-        cell: (info) => ((info.getValue().status === "Concluded" || info.getValue().status === "Cancel") ? null : (<IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
-          <MoreVertIcon />
-        </IconButton>)
-
-=======
         enableSorting: false,
-        cell: (info) => (
-          <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
-            <MoreVertIcon />
-          </IconButton>
->>>>>>> feat/newMeeting
-        ),
+        cell: (info) =>
+          info.getValue().status === "Concluded" ||
+          info.getValue().status === "Cancel" ? null : (
+            <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
+              <MoreVertIcon />
+            </IconButton>
+          ),
       }),
     ],
     []
@@ -347,7 +340,6 @@ export default function Meeting() {
     }
   );
 
-
   const handleDelete = () => {
     const deleteId = isForMenu?.meetId;
     deleteMutatae(deleteId!);
@@ -363,9 +355,6 @@ export default function Meeting() {
     getSortedRowModel: getSortedRowModel(),
     debugTable: true,
   });
-
-
-
 
   return (
     <>
@@ -469,7 +458,7 @@ export default function Meeting() {
                     </Select>
 
                     {filterField == "meetDatetime" ||
-                      filterField == "postedOn" ? (
+                    filterField == "postedOn" ? (
                       <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DesktopDatePicker
                           label="Select Date"
@@ -484,7 +473,7 @@ export default function Meeting() {
                               sx={{
                                 marginRight: "5px",
                                 ...(filterOperator == "is empty" ||
-                                  filterOperator == "is not empty"
+                                filterOperator == "is not empty"
                                   ? { display: "none" }
                                   : { display: "inline-block" }),
                               }}
@@ -532,7 +521,7 @@ export default function Meeting() {
                         sx={{
                           marginRight: "5px",
                           ...(filterOperator == "is empty" ||
-                            filterOperator == "is not empty"
+                          filterOperator == "is not empty"
                             ? { display: "none" }
                             : { display: "inline-block" }),
                         }}
@@ -552,30 +541,34 @@ export default function Meeting() {
         </Box>
       )}
 
+      {isForCancle && (
+        <CancleMeeting
+          cancleMeetId={isForMenu?.meetId}
+          refetch={getMeeting}
+          open={isForCancle}
+          onDiscardDialog={() => {
+            setIsForCancle(false);
+          }}
+          onSuccessDialog={() => {
+            setIsForCancle(false);
+          }}
+        />
+      )}
 
-      {isForCancle && (<CancleMeeting
-        cancleMeetId={isForMenu?.meetId}
-        refetch={getMeeting}
-        open={isForCancle}
-        onDiscardDialog={() => {
-          setIsForCancle(false)
-        }}
-        onSuccessDialog={() => {
-          setIsForCancle(false)
-        }} />)}
-
-      {isForPostpond && (<PostpondMeeting
-        pospondMeetId={isForMenu?.meetId}
-        initialDate={isForMenu!.meetDatetime}
-        refetch={getMeeting}
-        open={isForPostpond}
-        onDiscardDialog={() => {
-          setisForPostpond(false)
-        }}
-        onSuccessDialog={() => {
-          setisForPostpond(false)
-        }}
-      />)}
+      {isForPostpond && (
+        <PostpondMeeting
+          pospondMeetId={isForMenu?.meetId}
+          initialDate={isForMenu!.meetDatetime}
+          refetch={getMeeting}
+          open={isForPostpond}
+          onDiscardDialog={() => {
+            setisForPostpond(false);
+          }}
+          onSuccessDialog={() => {
+            setisForPostpond(false);
+          }}
+        />
+      )}
 
       {isDialogOpen ? (
         <AddMeetingDialog
@@ -633,205 +626,76 @@ export default function Meeting() {
               ))}
             </TableHead>
             <TableBody>
-<<<<<<< HEAD
-              {
-                table.getRowModel().rows.map((row) =>
-                  <MeetingTableRow key={row.id} row={row} />)
-              }
-=======
-              {table.getRowModel().rows.map((row) => {
-                return (
-                  <>
-                    <StyledTableRow key={row.id}>
-                      <StyledTableCell size="small">
-                        <IconButton
-                          aria-label="expand row"
-                          size="small"
-                          onClick={async () => {
-                            if (showAgenda == row.original.meetId) {
-                              setShowAgenda(-1);
-                            } else {
-                              await setShowAgenda(row.original.meetId);
-
-                              getMinutes.refetch();
-                              setFlagForCallMInutes(!flagForCallMinutes);
-                            }
-                          }}
-                        >
-                          {showAgenda == row.original.meetId ? (
-                            <KeyboardArrowUpIcon />
-                          ) : (
-                            <KeyboardArrowDownIcon />
-                          )}
-                        </IconButton>
-                      </StyledTableCell>
-
-                      {row.getVisibleCells().map((cell) => (
-                        <StyledTableCell key={cell.id} size="small">
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </StyledTableCell>
-                      ))}
-                    </StyledTableRow>
-                    <StyledTableRow>
-                      <StyledTableCell
-                        style={{ paddingBottom: 0, paddingTop: 0 }}
-                        colSpan={6}
-                      >
-                        <Collapse
-                          in={row.original.meetId == showAgenda}
-                          timeout="auto"
-                          unmountOnExit
-                        >
-                          {getMinutes.data.length == 0 ? (
-                            <Box
-                              sx={{
-                                margin: 3,
-                                textAlign: "center",
-                                color: "red",
-                                fontSize: 20,
-                              }}
-                            >
-                              No Agendas
-                            </Box>
-                          ) : (
-                            <Box sx={{ marginTop: 3, marginBottom: 3 }}>
-                              <Typography
-                                variant="h6"
-                                gutterBottom
-                                component="div"
-                                textAlign="center"
-                              >
-                                Minutes
-                              </Typography>
-                              <Table size="small" aria-label="purchases">
-                                <TableHead
-                                  sx={{
-                                    color: "se",
-                                  }}
-                                >
-                                  <TableRow>
-                                    <StyledTableCell>Agenda</StyledTableCell>
-                                    <StyledTableCell>
-                                      Description
-                                    </StyledTableCell>
-                                    <StyledTableCell align="right">
-                                      Presentator
-                                    </StyledTableCell>
-                                    <StyledTableCell align="right">
-                                      Discussion
-                                    </StyledTableCell>
-                                    <StyledTableCell align="right">
-                                      Conclusion
-                                    </StyledTableCell>
-                                  </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                  {getMinutes.data.length > 0 &&
-                                    getMinutes.data.map((minute, id) => (
-                                      <TableRow key={id}>
-                                        <StyledTableCell
-                                          component="th"
-                                          scope="row"
-                                          size="small"
-                                        >
-                                          <Tooltip title={minute.agenda}>
-                                            <Typography
-                                              sx={{
-                                                width: "150px",
-                                                overflow: "hidden",
-                                                textOverflow: "ellipsis",
-                                                whiteSpace: "nowrap",
-                                              }}
-                                            >
-                                              {minute.agenda}
-                                            </Typography>
-                                          </Tooltip>
-                                        </StyledTableCell>
-                                        <StyledTableCell>
-                                          <Tooltip title={minute.description}>
-                                            <Typography
-                                              sx={{
-                                                width: "150px",
-                                                overflow: "hidden",
-                                                textOverflow: "ellipsis",
-                                                whiteSpace: "nowrap",
-                                              }}
-                                            >
-                                              {minute.description}
-                                            </Typography>
-                                          </Tooltip>
-                                        </StyledTableCell>
-                                        <StyledTableCell align="right">
-                                          {minute.presenter}
-                                        </StyledTableCell>
-                                        <StyledTableCell align="right">
-                                          {minute.discussion}
-                                        </StyledTableCell>
-                                        <StyledTableCell align="right">
-                                          {minute.conclusion}
-                                        </StyledTableCell>
-                                      </TableRow>
-                                    ))}
-                                </TableBody>
-                              </Table>
-                            </Box>
-                          )}
-                        </Collapse>
-                      </StyledTableCell>
-                    </StyledTableRow>
-                  </>
-                );
-              })}
->>>>>>> feat/newMeeting
+              {table.getRowModel().rows.map((row) => (
+                <MeetingTableRow key={row.id} row={row} />
+              ))}
             </TableBody>
           </Table>
           <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
-            {isForMenu?.status === 'New' ? (<MenuItem onClick={() => {
-              handleClose();
-              handleCallMeeting()
-            }}>
-              Call</MenuItem>) : (null)}
+            {isForMenu?.status === "New" ? (
+              <MenuItem
+                onClick={() => {
+                  handleClose();
+                  handleCallMeeting();
+                }}
+              >
+                Call
+              </MenuItem>
+            ) : null}
 
-            {(isForMenu?.status === 'Called' || isForMenu?.status === 'Pospond') ? (<MenuItem
-              onClick={() => {
-                handleClose();
-                navigate("conclusion", { replace: true });
-              }}
-            >
-              Conclude
-            </MenuItem>) : (null)}
-            {isForMenu?.status === 'New' ? (<MenuItem
-              onClick={() => {
-                setIsDialogOpen(true);
-                handleClose();
-              }}
-            >
-              Edit
-            </MenuItem>) : (null)}
-            {isForMenu?.status === 'New' ? (<MenuItem
-              onClick={() => {
-                handleDelete();
-                handleClose();
-              }}
-            >
-              Delete
-            </MenuItem>) : (null)}
-            {(isForMenu?.status === 'Called' || isForMenu?.status === 'Pospond') ? (<MenuItem
-              onClick={() => {
-                setisForPostpond(true);
-                handleClose();
-              }}>
-              Postpond
-            </MenuItem>) : null}
-            {(isForMenu?.status === 'Called' || isForMenu?.status === 'Pospond') ? (<MenuItem onClick={() => {
-              setIsForCancle(true);
-              handleClose();
-            }}>
-              Cancle
-            </MenuItem>) : (null)}
+            {isForMenu?.status === "Called" ||
+            isForMenu?.status === "Pospond" ? (
+              <MenuItem
+                onClick={() => {
+                  handleClose();
+                  navigate("conclusion", { replace: true });
+                }}
+              >
+                Conclude
+              </MenuItem>
+            ) : null}
+            {isForMenu?.status === "New" ? (
+              <MenuItem
+                onClick={() => {
+                  setIsDialogOpen(true);
+                  handleClose();
+                }}
+              >
+                Edit
+              </MenuItem>
+            ) : null}
+            {isForMenu?.status === "New" ? (
+              <MenuItem
+                onClick={() => {
+                  handleDelete();
+                  handleClose();
+                }}
+              >
+                Delete
+              </MenuItem>
+            ) : null}
+            {isForMenu?.status === "Called" ||
+            isForMenu?.status === "Pospond" ? (
+              <MenuItem
+                onClick={() => {
+                  setisForPostpond(true);
+                  handleClose();
+                }}
+              >
+                Postpond
+              </MenuItem>
+            ) : null}
+            {isForMenu?.status === "Called" ||
+            isForMenu?.status === "Pospond" ? (
+              <MenuItem
+                onClick={() => {
+                  setIsForCancle(true);
+                  handleClose();
+                }}
+              >
+                Cancle
+              </MenuItem>
+            ) : null}
           </Menu>
           <TablePagination
             width="140px"

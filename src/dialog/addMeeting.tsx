@@ -145,11 +145,7 @@ export default function AddMeetingDialog({
     }
   }, [meetIdRes]);
 
-  const UpdateMeetingData = useUpdateMeetingAndMinutes(
-    axiosConfig,
-    onAddMeetingSuccessDialog,
-    refetch
-  );
+  const UpdateMeetingData = useUpdateMeetingAndMinutes(axiosConfig);
   //   useMutation<number, unknown, IMeeting>(
   //   async (data) =>
   //     await axios
@@ -170,11 +166,7 @@ export default function AddMeetingDialog({
   //   }
   // );
 
-  const postMeetingAndMinutes = usePostMeetingAndMInutes(
-    axiosConfig,
-    onAddMeetingSuccessDialog,
-    refetch
-  );
+  const postMeetingAndMinutes = usePostMeetingAndMInutes(axiosConfig);
   //   useMutation<
   //   number,
   //   unknown,
@@ -200,23 +192,23 @@ export default function AddMeetingDialog({
   //   }
   // );
 
-  const postMinute = useMutation<unknown, unknown, IPostMinutes>(
-    async (data) =>
-      await axios
-        .post("api/Minute", data, {
-          headers: headers,
-          params: {
-            meetId: Number(checkboxMeetId),
-          },
-        })
-        .then((res) => res.data),
-    {
-      onSuccess() {
-        onAddMeetingSuccessDialog();
-        refetch();
-      },
-    }
-  );
+  // const postMinute = useMutation<unknown, unknown, IPostMinutes>(
+  //   async (data) =>
+  //     await axios
+  //       .post("api/Minute", data, {
+  //         headers: headers,
+  //         params: {
+  //           meetId: Number(checkboxMeetId),
+  //         },
+  //       })
+  //       .then((res) => res.data),
+  //   {
+  //     onSuccess() {
+  //       onAddMeetingSuccessDialog();
+  //       refetch();
+  //     },
+  //   }
+  // );
 
   const formik = useFormik<FormData>({
     initialValues: {
@@ -232,14 +224,17 @@ export default function AddMeetingDialog({
       console.log(values);
       if (toEdit) {
         let tempdata = { ...toEdit, ...values };
-        UpdateMeetingData.mutate({
-          meeting: tempdata,
-          minutes: agendaFormik.values,
+        UpdateMeetingData.mutate(tempdata, {
+          onSuccess() {
+            setMeetIdRes(toEdit.meetId);
+            onAddMeetingSuccessDialog();
+          },
         });
       } else {
         postMeetingAndMinutes.mutate(values, {
           onSuccess(resMeetId) {
             setMeetIdRes(resMeetId);
+            onAddMeetingSuccessDialog();
           },
         });
       }
@@ -270,7 +265,7 @@ export default function AddMeetingDialog({
   const { data: agendas, refetch: agendaRefetch } = getAgenda(meetTypeId, {
     params: {
       meetTypeId: meetTypeId,
-      meetId: formik.values.meetId,
+
       meetId: meetId,
     },
     headers: {
