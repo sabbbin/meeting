@@ -154,7 +154,7 @@ export default function AgendaTable() {
       columnHelper.accessor((row) => row, {
         header: "Actions",
         cell: (info) =>
-          info.getValue().statusId === 6 && (
+          info.getValue().statusId === 7 && (
             <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
               <MoreVertIcon />
             </IconButton>

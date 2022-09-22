@@ -57,6 +57,8 @@ import StyledTableRow from "../components/StyledTableRow";
 import StyledTableCell from "../components/StyledTableCell";
 import PostpondMeeting from "../dialog/postpond";
 import CancleMeeting from "../dialog/cancleMeeting";
+import { IGetAgenda } from "../dialog/getAgenda";
+import MeetingTableRow from "../components/meetingTableRow";
 
 export interface IMeeting {
   meetId?: number | undefined;
@@ -72,17 +74,23 @@ export interface IMeeting {
   totalRows?: number;
 }
 
-
+interface IGetMinutes {
+  minuteId: number;
+  meetId: number;
+  agenda: string;
+  agendaId: number;
+  description: string;
+  presenter: string;
+  discussion: string;
+  conclusion: string;
+}
 
 
 const columnHelper = createColumnHelper<IMeeting>();
 
 export default function Meeting() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [flagForCallMinutes, setFlagForCallMInutes] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [page, setPage] = useState(1);
   const [isForMenu, setIsForMenu] = useState<IMeeting | null>();
   const [openMenu, setOpenMenu] = useState(false);
   const [isForPostpond, setisForPostpond] = useState(false);
@@ -90,7 +98,6 @@ export default function Meeting() {
   let access_token = localStorage.getItem("access_token");
   const navigate = useNavigate();
 
-  const [callByMeeting, setCallByMeeting] = useState(false);
 
   const [sortCol, setSortCol] = useState<SortingState>([
     {
@@ -339,40 +346,8 @@ export default function Meeting() {
     debugTable: true,
   });
 
-  const [showAgenda, setShowAgenda] = useState<number>();
 
-  interface IGetMinutes {
-    minuteId: number;
-    meetId: number;
-    agenda: string;
-    agendaId: number;
-    description: string;
-    presenter: string;
-    discussion: string;
-    conclusion: string;
-  }
 
-  let done: String;
-  const getMinutes = useQuery<IGetMinutes[], unknown, IGetMinutes[]>(
-    ["getMinutes"],
-    () => {
-      return axios
-        .get("api/Minute/GetMinute", {
-          params: {
-            meetid: showAgenda,
-          },
-          headers: {
-            Authorization: "bearer " + accessToken,
-          },
-        })
-        .then((res) => res.data);
-    },
-    {
-      initialData: [],
-      refetchOnWindowFocus: false,
-      enabled: false,
-    }
-  );
 
   return (
     <>
@@ -559,15 +534,6 @@ export default function Meeting() {
         </Box>
       )}
 
-      {/* {callByMeeting && (
-        <AddCallByMeeting
-          meeting={isForMenu!}
-          onDialogClose={() => {
-            setCallByMeeting(false);
-            handleClose();
-          }}
-        />
-      )} */}
 
       {isForCancle && (<CancleMeeting
         cancleMeetId={isForMenu?.meetId}
@@ -649,151 +615,10 @@ export default function Meeting() {
               ))}
             </TableHead>
             <TableBody>
-              {table.getRowModel().rows.map((row) => {
-                return (
-                  <>
-                    <StyledTableRow key={row.id}>
-                      <StyledTableCell>
-                        <IconButton
-                          aria-label="expand row"
-                          size="small"
-                          onClick={async () => {
-                            if (showAgenda == row.original.meetId) {
-                              setShowAgenda(-1);
-                            } else {
-                              await setShowAgenda(row.original.meetId);
-
-                              getMinutes.refetch();
-                              setFlagForCallMInutes(!flagForCallMinutes);
-                            }
-                          }}
-                        >
-                          {showAgenda == row.original.meetId ? (
-                            <KeyboardArrowUpIcon />
-                          ) : (
-                            <KeyboardArrowDownIcon />
-                          )}
-                        </IconButton>
-                      </StyledTableCell>
-
-                      {row.getVisibleCells().map((cell) => (
-                        <StyledTableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </StyledTableCell>
-                      ))}
-                    </StyledTableRow>
-                    <StyledTableRow>
-                      <StyledTableCell
-                        style={{ paddingBottom: 0, paddingTop: 0 }}
-                        colSpan={6}
-                      >
-                        <Collapse
-                          in={row.original.meetId == showAgenda}
-                          timeout="auto"
-                          unmountOnExit
-                        >
-                          {getMinutes.data.length == 0 ? (
-                            <Box
-                              sx={{
-                                margin: 3,
-                                textAlign: "center",
-                                color: "red",
-                                fontSize: 20,
-                              }}
-                            >
-                              No Agendas
-                            </Box>
-                          ) : (
-                            <Box sx={{ marginTop: 3, marginBottom: 3 }}>
-                              <Typography
-                                variant="h6"
-                                gutterBottom
-                                component="div"
-                                textAlign="center"
-                              >
-                                Minutes
-                              </Typography>
-                              <Table size="small" aria-label="purchases">
-                                <TableHead
-                                  sx={{
-                                    color: "se",
-                                  }}
-                                >
-                                  <TableRow>
-                                    <StyledTableCell>Agenda</StyledTableCell>
-                                    <StyledTableCell>
-                                      Description
-                                    </StyledTableCell>
-                                    <StyledTableCell align="right">
-                                      Presentator
-                                    </StyledTableCell>
-                                    <StyledTableCell align="right">
-                                      Discussion
-                                    </StyledTableCell>
-                                    <StyledTableCell align="right">
-                                      Conclusion
-                                    </StyledTableCell>
-                                  </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                  {getMinutes.data.length > 0 &&
-                                    getMinutes.data.map((minute, id) => (
-                                      <TableRow key={id}>
-                                        <StyledTableCell
-                                          component="th"
-                                          scope="row"
-                                        >
-                                          <Tooltip title={minute.agenda}>
-                                            <Typography
-                                              sx={{
-                                                width: "150px",
-                                                overflow: "hidden",
-                                                textOverflow: "ellipsis",
-                                                whiteSpace: "nowrap",
-                                              }}
-                                            >
-                                              {minute.agenda}
-                                            </Typography>
-                                          </Tooltip>
-                                        </StyledTableCell>
-                                        <StyledTableCell>
-                                          <Tooltip title={minute.description}>
-                                            <Typography
-                                              sx={{
-                                                width: "150px",
-                                                overflow: "hidden",
-                                                textOverflow: "ellipsis",
-                                                whiteSpace: "nowrap",
-                                              }}
-                                            >
-                                              {minute.description}
-                                            </Typography>
-                                          </Tooltip>
-                                        </StyledTableCell>
-                                        <StyledTableCell align="right">
-                                          {minute.presenter}
-                                        </StyledTableCell>
-                                        <StyledTableCell align="right">
-                                          {minute.discussion}
-                                        </StyledTableCell>
-                                        <StyledTableCell align="right">
-                                          {minute.conclusion}
-                                        </StyledTableCell>
-                                      </TableRow>
-                                    ))}
-                                </TableBody>
-                              </Table>
-                            </Box>
-                          )}
-                        </Collapse>
-                      </StyledTableCell>
-                    </StyledTableRow>
-                  </>
-                );
-              })}
+              {
+                table.getRowModel().rows.map((row) =>
+                  <MeetingTableRow key={row.id} row={row} />)
+              }
             </TableBody>
           </Table>
           <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>

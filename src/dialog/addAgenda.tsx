@@ -72,7 +72,7 @@ export default function AddAgendaDialog({
   const CreateMeetingTypeMutation = useMutation<unknown, unknown, CreateAgenda>(
     async (data) =>
       await axios
-        .post("api/MeetingAgenda", data, {
+        .post("api/Agenda", data, {
           headers: headers,
         })
         .then((res) => res.data),
@@ -87,7 +87,7 @@ export default function AddAgendaDialog({
   const UpdateMeetingTypeMutation = useMutation<unknown, unknown, IAgenda>(
     async (data) =>
       await axios
-        .put("api/MeetingAgenda", data, {
+        .put("api/Agenda", data, {
           params: { agendaId: toEdit?.agendaId },
           headers: {
             "Content-Type": "application/json",
