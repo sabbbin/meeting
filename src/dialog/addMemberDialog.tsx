@@ -30,8 +30,8 @@ interface AddMemberDialogProps extends DialogProps {
 }
 
 interface UserMeetingTypeGet {
-  TypeName: string;
-  MeetTypeId: number;
+  typeName: string;
+  meetTypeId: number;
 }
 
 interface UserMeetingType {
@@ -69,9 +69,9 @@ export default function AddMemberDialog({
       onSuccess: (getMeetTypeSelected) => {
         let data = getMeetTypeSelected.reduce(
           (a: any, b) => {
-            let { MeetTypeId } = b;
+            let { meetTypeId } = b;
 
-            return [...a, MeetTypeId];
+            return [...a, meetTypeId];
           },
           [toEditMember]
         );
@@ -93,7 +93,7 @@ export default function AddMemberDialog({
     ["getTypeForUser"],
     () =>
       axios
-        .get("api/MeetingType/GetTypeForUser", {
+        .get("api/MeetingType/GetAllType", {
           headers: {
             Authorization: "Bearer " + access_token!,
           },
@@ -115,10 +115,10 @@ export default function AddMemberDialog({
   //keeeping user in dictionary
   if (dataTypeForUser.length > 0) {
     var dataMeeting = dataTypeForUser.reduce((initial: any, info: any) => {
-      let { MeetTypeId, TypeName } = info;
+      let { meetTypeId, typeName } = info;
 
       let temp = {
-        [MeetTypeId]: TypeName,
+        [meetTypeId]: typeName,
       };
       return { ...initial, ...temp };
     }, {});
@@ -155,7 +155,7 @@ export default function AddMemberDialog({
   const UpdateMember = (e: any) => {
     e.preventDefault();
     let temp = {
-      meetTypeIds: meetingField.map((m) => m.MeetTypeId),
+      meetTypeIds: meetingField.map((m) => m.meetTypeId),
     };
 
     console.log("tempt", meetingField);
@@ -177,14 +177,14 @@ export default function AddMemberDialog({
           options={dataTypeForUser}
           value={[...meetingField]}
           filterSelectedOptions
-          getOptionLabel={(option) => option.TypeName}
+          getOptionLabel={(option) => option.typeName}
           onChange={(e, value) => {
             setMeetingField(value);
           }}
           isOptionEqualToValue={(option, value) =>
-            option.MeetTypeId == value.MeetTypeId
+            option.meetTypeId == value.meetTypeId
           }
-          renderInput={(params) => <TextField required {...params}></TextField>}
+          renderInput={(params) => <TextField {...params}></TextField>}
         />
       </DialogContent>
       <DialogActions>

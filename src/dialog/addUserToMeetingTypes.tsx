@@ -58,6 +58,7 @@ function AddUserToMeetingTypes({
   meetTypeId,
   open,
 }: AddUserToMeetingTypes) {
+  console.log("meeting", meetTypeId);
   const [checked, setChecked] = React.useState<readonly getUserFromMeeting[]>(
     []
   );
@@ -135,7 +136,7 @@ function AddUserToMeetingTypes({
   };
 
   interface submitUserToMeeting {
-    userIds: [number];
+    userId: [number];
   }
 
   let submitUserToMeeting = useMutation<unknown, unknown, submitUserToMeeting>(
@@ -156,13 +157,15 @@ function AddUserToMeetingTypes({
   );
   const handleSubmit = (e: any) => {
     e.preventDefault();
+
     let data = right.reduce((init: any, dat) => {
       return [...init, dat.UserId!];
     }, []);
-    let userId = {
-      userIds: data,
+    let userIds = {
+      userId: data,
     };
-    submitUserToMeeting.mutate(userId);
+    console.log("right data", userIds);
+    submitUserToMeeting.mutate(userIds);
   };
 
   const customList = (

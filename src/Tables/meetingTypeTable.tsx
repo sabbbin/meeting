@@ -67,7 +67,7 @@ import StyledTableRow from "../components/StyledTableRow";
 import StyledTableCell from "../components/StyledTableCell";
 
 export interface IMeetingType {
-  MeetTypeId?: number;
+  meetTypeId?: number;
   typeName: string;
   alias: string;
   orderIdx: number;
@@ -88,7 +88,7 @@ export default function MeetingTypeTable() {
       pageSize: 10,
     });
   const [isforMenu, setisforMenu] = useState<IMeetingType | null>();
-  let meetTypeId = isforMenu?.MeetTypeId;
+  let meetTypeId = isforMenu?.meetTypeId;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [viewUser, setViewUser] = useState(false);
@@ -193,6 +193,7 @@ export default function MeetingTypeTable() {
       }),
       columnHelper.accessor((row) => row, {
         header: "Actions",
+        enableSorting: false,
         cell: (info) => (
           <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
             <MoreVertIcon />
@@ -211,7 +212,7 @@ export default function MeetingTypeTable() {
       ...axiosConfig,
     }
   );
-  console.log("axiosconfitg", axiosConfig);
+  console.log("axiosconfitg", meetTypeData);
 
   const { data: updateStatus, mutate: updateMutate } = useMutation(
     (data: any) => {
@@ -264,12 +265,12 @@ export default function MeetingTypeTable() {
   // });
 
   const handleDelete = (value: any) => {
-    const deleteId = isforMenu?.MeetTypeId!;
+    const deleteId = isforMenu?.meetTypeId!;
     deleteMutatae(deleteId);
   };
 
   const handleStatusChange = (value: any) => {
-    const id = isforMenu?.MeetTypeId;
+    const id = isforMenu?.meetTypeId;
     const updateData = {
       isEnable: value,
       typeName: isforMenu?.typeName,
@@ -523,7 +524,7 @@ export default function MeetingTypeTable() {
             setisforMenu(null);
           }}
           open={viewUser}
-          meetTypeId={isforMenu!.MeetTypeId!}
+          meetTypeId={isforMenu!.meetTypeId!}
         />
       )}
       <TableContainer sx={{ minWidth: 1000, margin: "1" }} component={Paper}>

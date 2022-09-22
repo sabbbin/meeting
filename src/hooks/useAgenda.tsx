@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { SortingState } from "@tanstack/react-table";
 import axios, { AxiosRequestConfig } from "axios";
+import { CreateAgenda } from "../dialog/addAgenda";
 import { IAgenda } from "../Tables/agendaTable";
 
 function useAgenda(

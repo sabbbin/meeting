@@ -83,7 +83,7 @@ export default function UserTable() {
       pageSize: 25,
     });
 
-  const [isforMenu, setisforMenu] = useState<IUser | null>();
+  const [isforMenu, setIsForMenu] = useState<IUser | null>();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
   const [isChangeStatus, setisChangeStatus] = useState(false);
@@ -97,7 +97,7 @@ export default function UserTable() {
     user: IUser
   ) => {
     setAnchorEl(event.currentTarget);
-    setisforMenu(user);
+    setIsForMenu(user);
     setOpenMenu(true);
   };
 
@@ -163,6 +163,7 @@ export default function UserTable() {
       }),
       columnHelper.accessor((row) => row, {
         header: "Actions",
+        enableSorting: false,
         cell: (info) => (
           <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
             <MoreVertIcon />
@@ -215,7 +216,7 @@ export default function UserTable() {
   const [sortCol, setSortCol] = useState<SortingState>([
     {
       id: "createdOn",
-      desc: false,
+      desc: true,
     },
   ]);
 
@@ -265,6 +266,7 @@ export default function UserTable() {
     state: {
       sorting: sortCol,
     },
+
     onSortingChange: setSortCol,
     getSortedRowModel: getSortedRowModel(),
     debugTable: true,
@@ -307,6 +309,7 @@ export default function UserTable() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          maxWidth: "90vw",
         }}
       >
         <Button
@@ -483,11 +486,11 @@ export default function UserTable() {
           open={isDialogOpen}
           onSuccessDialog={() => {
             enqueueSnackbar("Success", { variant: "success" });
-            setisforMenu(null);
+            setIsForMenu(null);
             setIsDialogOpen(false);
           }}
           onDiscardDialog={() => {
-            setisforMenu(null);
+            setIsForMenu(null);
             setIsDialogOpen(false);
           }}
         />
@@ -548,35 +551,44 @@ export default function UserTable() {
           <TableHead>
             {table.getHeaderGroups().map((headerGroup) => (
               <StyledTableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <StyledTableCell
-                    key={header.id}
-                    sx={{
-                      whiteSpace: "nowrap",
-                      alignItems: "center",
-                    }}
-                  >
-                    {header.isPlaceholder ? null : (
-                      <div
-                        {...{
-                          className: header.column.getCanSort()
-                            ? "cursor-pointer select-none"
-                            : "",
-                          onClick: header.column.getToggleSortingHandler(),
-                        }}
-                      >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                        {{
-                          asc: " 🔼",
-                          desc: " 🔽",
-                        }[header.column.getIsSorted() as string] ?? null}
-                      </div>
-                    )}
-                  </StyledTableCell>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <StyledTableCell
+                      key={header.id}
+                      size="small"
+                      sx={{
+                        whiteSpace: "nowrap",
+                        alignItems: "center",
+                        // position:
+                        //   header.column.columnDef.header == "Actions"
+                        //     ? "sticky"
+                        //     : "relative",
+                        // left:
+                        //   header.column.columnDef.header == "Actions" ? 0 : "",
+                      }}
+                    >
+                      {header.isPlaceholder ? null : (
+                        <div
+                          {...{
+                            className: header.column.getCanSort()
+                              ? "cursor-pointer select-none"
+                              : "",
+                            onClick: header.column.getToggleSortingHandler(),
+                          }}
+                        >
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                          {{
+                            asc: " 🔼",
+                            desc: " 🔽",
+                          }[header.column.getIsSorted() as string] ?? null}
+                        </div>
+                      )}
+                    </StyledTableCell>
+                  );
+                })}
               </StyledTableRow>
             ))}
           </TableHead>

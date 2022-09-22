@@ -1,4 +1,4 @@
-import { CheckBox, TableRows } from "@mui/icons-material";
+import { AttachEmail, CheckBox, TableRows } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -46,33 +46,50 @@ import { StyledAttendanceRow } from "../components/StyledTableRow";
 import { useMeetingConclusinStore } from "../hooks/zustard";
 import { styled } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
+import MeetingPreviewConclude from "../dialog/meetingPreviewConclude";
 
 const FormDialogPaper = (
   props: OverridableComponent<PaperTypeMap<{}, "div">>
 ) => <Paper {...(props as any)} as="form" />;
 
-interface ICallByMeetingForm {
-  meetingDate: string;
+export interface IMeetingBasicInfo {
+  meetId?: number;
+  meetDatetime: string;
+  meetTypeId?: number;
   location: string;
+  calledBy?: string;
   meetingTypes: string;
-  attendence: [];
 }
-interface AgendaForm {
-  agenda: string;
 
-  date: string;
-  status: string;
+export interface IMeetingAttendance {
+  meetId: number;
+  attendeeId: number;
+  isPresent: boolean;
+}
+export interface IGetUserTypeByMeeting {
+  IsSelected: number;
+  UserId: number;
+  UserName: string;
+  FullName: string;
+  isPresent?: boolean;
+  meetId?: number;
+}
+
+export interface IMeetingConclude {
+  minuteId: string;
+  presentedBy: string;
   discussion: string;
-  description: string;
   conclusion: string;
-  postedBy: string;
-  postedOn: string;
-  presenter: string;
+  closeAgenda: boolean;
 }
 
-interface IAddCallByMeeting {
-  onDialogClose: () => void;
-  meeting: IMeeting;
+export interface IInvities {
+  meetId: number;
+  invitie: string;
+  description: string;
+}
+export interface IMeetingConcludePreview extends Partial<IMeetingConclude> {
+  agenda: string;
 }
 
 interface IGetMinutes {
@@ -81,11 +98,12 @@ interface IGetMinutes {
   agenda: string;
   agendaId: number;
   description: string;
-  discussion: string;
-  conclusion: string;
+  discussion?: string;
+  conclusion?: string;
   postedBy: string;
   postedOn: string;
-  presenter: string;
+  presentedBy?: string;
+  closeAgenda: boolean;
 }
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
@@ -99,11 +117,12 @@ const Item = styled(Paper)(({ theme }) => ({
 export default function MeetingConclusion() {
   // console.log("meeting", meeting);
   const navigate = useNavigate();
+  const [meetingPreviewConcludeDialog, setMeetingPreviewConcludeDialog] =
+    useState(false);
 
   const meeting = useMeetingConclusinStore((state) => state.meeting!);
 
   const [showAgenda, setShowAgenda] = useState(-1);
-  const [callMinutesHistoryFlag, setCallMinutesHistoryFlag] = useState(false);
 
   useEffect(() => {
     getUserMeetingType.refetch();
@@ -114,37 +133,36 @@ export default function MeetingConclusion() {
     // console.log("meeting getdata", getDataMinutes);
   }, []);
 
-  const [minuteStatus, setMinuteSatus] = useState<boolean>(false);
+  const [invities, setInvities] = useState([]);
 
-  const formikICallByMeetingForm = useFormik<ICallByMeetingForm>({
+  const formikMeetingBasicInfo = useFormik<IMeetingBasicInfo>({
     initialValues: {
-      meetingDate: dayjs(meeting.meetDatetime)
-        .format("YYYY-MM-DD    h:m:ss A")
-        .toString(),
+      meetDatetime: dayjs(meeting.meetDatetime).format(
+        "YYYY-MM-DD    HH:MM:ss A"
+      ),
+
       location: meeting.location!,
       meetingTypes: meeting.typeName!,
-      attendence: [],
+      calledBy: meeting.calledBy!,
+      meetId: meeting.meetId!,
+      meetTypeId: meeting.meetTypeId!,
     },
     onSubmit: (values) => {
       console.log("values", values);
     },
   });
+  console.log("meeting,  ", meeting);
 
-  interface IMeetingUser {
-    IsSelected: number;
-    UserId: number;
-    UserName: string;
-    FullName: string;
-    isAbsences?: boolean;
-  }
-
-  const [attendMember, setAttendMember] = useState<IMeetingUser[]>([]);
+  const [attendMember, setAttendMember] = useState<IGetUserTypeByMeeting[]>([]);
   let accessToken = localStorage.getItem("access_token");
-  const getUserMeetingType = useQuery<IMeetingUser[]>(
+  useEffect(() => {
+    getUserMeetingType.refetch();
+  }, []);
+  const getUserMeetingType = useQuery<IGetUserTypeByMeeting[]>(
     ["getUserMeetingTypes"],
     () =>
       axios
-        .get(`api/MeetingType/GetUserByType/${meeting.meetTypeId}`, {
+        .get(`/api/MeetingType/GetUserByType/${meeting.meetTypeId}`, {
           headers: {
             Authorization: "bearer " + accessToken,
           },
@@ -154,25 +172,29 @@ export default function MeetingConclusion() {
       onSuccess: (values) => {
         let selectedUser = values.filter((val) => {
           if (val.IsSelected == 1) {
-            val["isAbsences"] = false;
+            val["isPresent"] = true;
+            val["meetId"] = meeting.meetId;
             return val;
           }
         });
         setAttendMember(selectedUser);
       },
+      refetchOnWindowFocus: false,
+      enabled: false,
     }
   );
-
+  const [meetingConclude, setMeetingConclude] =
+    useState<IMeetingConcludePreview[]>();
   const { data: getDataMinutes, refetch: callGetMinutes } = useQuery<
     IGetMinutes[]
   >(
-    ["getMinutes"],
+    ["getMinutes", meeting.meetId],
     async () => {
       console.log("meeting", meeting.meetId);
       return await axios
-        .get("api/Minute/GetMinute", {
+        .get("/api/Minute/GetMinute", {
           params: {
-            meetid: meeting.meetId!,
+            meetId: meeting.meetId!,
           },
           headers: {
             Authorization: "bearer " + accessToken,
@@ -191,10 +213,13 @@ export default function MeetingConclusion() {
     ["getMinutesAndHistory"],
     () =>
       axios
-        .get("api/Minute/GetMinuteAndHistory", {
+        .get("/api/Minute/GetHistory", {
           params: {
             meetid: meeting.meetId,
             agendaid: showAgenda,
+          },
+          headers: {
+            Authorization: "bearer " + accessToken,
           },
         })
         .then((res) => res.data),
@@ -209,6 +234,16 @@ export default function MeetingConclusion() {
     <>
       <Toolbar />
       <Paper elevation={0}>
+        {meetingPreviewConcludeDialog && (
+          <MeetingPreviewConclude
+            meetingConclude={meetingConclude!}
+            meetingBasicInfo={formikMeetingBasicInfo.values}
+            attendMeeting={attendMember}
+            invities={invities}
+            open={meetingPreviewConcludeDialog}
+            onDialogClose={() => setMeetingPreviewConcludeDialog(false)}
+          />
+        )}
         <Grid container justifyContent="space-between">
           <Grid item xs={8}>
             <Paper
@@ -233,8 +268,38 @@ export default function MeetingConclusion() {
                 <Formik
                   enableReinitialize
                   initialValues={{ forms: getDataMinutes }}
-                  onSubmit={(values) => {
-                    console.log("values", values);
+                  onSubmit={async (values) => {
+                    let filterFormValue = values.forms.reduce(
+                      (initial: any, val) => {
+                        if (
+                          val.discussion != "" &&
+                          val.conclusion != "" &&
+                          val.presentedBy != ""
+                        ) {
+                          return [
+                            ...initial,
+                            {
+                              closeAgenda: val.closeAgenda,
+                              agenda: val.agenda,
+                              minuteId: val.minuteId,
+                              presentedBy: val.presentedBy,
+                              discussion: val.discussion,
+                              conclusion: val.conclusion,
+                            },
+                          ];
+                        }
+                        return initial;
+                      },
+                      []
+                    );
+                    console.log("before", values.forms);
+                    console.log("values agenda", filterFormValue);
+                    console.log("attendenc", attendMember);
+                    console.log("invities", invities);
+                    console.log("form", formikMeetingBasicInfo.values);
+
+                    await setMeetingConclude(filterFormValue);
+                    setMeetingPreviewConcludeDialog(true);
                   }}
                   render={({
                     values,
@@ -273,9 +338,6 @@ export default function MeetingConclusion() {
                                         if (showAgenda !== value.agendaId) {
                                           await setShowAgenda(value.agendaId);
                                           callGetMinuteHistory();
-                                          setCallMinutesHistoryFlag(
-                                            !callMinutesHistoryFlag
-                                          );
                                         } else {
                                           setShowAgenda(-1);
                                         }
@@ -338,16 +400,17 @@ export default function MeetingConclusion() {
                                         >
                                           <Box></Box>
                                           <Typography>
-                                            Date:{" "}
+                                            <b> Date: </b>
                                             {dayjs(val.meetDatetime).format(
                                               "DD/MM/YYYY"
                                             )}
                                           </Typography>
                                           <Typography>
-                                            Discussion : {val.discussion}
+                                            <b>Discussion : </b>
+                                            {val.discussion}
                                           </Typography>
                                           <Typography>
-                                            Conclusion : {val.conclusion}
+                                            <b>Conclusion :</b> {val.conclusion}
                                           </Typography>
                                         </Box>
                                       ))}
@@ -359,10 +422,10 @@ export default function MeetingConclusion() {
                                       }}
                                     >
                                       <Typography>
-                                        Posted By: {value.postedBy}
+                                        <b> Posted By: </b> {value.postedBy}
                                       </Typography>
                                       <Typography>
-                                        Created Date:{" "}
+                                        <b> Created Date:</b>
                                         {dayjs(value.postedOn).format(
                                           "DD/MM/YYYY"
                                         )}
@@ -373,11 +436,18 @@ export default function MeetingConclusion() {
                                         spacing={1}
                                         alignItems="center"
                                       >
-                                        <Switch
-                                          checked={!minuteStatus}
-                                          onChange={() =>
-                                            setMinuteSatus(!minuteStatus)
-                                          }
+                                        <Field
+                                          component={Switch}
+                                          checked={value.closeAgenda}
+                                          name={`forms.${index}.closeAgenda`}
+                                          onChange={(
+                                            v: React.ChangeEvent<HTMLInputElement>
+                                          ) => {
+                                            setFieldValue(
+                                              `forms.${index}.closeAgenda`,
+                                              v.target.checked
+                                            );
+                                          }}
                                         />
                                         <Typography>Open</Typography>
                                       </Stack>
@@ -390,6 +460,7 @@ export default function MeetingConclusion() {
                                       sx={{
                                         marginBottom: 3,
                                       }}
+                                      required
                                       multiline
                                       fullWidth
                                       maxRows={4}
@@ -405,6 +476,7 @@ export default function MeetingConclusion() {
                                     />
                                     <Field
                                       component={TextField}
+                                      required
                                       label="Conclusion"
                                       value={value.conclusion}
                                       name={`forms.${index}.conclusion`}
@@ -428,13 +500,14 @@ export default function MeetingConclusion() {
                                     <Field
                                       component={TextField}
                                       label="PresentedBy"
+                                      required
                                       name={`forms.${index}.presentedBy`}
                                       size="small"
                                       sx={{
                                         float: "right",
                                         marginBottom: 1,
                                       }}
-                                      defaultValue={value.presenter}
+                                      value={value.presentedBy}
                                       onChange={(
                                         v: React.ChangeEvent<HTMLInputElement>
                                       ) => {
@@ -462,7 +535,6 @@ export default function MeetingConclusion() {
                           variant="contained"
                           onClick={() => {
                             handleSubmit();
-                            handleReset();
                           }}
                           sx={{ marginRight: 2 }}
                         >
@@ -502,8 +574,7 @@ export default function MeetingConclusion() {
               <Stack spacing={1}>
                 <Item>
                   <Typography>
-                    Meeting Types :{" "}
-                    {formikICallByMeetingForm.values.meetingTypes}
+                    Meeting Types : {formikMeetingBasicInfo.values.meetingTypes}
                   </Typography>
                 </Item>
 
@@ -515,15 +586,15 @@ export default function MeetingConclusion() {
                     autoFocus
                     fullWidth
                     name="location"
-                    value={formikICallByMeetingForm.values.location}
-                    onChange={formikICallByMeetingForm.handleChange}
+                    value={formikMeetingBasicInfo.values.location}
+                    onChange={formikMeetingBasicInfo.handleChange}
                     error={
-                      formikICallByMeetingForm.touched.location &&
-                      Boolean(formikICallByMeetingForm.errors.location)
+                      formikMeetingBasicInfo.touched.location &&
+                      Boolean(formikMeetingBasicInfo.errors.location)
                     }
                     helperText={
-                      formikICallByMeetingForm.touched.location &&
-                      formikICallByMeetingForm.errors.location
+                      formikMeetingBasicInfo.touched.location &&
+                      formikMeetingBasicInfo.errors.location
                     }
                   />
                 </Item>
@@ -531,12 +602,12 @@ export default function MeetingConclusion() {
                 <Item>
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DateTimePicker
-                      label="Select Date and time"
-                      value={formikICallByMeetingForm.values.meetingDate}
+                      label="Meeting Date and Time"
+                      value={formikMeetingBasicInfo.values.meetDatetime}
                       inputFormat="MMM D, YYYY h:mm A"
                       onChange={(newValue) => {
-                        formikICallByMeetingForm.setFieldValue(
-                          "meetingDate",
+                        formikMeetingBasicInfo.setFieldValue(
+                          "meetDatetime",
                           newValue
                         );
                       }}
@@ -545,12 +616,12 @@ export default function MeetingConclusion() {
                           fullWidth
                           size="small"
                           error={
-                            formikICallByMeetingForm.touched.meetingDate &&
-                            Boolean(formikICallByMeetingForm.errors.meetingDate)
+                            formikMeetingBasicInfo.touched.meetDatetime &&
+                            Boolean(formikMeetingBasicInfo.errors.meetDatetime)
                           }
                           helperText={
-                            formikICallByMeetingForm.touched.meetingDate &&
-                            formikICallByMeetingForm.errors.meetingDate
+                            formikMeetingBasicInfo.touched.meetDatetime &&
+                            formikMeetingBasicInfo.errors.meetDatetime
                           }
                           {...params}
                         />
@@ -576,6 +647,7 @@ export default function MeetingConclusion() {
                     borderRadius: 4,
                     overflow: "hidden",
                     padding: "1px"!,
+                    overflowY: "scroll",
                   }}
                 >
                   <Table stickyHeader aria-label="sticky table" size="small">
@@ -602,13 +674,13 @@ export default function MeetingConclusion() {
                         <StyledAttendanceRow key={id}>
                           <StyledAttendanceCell>
                             <Checkbox
-                              checked={!member.isAbsences}
+                              checked={member.isPresent}
                               onChange={() => {
-                                console.log("before member", member.isAbsences);
+                                console.log("before member", member.isPresent);
 
                                 setAttendMember((pre) => {
-                                  attendMember[id].isAbsences =
-                                    !attendMember[id].isAbsences;
+                                  attendMember[id].isPresent =
+                                    !attendMember[id].isPresent;
                                   return [...pre];
                                 });
                               }}
@@ -641,7 +713,7 @@ export default function MeetingConclusion() {
                   enableReinitialize
                   initialValues={{ invities: [] }}
                   onSubmit={(values) => {
-                    console.log("values", values);
+                    setInvities([...values.invities]);
                   }}
                   render={({
                     values,
@@ -666,8 +738,9 @@ export default function MeetingConclusion() {
                               onClick={() => {
                                 let id = values.invities.length;
                                 arrayHelpers.insert(id, {
-                                  name: "",
-                                  comments: "",
+                                  meetId: meeting.meetId,
+                                  invitie: "",
+                                  description: "",
                                 });
                               }}
                             >
@@ -679,14 +752,14 @@ export default function MeetingConclusion() {
                                 <>
                                   <Field
                                     component={TextField}
-                                    label="Name"
-                                    name={`invities.${index}.name`}
+                                    label="Invitie"
+                                    name={`invities.${index}.invitie`}
                                     size="small"
                                     onChange={(
                                       v: React.ChangeEvent<HTMLInputElement>
                                     ) => {
                                       setFieldValue(
-                                        `invities.${index}.name`,
+                                        `invities.${index}.invitie`,
                                         v.target.value
                                       );
                                     }}
@@ -702,13 +775,13 @@ export default function MeetingConclusion() {
                                     maxRows={3}
                                     size="small"
                                     fullwidth
-                                    label="Comments"
-                                    name={`invities.${index}.comments`}
+                                    label="Description"
+                                    name={`invities.${index}.description`}
                                     onChange={(
                                       v: React.ChangeEvent<HTMLInputElement>
                                     ) => {
                                       setFieldValue(
-                                        `invities.${index}.comments`,
+                                        `invities.${index}.description`,
                                         v.target.value
                                       );
                                     }}

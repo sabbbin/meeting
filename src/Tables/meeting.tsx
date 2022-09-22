@@ -44,7 +44,7 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { number } from "yup";
 import AgendaTable from "./agendaTable";
-import AddCallByMeeting from "../dialog/addCallByMeeting";
+import AddCallByMeeting from "../dialog/meetingPreviewConclude";
 import PopupState, { bindPopover, bindTrigger } from "material-ui-popup-state";
 import { ValuesType } from "utility-types";
 import { FilterType } from "../filter";
@@ -64,14 +64,21 @@ export interface IMeeting {
   meetId?: number | undefined;
   meetDatetime: string | undefined;
   meetTypeId: number | undefined;
+  typeName?: string;
   location: string | undefined;
   calledBy: string | undefined;
+  postedBy?: number | undefined;
   postedOn?: Date;
   status?: string;
-  typeName?: string;
-  postedBy?: number | undefined;
   agendaIds?: string[] | undefined;
   totalRows?: number;
+}
+export interface IPostMeeting {
+  meetDatetime: string | undefined;
+  meetTypeId: number | undefined;
+  location: string | undefined;
+  calledBy: string | undefined;
+  postedBy: number | undefined;
 }
 
 interface IGetMinutes {
@@ -101,8 +108,8 @@ export default function Meeting() {
 
   const [sortCol, setSortCol] = useState<SortingState>([
     {
-      id: "location",
-      desc: false,
+      id: "postedOn",
+      desc: true,
     },
   ]);
 
@@ -170,6 +177,9 @@ export default function Meeting() {
       Authorization: "Bearer " + accessToken,
     },
   };
+  useEffect(() => {
+    getMeeting();
+  }, []);
   const { data: meetingData, refetch: getMeeting } = useMeeting(
     pagination.pageNumber,
     pagination.pageSize,
@@ -300,10 +310,18 @@ export default function Meeting() {
       }),
       columnHelper.accessor((row) => row, {
         header: "Actions",
+<<<<<<< HEAD
         cell: (info) => ((info.getValue().status === "Concluded" || info.getValue().status === "Cancel") ? null : (<IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
           <MoreVertIcon />
         </IconButton>)
 
+=======
+        enableSorting: false,
+        cell: (info) => (
+          <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
+            <MoreVertIcon />
+          </IconButton>
+>>>>>>> feat/newMeeting
         ),
       }),
     ],
@@ -615,10 +633,159 @@ export default function Meeting() {
               ))}
             </TableHead>
             <TableBody>
+<<<<<<< HEAD
               {
                 table.getRowModel().rows.map((row) =>
                   <MeetingTableRow key={row.id} row={row} />)
               }
+=======
+              {table.getRowModel().rows.map((row) => {
+                return (
+                  <>
+                    <StyledTableRow key={row.id}>
+                      <StyledTableCell size="small">
+                        <IconButton
+                          aria-label="expand row"
+                          size="small"
+                          onClick={async () => {
+                            if (showAgenda == row.original.meetId) {
+                              setShowAgenda(-1);
+                            } else {
+                              await setShowAgenda(row.original.meetId);
+
+                              getMinutes.refetch();
+                              setFlagForCallMInutes(!flagForCallMinutes);
+                            }
+                          }}
+                        >
+                          {showAgenda == row.original.meetId ? (
+                            <KeyboardArrowUpIcon />
+                          ) : (
+                            <KeyboardArrowDownIcon />
+                          )}
+                        </IconButton>
+                      </StyledTableCell>
+
+                      {row.getVisibleCells().map((cell) => (
+                        <StyledTableCell key={cell.id} size="small">
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </StyledTableCell>
+                      ))}
+                    </StyledTableRow>
+                    <StyledTableRow>
+                      <StyledTableCell
+                        style={{ paddingBottom: 0, paddingTop: 0 }}
+                        colSpan={6}
+                      >
+                        <Collapse
+                          in={row.original.meetId == showAgenda}
+                          timeout="auto"
+                          unmountOnExit
+                        >
+                          {getMinutes.data.length == 0 ? (
+                            <Box
+                              sx={{
+                                margin: 3,
+                                textAlign: "center",
+                                color: "red",
+                                fontSize: 20,
+                              }}
+                            >
+                              No Agendas
+                            </Box>
+                          ) : (
+                            <Box sx={{ marginTop: 3, marginBottom: 3 }}>
+                              <Typography
+                                variant="h6"
+                                gutterBottom
+                                component="div"
+                                textAlign="center"
+                              >
+                                Minutes
+                              </Typography>
+                              <Table size="small" aria-label="purchases">
+                                <TableHead
+                                  sx={{
+                                    color: "se",
+                                  }}
+                                >
+                                  <TableRow>
+                                    <StyledTableCell>Agenda</StyledTableCell>
+                                    <StyledTableCell>
+                                      Description
+                                    </StyledTableCell>
+                                    <StyledTableCell align="right">
+                                      Presentator
+                                    </StyledTableCell>
+                                    <StyledTableCell align="right">
+                                      Discussion
+                                    </StyledTableCell>
+                                    <StyledTableCell align="right">
+                                      Conclusion
+                                    </StyledTableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  {getMinutes.data.length > 0 &&
+                                    getMinutes.data.map((minute, id) => (
+                                      <TableRow key={id}>
+                                        <StyledTableCell
+                                          component="th"
+                                          scope="row"
+                                          size="small"
+                                        >
+                                          <Tooltip title={minute.agenda}>
+                                            <Typography
+                                              sx={{
+                                                width: "150px",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                whiteSpace: "nowrap",
+                                              }}
+                                            >
+                                              {minute.agenda}
+                                            </Typography>
+                                          </Tooltip>
+                                        </StyledTableCell>
+                                        <StyledTableCell>
+                                          <Tooltip title={minute.description}>
+                                            <Typography
+                                              sx={{
+                                                width: "150px",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                whiteSpace: "nowrap",
+                                              }}
+                                            >
+                                              {minute.description}
+                                            </Typography>
+                                          </Tooltip>
+                                        </StyledTableCell>
+                                        <StyledTableCell align="right">
+                                          {minute.presenter}
+                                        </StyledTableCell>
+                                        <StyledTableCell align="right">
+                                          {minute.discussion}
+                                        </StyledTableCell>
+                                        <StyledTableCell align="right">
+                                          {minute.conclusion}
+                                        </StyledTableCell>
+                                      </TableRow>
+                                    ))}
+                                </TableBody>
+                              </Table>
+                            </Box>
+                          )}
+                        </Collapse>
+                      </StyledTableCell>
+                    </StyledTableRow>
+                  </>
+                );
+              })}
+>>>>>>> feat/newMeeting
             </TableBody>
           </Table>
           <Menu open={openMenu} anchorEl={anchorEl} onClose={handleCloseMenu}>
