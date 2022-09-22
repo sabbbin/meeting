@@ -192,12 +192,12 @@ export default function AgendaTable() {
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor("fullName", {
-        header: "Posted By",
+        header: "PostedBy",
         cell: (info) => info.getValue(),
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.postedOn, {
-        header: "Posted On",
+        header: "PostedOn",
         cell: (info) => dayjs(info.getValue()).format("YYYY-MM-DD"),
         footer: (info) => info.column.id,
       }),
@@ -229,18 +229,33 @@ export default function AgendaTable() {
 
   const [sortCol, setSortCol] = useState<SortingState>([
     {
-      id: "Posted On",
+      id: "PostedOn",
       desc: true,
     },
   ]);
 
+  interface IaxiosConfig {
+    params: {
+      userId: string | null;
+      pageSize: number;
+      pageNo: number;
+      searchCol?: string;
+      searchVal?: string;
+      operators?: string;
+      sortCol?: string;
+      sortOrder?: string;
+    };
+    headers: {
+      Authorization: string;
+    };
+  }
   let axiosConfig: IaxiosConfig = {
     params: {
       pageSize: pagination.pageSize,
       pageNo: pagination.pageNumber + 1,
       userId: userId,
-      sortCol: sortCol[0]?.id.replace(/\s/g, '') || "typeName",
-      sortOrder: sortCol[0]?.desc || true,
+      sortCol: sortCol[0]?.id || "typeName",
+      sortOrder: sortCol[0]?.desc ? "desc" : "asc",
     },
     headers: {
       Authorization: "Bearer " + accessToken,

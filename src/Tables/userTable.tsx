@@ -231,7 +231,7 @@ export default function UserTable() {
       searchVal?: string[];
       operators?: string;
       sortCol?: string;
-      sortOrder?: boolean;
+      sortOrder?: string;
     };
     headers: {
       Authorization: string;
@@ -243,7 +243,7 @@ export default function UserTable() {
       size: pagination.pageSize,
       page: pagination.pageNumber + 1,
       sortCol: sortCol[0]?.id || "createdOn",
-      sortOrder: sortCol[0]?.desc || true,
+      sortOrder: sortCol[0]?.desc ? "desc" : "asc",
     },
     headers: {
       Authorization: "Bearer " + accessToken,

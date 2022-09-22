@@ -1,7 +1,6 @@
 import { styled, TableCell, tableCellClasses, TableRow } from "@mui/material";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
-
   [`&.${tableCellClasses.head}`]: {
     backgroundColor: theme.palette.common.black,
     color: theme.palette.common.white,
@@ -24,6 +23,5 @@ export const StyledAttendanceCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.body}`]: {
     whiteSpace: "nowrap",
     fontSize: 12,
-    color: "red",
   },
 }));
