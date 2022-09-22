@@ -500,13 +500,7 @@ export default function MeetingConclusion() {
                                         errors.forms &&
                                         (
                                           errors.forms[
-                                            index
-                                          ] as FormikErrors<IGetMinutes>
-                                        ).discussion &&
-                                        touched.forms &&
-                                        (
-                                          touched.forms[
-                                            index
+                                          index
                                           ] as FormikErrors<IGetMinutes>
                                         )?.discussion
                                       }
@@ -527,13 +521,7 @@ export default function MeetingConclusion() {
                                         errors.forms &&
                                         (
                                           errors.forms[
-                                            index
-                                          ] as FormikErrors<IGetMinutes>
-                                        ).conclusion &&
-                                        touched.forms &&
-                                        (
-                                          touched.forms[
-                                            index
+                                          index
                                           ] as FormikErrors<IGetMinutes>
                                         )?.conclusion
                                       }
@@ -564,13 +552,7 @@ export default function MeetingConclusion() {
                                         errors.forms &&
                                         (
                                           errors.forms[
-                                            index
-                                          ] as FormikErrors<IGetMinutes>
-                                        ).presentedBy &&
-                                        touched.forms &&
-                                        (
-                                          touched.forms[
-                                            index
+                                          index
                                           ] as FormikErrors<IGetMinutes>
                                         )?.presentedBy
                                       }
@@ -667,14 +649,14 @@ export default function MeetingConclusion() {
                       formikMeetingBasicInfo.values.location == "" &&
                       "select location"
                     }
-                    // error={
-                    //   formikMeetingBasicInfo.touched.location &&
-                    //   Boolean(formikMeetingBasicInfo.errors.location)
-                    // }
-                    // helperText={
-                    //   formikMeetingBasicInfo.touched.location &&
-                    //   formikMeetingBasicInfo.errors.location
-                    // }
+                  // error={
+                  //   formikMeetingBasicInfo.touched.location &&
+                  //   Boolean(formikMeetingBasicInfo.errors.location)
+                  // }
+                  // helperText={
+                  //   formikMeetingBasicInfo.touched.location &&
+                  //   formikMeetingBasicInfo.errors.location
+                  // }
                   />
                 </Item>
 
@@ -860,13 +842,7 @@ export default function MeetingConclusion() {
                                       errors.invities &&
                                       (
                                         errors.invities[
-                                          index
-                                        ] as FormikErrors<IInvities>
-                                      )?.invitie &&
-                                      touched.invities &&
-                                      (
-                                        touched.invities[
-                                          index
+                                        index
                                         ] as FormikErrors<IInvities>
                                       )?.invitie
                                     }
@@ -894,13 +870,7 @@ export default function MeetingConclusion() {
                                       errors.invities &&
                                       (
                                         errors.invities[
-                                          index
-                                        ] as FormikErrors<IInvities>
-                                      )?.description &&
-                                      touched.invities &&
-                                      (
-                                        touched.invities[
-                                          index
+                                        index
                                         ] as FormikErrors<IInvities>
                                       )?.description
                                     }
