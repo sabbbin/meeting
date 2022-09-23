@@ -20,6 +20,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { OverridableComponent } from "@mui/material/OverridableComponent";
 import { LocalConvenienceStoreOutlined } from "@mui/icons-material";
+import { useSnackbar } from "notistack";
 
 interface getUserFromMeeting {
   UserId: number;
@@ -62,6 +63,7 @@ function AddUserToMeetingTypes({
   const [checked, setChecked] = React.useState<readonly getUserFromMeeting[]>(
     []
   );
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const [left, setLeft] = React.useState<readonly getUserFromMeeting[]>([]);
   const [right, setRight] = React.useState<readonly getUserFromMeeting[]>([]);
   let access_token = localStorage.getItem("access_token");
@@ -151,8 +153,13 @@ function AddUserToMeetingTypes({
       }),
     {
       onSuccess: () => {
+        enqueueSnackbar("Successfully added user.", { variant: "success" })
         onDialogClose();
       },
+
+      onError: () => {
+        enqueueSnackbar("Can not be added.", { variant: "error" })
+      }
     }
   );
   const handleSubmit = (e: any) => {

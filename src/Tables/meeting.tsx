@@ -586,7 +586,7 @@ export default function Meeting() {
             setIsDialogOpen(false);
           }}
           onAddMeetingSuccessDialog={() => {
-            enqueueSnackbar("Success", { variant: "success" });
+
             setIsForMenu(null);
             setIsDialogOpen(false);
           }}

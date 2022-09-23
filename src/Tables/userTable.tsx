@@ -485,7 +485,7 @@ export default function UserTable() {
           toEdit={isforMenu}
           open={isDialogOpen}
           onSuccessDialog={() => {
-            enqueueSnackbar("Success", { variant: "success" });
+            isforMenu ? (enqueueSnackbar("Successfully Updated", { variant: "success" })) : (enqueueSnackbar("Successfully created user         ", { variant: "success" }))
             setIsForMenu(null);
             setIsDialogOpen(false);
           }}
@@ -500,9 +500,12 @@ export default function UserTable() {
           toEditMember={isforMenu!}
           open={isAddMemberDialogOpen}
           onSuccessAddMemberDialog={() => {
-            enqueueSnackbar("Successfully added member", {
+            isforMenu ? (enqueueSnackbar("Successfully added member", {
               variant: "success",
-            });
+            })) : (enqueueSnackbar("Successfully updated member", {
+              variant: "success",
+            }))
+
             setIsAddMemberDialogOpen(false);
           }}
           onDiscardAddMemberDialog={() => {
@@ -515,7 +518,8 @@ export default function UserTable() {
           refetch={refetch}
           open={isChangeStatus}
           onStatusSuccessDialog={() => {
-            enqueueSnackbar("Successfully changes status", {
+
+            enqueueSnackbar("Successfully changed status", {
               variant: "success",
             });
             setisChangeStatus(false);

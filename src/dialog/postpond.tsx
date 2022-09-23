@@ -18,6 +18,7 @@ import axios from "axios";
 import * as yup from "yup";
 import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { useSnackbar } from "notistack";
 
 
 const FormDialogPaper = (
@@ -53,7 +54,7 @@ const PostpondMeeting = ({
         comment: yup.string().optional(),
         postedBy: yup.number(),
     });
-
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
     let accessToken = localStorage.getItem("access_token");
 
@@ -72,9 +73,13 @@ const PostpondMeeting = ({
                 .then((res) => res.data),
         {
             onSuccess() {
+                enqueueSnackbar("Successfully posponded Meeting.", { variant: "success" })
                 onSuccessDialog()
                 refetch()
             },
+            onError: () => {
+                enqueueSnackbar("Can not pospond Meeting.", { variant: "error" })
+            }
         }
     );
 

@@ -56,6 +56,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { usePostMeetingAndMInutes } from "../hooks/usePostMeetingAndMInutes";
 import { useUpdateMeetingAndMinutes } from "../hooks/useUpdateMeetingAndMInutes";
 import { useMergeMinute } from "../hooks/useMergeMinutes";
+import { useSnackbar } from "notistack";
 
 interface AddMeeting extends DialogProps {
   onAddMeetingDiscardDialog: () => void;
@@ -113,7 +114,7 @@ export default function AddMeetingDialog({
   refetch,
 }: AddMeeting) {
   const [isCheckboxSelected, setIsCheckboxSelected] = useState([]);
-
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   let userId = localStorage.getItem("userId");
   const [meetIdRes, setMeetIdRes] = useState<number | null>();
   let accessToken = localStorage.getItem("access_token");
@@ -166,16 +167,24 @@ export default function AddMeetingDialog({
         let tempdata = { ...toEdit, ...values };
         UpdateMeetingData.mutate(tempdata, {
           onSuccess() {
+            enqueueSnackbar("Successfully updated.", { variant: "success" })
             setMeetIdRes(toEdit.meetId);
             // onAddMeetingSuccessDialog();
           },
+          onError: () => {
+            enqueueSnackbar("Cannot update.", { variant: "error" })
+          }
         });
       } else {
         postMeetingAndMinutes.mutate(values, {
           onSuccess(resMeetId) {
+            enqueueSnackbar("Success.", { variant: "success" })
             setMeetIdRes(resMeetId);
             // onAddMeetingSuccessDialog();
           },
+          onError: () => {
+            enqueueSnackbar("Can not post.", { variant: "error" })
+          }
         });
       }
     },
