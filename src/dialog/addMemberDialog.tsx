@@ -101,9 +101,7 @@ export default function AddMemberDialog({
         .then((res) => res.data),
 
     {
-      initialData: {
-        dataTypeForUser: [],
-      },
+      initialData: [],
       onSuccess: async () => {
         let info = await getData().then((res) => res.data);
         console.log("info", info);
@@ -161,7 +159,7 @@ export default function AddMemberDialog({
     console.log("tempt", meetingField);
     mutate(temp);
   };
-
+  console.log(dataTypeForUser)
   return (
     <Dialog
       PaperComponent={FormDialogPaper as never}
@@ -174,7 +172,7 @@ export default function AddMemberDialog({
         <Autocomplete
           id="tags-outlined"
           multiple
-          options={dataTypeForUser}
+          options={dataTypeForUser ?? []}
           value={[...meetingField]}
           filterSelectedOptions
           getOptionLabel={(option) => option.typeName}

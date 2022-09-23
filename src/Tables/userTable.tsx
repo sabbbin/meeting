@@ -429,7 +429,7 @@ export default function UserTable() {
                               sx={{
                                 marginRight: "5px",
                                 ...(filterOperator == "is empty" ||
-                                filterOperator == "is not empty"
+                                  filterOperator == "is not empty"
                                   ? { display: "none" }
                                   : { display: "inline-block" }),
                               }}
@@ -477,7 +477,7 @@ export default function UserTable() {
                         sx={{
                           marginRight: "5px",
                           ...(filterOperator == "is empty" ||
-                          filterOperator == "is not empty"
+                            filterOperator == "is not empty"
                             ? { display: "none" }
                             : { display: "inline-block" }),
                         }}
@@ -552,12 +552,13 @@ export default function UserTable() {
         <ChangePasswordDialog
           open={isResetPassword}
           onChangePasswordDiscardDialog={() => {
-            enqueueSnackbar("Successfully changed password", {
-              variant: "success",
-            });
+
             setisResetPassword(false);
           }}
           onChangePasswordSuccessDialog={() => {
+            enqueueSnackbar("Successfully changed password", {
+              variant: "success",
+            });
             setisResetPassword(false);
           }}
           toEditChangePasswprd={Number(isforMenu?.userId)}

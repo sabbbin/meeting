@@ -15,6 +15,7 @@ import axios, { AxiosRequestConfig } from "axios";
 import { useAuthenticationStore } from "../hooks/useAuthenticationLogin";
 import { IUser } from "../Tables/userTable";
 import { useNavigate } from "react-router-dom";
+import { useSnackbar } from "notistack";
 
 const theme = createTheme();
 
@@ -40,6 +41,7 @@ export default function Login() {
   //     state => state.Login
   // );
   let navigate = useNavigate();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
   const formik = useFormik({
     initialValues: {
@@ -71,6 +73,9 @@ export default function Login() {
           replace: true,
         });
       },
+      onError() {
+        enqueueSnackbar('Username or password is incorrect or your account has been diabled/suspended. Please contact your administrator.', { variant: "error" })
+      }
     }
   );
 

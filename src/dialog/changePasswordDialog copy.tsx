@@ -25,12 +25,14 @@ export interface IChangePasswordDialog {
   userId: number;
   password: string;
   confirmPassword: string;
+  oldPassword?: string;
 }
 
 interface ChangePasswordProps extends DialogProps {
   onChangePasswordDiscardDialog: () => void;
   onChangePasswordSuccessDialog: () => void;
   toEditChangePasswprd: number;
+  shouldEnterOldPassword?: boolean
 }
 
 const FormDialogPaper = (
@@ -54,11 +56,19 @@ const validationSchema = yup.object({
     .typeError("Password and confirm password should match"),
 });
 
+const validationSchemaUser = validationSchema.shape({
+  oldPassword: yup.string()
+    // .min(8, "Password should be of minimum 8 characters length")
+    .required()
+    .typeError("Password name must be a string"),
+})
+
 export default function ChangePasswordDialog({
   onChangePasswordDiscardDialog,
   onChangePasswordSuccessDialog,
   toEditChangePasswprd: toEdit,
   open,
+  shouldEnterOldPassword
 }: ChangePasswordProps) {
   let accessToken = localStorage.getItem("access_token");
 
@@ -72,14 +82,14 @@ export default function ChangePasswordDialog({
     Authorization: "Bearer " + accessToken,
   };
 
-  const ChangeStatusMutation = useMutation<
+  const ChangePasswordAdmin = useMutation<
     unknown,
     unknown,
     IChangePasswordDialog
   >(
     async (data) =>
       await axios
-        .put("api/User/ResetPassword", data, {
+        .put("api/User/ResetPasswordByAdmin", data, {
           headers: headers,
         })
         .then((res) => res.data),
@@ -90,21 +100,36 @@ export default function ChangePasswordDialog({
     }
   );
 
+  const ResetPasswordByUser = useMutation<unknown, unknown, IChangePasswordDialog>(
+    async (data) =>
+      await axios.put("api/User/ResetPasswordByUser", data, {
+        headers: headers,
+      }).then((res) => res.data),
+    {
+      onSuccess() {
+        onChangePasswordSuccessDialog();
+      },
+    }
+  )
+
   const formik = useFormik<IChangePasswordDialog>({
     initialValues: {
       userId: toEdit,
       password: "",
       confirmPassword: "",
+      oldPassword: "",
     },
-    validationSchema: validationSchema,
+    validationSchema: shouldEnterOldPassword ? validationSchemaUser : validationSchema,
     onSubmit: (values) => {
-      if (toEdit) ChangeStatusMutation.mutate(values);
+      if (shouldEnterOldPassword) {
+        ResetPasswordByUser.mutate(values)
+      }
+      else {
+        ChangePasswordAdmin.mutate(values);
+      }
     },
   });
 
-  const handleClose = () => {
-    onChangePasswordDiscardDialog();
-  };
 
   return (
     <Dialog
@@ -113,10 +138,24 @@ export default function ChangePasswordDialog({
         onSubmit: formik.handleSubmit as never,
       }}
       open={open}
-      onClose={handleClose}
+
     >
       <DialogTitle>Change Password</DialogTitle>
       <DialogContent>
+        {shouldEnterOldPassword && <TextField
+          autoFocus
+          margin="dense"
+          id="oldPassword"
+          name="oldPassword"
+          value={formik.values.oldPassword}
+          onChange={formik.handleChange}
+          error={formik.touched.oldPassword && Boolean(formik.errors.oldPassword)}
+          helperText={formik.touched.oldPassword && formik.errors.oldPassword}
+          label="oldPassword"
+          type="oldPassword"
+          fullWidth
+          variant="standard"
+        />}
         <TextField
           autoFocus
           margin="dense"
@@ -149,6 +188,7 @@ export default function ChangePasswordDialog({
           fullWidth
           variant="standard"
         />
+
       </DialogContent>
       <DialogActions>
         <Button onClick={onChangePasswordDiscardDialog}>Cancel</Button>

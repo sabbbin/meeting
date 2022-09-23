@@ -162,7 +162,7 @@ export default function BaseLayout() {
       <CssBaseline />
       <AppBar position="fixed" open={open}>
         <Toolbar sx={{ justifyContent: "space-between" }}>
-          <ChangePasswordDialog
+          {isResetPassword && <ChangePasswordDialog
             open={isResetPassword}
             onChangePasswordDiscardDialog={() => {
               setisResetPassword(false);
@@ -171,7 +171,9 @@ export default function BaseLayout() {
               setisResetPassword(false);
             }}
             toEditChangePasswprd={Number(id)}
+            shouldEnterOldPassword={true}
           />
+          }
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <IconButton
               color="inherit"
@@ -199,11 +201,17 @@ export default function BaseLayout() {
               horizontal: "left",
             }}
           >
-            <MenuItem> {fullname}</MenuItem>
+            <MenuItem
+              disabled
+              sx={{
+                color: 'black'
+              }}
+            > {fullname}</MenuItem>
 
             <MenuItem
               onClick={() => {
                 setisResetPassword(true);
+                handleClose()
               }}
             >
               Change Password

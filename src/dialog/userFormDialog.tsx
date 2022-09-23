@@ -228,7 +228,7 @@ const UserFormDialog = ({
         />
         <TextField
           margin="dense"
-          id="name"
+          id="email"
           name="email"
           value={formik.values.email}
           onChange={formik.handleChange}
@@ -241,7 +241,7 @@ const UserFormDialog = ({
         />
         <TextField
           margin="dense"
-          id="name"
+          id="fullName"
           name="fullName"
           value={formik.values.fullName}
           onChange={formik.handleChange}
@@ -271,7 +271,7 @@ const UserFormDialog = ({
           <TextField
             autoFocus
             margin="dense"
-            id="Password"
+            id="confirmPassword"
             name="confirmPassword"
             value={formik.values.confirmPassword}
             onChange={formik.handleChange}
