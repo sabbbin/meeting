@@ -77,7 +77,6 @@ interface IaxiosConfig {
 }
 const columnHelper = createColumnHelper<IAgenda>();
 
-
 const filterOptions = [
   {
     field: "typeName",
@@ -130,14 +129,14 @@ export default function AgendaTable() {
 
   const getStatusID = (statusId: number) => {
     switch (statusId) {
-      case 6://new agenda status
+      case 6: //new agenda status
         return "info";
-      case 7:// open agenda
+      case 7: // open agenda
         return "success";
-      case 8://closed agenda
+      case 8: //closed agenda
         return "default";
     }
-  }
+  };
 
   const columns = useMemo(
     () => [
@@ -184,11 +183,13 @@ export default function AgendaTable() {
       }),
       columnHelper.accessor((row) => row, {
         header: "Status",
-        cell: (info) => (<Chip
-          size="small"
-          label={info.getValue().statusName}
-          color={getStatusID(info.getValue().statusId)}
-        />),
+        cell: (info) => (
+          <Chip
+            size="small"
+            label={info.getValue().statusName}
+            color={getStatusID(info.getValue().statusId)}
+          />
+        ),
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor("fullName", {
@@ -205,17 +206,20 @@ export default function AgendaTable() {
         header: "Actions",
         enableSorting: false,
         cell: (info) =>
-          (info.getValue().statusId === 6 && info.getValue().postedBy === Number(localStorage.getItem("userId"))) ? (
+          info.getValue().statusId === 6 &&
+          info.getValue().postedBy ===
+            Number(localStorage.getItem("userId")) ? (
             <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
               <MoreVertIcon />
-            </IconButton>) : (null),
+            </IconButton>
+          ) : null,
       }),
     ],
     []
   );
 
   //filter options for agenda
-
+  const [removeFilterFlag, setRemoveFilterFlag] = useState<boolean>(false);
 
   const [filterField, setFilterField] =
     useState<ValuesType<typeof filterOptions>["field"]>("typeName");
@@ -270,7 +274,6 @@ export default function AgendaTable() {
     { ...axiosConfig }
   );
 
-
   const { mutate: deleteMutatae } = useMutation<unknown, unknown, string>(
     (deleteId) =>
       axios
@@ -294,7 +297,6 @@ export default function AgendaTable() {
   );
 
   const handleDelete = () => deleteMutatae(isforAgenda?.agendaId!);
-
 
   const table = useReactTable({
     data: meetingAgendaData,
@@ -350,157 +352,176 @@ export default function AgendaTable() {
         </Button>
 
         <PopupState variant="popover" popupId="demo-popup-popover">
-          {(popupState) => (
-            <div>
-              <Button
-                size="small"
-                variant="contained"
-                sx={{ marginBottom: "10px" }}
-                {...bindTrigger(popupState)}
-              >
-                Open search
-              </Button>
-              <Popover
-                {...bindPopover(popupState)}
-                anchorOrigin={{
-                  vertical: "top",
-                  horizontal: "left",
-                }}
-                transformOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
-                }}
-              >
-                <Paper
+          {(popupState) => {
+            return (
+              <div>
+                <Button
+                  variant="contained"
+                  size="small"
                   sx={{
-                    padding: "10px",
+                    marginBottom: "10px",
+                    marginRight: 1,
+                  }}
+                  onClick={() => {
+                    setRemoveFilterFlag(false);
+                    refetch();
                   }}
                 >
-                  <Select
-                    id="demo-simple-select"
-                    value={filterField}
-                    label="Age"
-                    sx={{ marginRight: "5px" }}
-                    size="small"
-                    onChange={(e) => {
-                      setFilterField(e.target.value as never);
+                  Remove Filter
+                </Button>
 
-                      setsearchValue("");
+                <Button
+                  size="small"
+                  variant="contained"
+                  sx={{ marginBottom: "10px" }}
+                  {...bindTrigger(popupState)}
+                >
+                  Open search
+                </Button>
 
-                      setMultiValue([]);
-                      setFilterOperator(
-                        filterOptions.find((op) => op.field === e.target.value)
-                          ?.options[0]! as never
-                      );
+                <Popover
+                  {...bindPopover(popupState)}
+                  anchorOrigin={{
+                    vertical: "top",
+                    horizontal: "left",
+                  }}
+                  transformOrigin={{
+                    vertical: "top",
+                    horizontal: "right",
+                  }}
+                >
+                  <Paper
+                    sx={{
+                      padding: "10px",
                     }}
                   >
-                    {filterOptions.map((col, i) => (
-                      <MenuItem value={col.field}>{col.field}</MenuItem>
-                    ))}
-                  </Select>
-                  <Select
-                    id="demo-simple-select"
-                    value={filterOperator}
-                    label="Age"
-                    sx={{ marginRight: "5px" }}
-                    size="small"
-                    onChange={(e) => {
-                      setFilterOperator(e.target.value as never);
-                      if (dayjs(searchValue).isValid()) {
-                        setsearchValue(dayjs().format("YYYY-MM-DD"));
-                      } else {
+                    <Select
+                      id="demo-simple-select"
+                      value={filterField}
+                      label="Age"
+                      sx={{ marginRight: "5px" }}
+                      size="small"
+                      onChange={(e) => {
+                        setFilterField(e.target.value as never);
+
                         setsearchValue("");
-                      }
-                      setMultiValue([]);
-                    }}
-                  >
-                    {(
-                      filterOptions.find((op) => op.field === filterField)
-                        ?.options ?? []
-                    ).map((col) => (
-                      <MenuItem value={col}>{col}</MenuItem>
-                    ))}
-                  </Select>
 
-                  {filterField == "PostedOn" ? (
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <DesktopDatePicker
-                        label="Select Date"
-                        inputFormat="YYYY-MM-DD"
-                        value={searchValue}
-                        onChange={(val: any) => {
-                          setsearchValue(dayjs(val).format("YYYY-MM-DD"));
+                        setMultiValue([]);
+                        setFilterOperator(
+                          filterOptions.find(
+                            (op) => op.field === e.target.value
+                          )?.options[0]! as never
+                        );
+                      }}
+                    >
+                      {filterOptions.map((col, i) => (
+                        <MenuItem value={col.field}>{col.field}</MenuItem>
+                      ))}
+                    </Select>
+                    <Select
+                      id="demo-simple-select"
+                      value={filterOperator}
+                      label="Age"
+                      sx={{ marginRight: "5px" }}
+                      size="small"
+                      onChange={(e) => {
+                        setFilterOperator(e.target.value as never);
+                        if (dayjs(searchValue).isValid()) {
+                          setsearchValue(dayjs().format("YYYY-MM-DD"));
+                        } else {
+                          setsearchValue("");
+                        }
+                        setMultiValue([]);
+                      }}
+                    >
+                      {(
+                        filterOptions.find((op) => op.field === filterField)
+                          ?.options ?? []
+                      ).map((col) => (
+                        <MenuItem value={col}>{col}</MenuItem>
+                      ))}
+                    </Select>
+
+                    {filterField == "PostedOn" ? (
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DesktopDatePicker
+                          label="Select Date"
+                          inputFormat="YYYY-MM-DD"
+                          value={searchValue}
+                          onChange={(val: any) => {
+                            setsearchValue(dayjs(val).format("YYYY-MM-DD"));
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              size="small"
+                              sx={{
+                                marginRight: "5px",
+                                ...(filterOperator == "is empty" ||
+                                filterOperator == "is not empty"
+                                  ? { display: "none" }
+                                  : { display: "inline-block" }),
+                              }}
+                              {...params}
+                            />
+                          )}
+                        />
+                      </LocalizationProvider>
+                    ) : filterOperator == "is any of" ? (
+                      <Autocomplete
+                        multiple
+                        size="small"
+                        sx={{
+                          minWidth: "200px",
+                          maxWidth: "300px",
+                          maxHeight: "50px",
+
+                          marginRight: "5px",
+                          zIndex: 100,
+                        }}
+                        id="tags-filled"
+                        options={multiValue!.map((option) => option)}
+                        freeSolo
+                        renderTags={(value, getTagProps) => {
+                          setMultiValue(value);
+                          return value.map((option, index) => (
+                            <Chip
+                              variant="outlined"
+                              label={option}
+                              {...getTagProps({ index })}
+                            />
+                          ));
                         }}
                         renderInput={(params) => (
                           <TextField
-                            size="small"
-                            sx={{
-                              marginRight: "5px",
-                              ...(filterOperator == "is empty" ||
-                                filterOperator == "is not empty"
-                                ? { display: "none" }
-                                : { display: "inline-block" }),
-                            }}
                             {...params}
+                            variant="filled"
+                            label="Enter search value"
                           />
                         )}
                       />
-                    </LocalizationProvider>
-                  ) : filterOperator == "is any of" ? (
-                    <Autocomplete
-                      multiple
-                      size="small"
-                      sx={{
-                        minWidth: "200px",
-                        maxWidth: "300px",
-                        maxHeight: "50px",
-
-                        marginRight: "5px",
-                        zIndex: 100,
-                      }}
-                      id="tags-filled"
-                      options={multiValue!.map((option) => option)}
-                      freeSolo
-                      renderTags={(value, getTagProps) => {
-                        setMultiValue(value);
-                        return value.map((option, index) => (
-                          <Chip
-                            variant="outlined"
-                            label={option}
-                            {...getTagProps({ index })}
-                          />
-                        ));
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          variant="filled"
-                          label="Enter search value"
-                        />
-                      )}
-                    />
-                  ) : (
-                    <TextField
-                      size="small"
-                      sx={{
-                        marginRight: "5px",
-                        ...(filterOperator == "is empty" ||
+                    ) : (
+                      <TextField
+                        size="small"
+                        sx={{
+                          marginRight: "5px",
+                          ...(filterOperator == "is empty" ||
                           filterOperator == "is not empty"
-                          ? { display: "none" }
-                          : { display: "inline-block" }),
-                      }}
-                      value={searchValue}
-                      onChange={(e) => setsearchValue(e.target.value)}
-                    />
-                  )}
+                            ? { display: "none" }
+                            : { display: "inline-block" }),
+                        }}
+                        value={searchValue}
+                        onChange={(e) => setsearchValue(e.target.value)}
+                      />
+                    )}
 
-                  <Button onClick={handleSearch} variant="contained">
-                    Search
-                  </Button>
-                </Paper>
-              </Popover>
-            </div>
-          )}
+                    <Button onClick={handleSearch} variant="contained">
+                      Search
+                    </Button>
+                  </Paper>
+                </Popover>
+              </div>
+            );
+          }}
         </PopupState>
       </Box>
       {isDialogOpen && (
