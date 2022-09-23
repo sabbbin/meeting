@@ -167,7 +167,7 @@ export default function MeetingConclusion() {
           .required()
           .test({
             test: (dt) => {
-              return dayjs(dt).isAfter(meeting.meetDatetime);
+              return dayjs(dt).isSame(meeting.meetDatetime) || dayjs(dt).isAfter(meeting.meetDatetime)
             },
 
             message: "Meeting Date cannot be less than current date",
@@ -503,7 +503,7 @@ export default function MeetingConclusion() {
                                         errors.forms &&
                                         (
                                           errors.forms[
-                                            index
+                                          index
                                           ] as FormikErrors<IGetMinutes>
                                         )?.discussion
                                       }
@@ -524,7 +524,7 @@ export default function MeetingConclusion() {
                                         errors.forms &&
                                         (
                                           errors.forms[
-                                            index
+                                          index
                                           ] as FormikErrors<IGetMinutes>
                                         )?.conclusion
                                       }
@@ -555,7 +555,7 @@ export default function MeetingConclusion() {
                                         errors.forms &&
                                         (
                                           errors.forms[
-                                            index
+                                          index
                                           ] as FormikErrors<IGetMinutes>
                                         )?.presentedBy
                                       }
@@ -652,14 +652,14 @@ export default function MeetingConclusion() {
                       formikMeetingBasicInfo.values.location == "" &&
                       "select location"
                     }
-                    // error={
-                    //   formikMeetingBasicInfo.touched.location &&
-                    //   Boolean(formikMeetingBasicInfo.errors.location)
-                    // }
-                    // helperText={
-                    //   formikMeetingBasicInfo.touched.location &&
-                    //   formikMeetingBasicInfo.errors.location
-                    // }
+                  // error={
+                  //   formikMeetingBasicInfo.touched.location &&
+                  //   Boolean(formikMeetingBasicInfo.errors.location)
+                  // }
+                  // helperText={
+                  //   formikMeetingBasicInfo.touched.location &&
+                  //   formikMeetingBasicInfo.errors.location
+                  // }
                   />
                 </Item>
 
@@ -840,7 +840,7 @@ export default function MeetingConclusion() {
                                       errors.invities &&
                                       (
                                         errors.invities[
-                                          index
+                                        index
                                         ] as FormikErrors<IInvities>
                                       )?.invitie
                                     }
@@ -868,7 +868,7 @@ export default function MeetingConclusion() {
                                       errors.invities &&
                                       (
                                         errors.invities[
-                                          index
+                                        index
                                         ] as FormikErrors<IInvities>
                                       )?.description
                                     }
