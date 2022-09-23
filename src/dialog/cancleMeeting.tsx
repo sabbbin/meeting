@@ -16,6 +16,7 @@ import { OverridableComponent } from "@mui/material/OverridableComponent";
 import { useMutation } from "@tanstack/react-query";
 
 import axios from "axios";
+import { useSnackbar } from "notistack";
 
 
 const FormDialogPaper = (
@@ -48,6 +49,7 @@ const CancleMeeting = ({
         postedBy: yup.number(),
     });
 
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
     let accessToken = localStorage.getItem("access_token");
 
@@ -66,9 +68,13 @@ const CancleMeeting = ({
                 .then((res) => res.data),
         {
             onSuccess() {
+                enqueueSnackbar("Successfully canceled Meeting.", { variant: "warning" })
                 onSuccessDialog();
                 refetch();
             },
+            onError: () => {
+                enqueueSnackbar("Can not cancel Meeting Type.", { variant: "error" })
+            }
         }
     );
 

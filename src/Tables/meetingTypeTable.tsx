@@ -240,8 +240,12 @@ export default function MeetingTypeTable() {
     },
     {
       onSuccess: () => {
+        enqueueSnackbar("Successfully updated Status.", { variant: "success" })
         refetch();
       },
+      onError: () => {
+        enqueueSnackbar("Can not be updated Status.", { variant: "error" })
+      }
     }
   );
 
@@ -262,8 +266,12 @@ export default function MeetingTypeTable() {
         .then((res) => res.data),
     {
       onSuccess: () => {
+        enqueueSnackbar("Successfully Deleted.", { variant: "warning" })
         refetch();
       },
+      onError: () => {
+        enqueueSnackbar("Can not be Deleted.", { variant: "error" })
+      }
     }
   );
 

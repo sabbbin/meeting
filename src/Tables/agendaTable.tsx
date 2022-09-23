@@ -297,8 +297,12 @@ export default function AgendaTable() {
         .then((res) => res.data),
     {
       onSuccess: () => {
+        enqueueSnackbar("Successfully Deleted", { variant: "warning" })
         refetch();
       },
+      onError: () => {
+        enqueueSnackbar("Can not be deleted", { variant: "error" })
+      }
     }
   );
 
@@ -552,7 +556,7 @@ export default function AgendaTable() {
           toEditAddAgenda={isforAgenda}
           open={isDialogOpen}
           onSuccessDialog={() => {
-            enqueueSnackbar("Success", { variant: "success" });
+            isforAgenda ? (enqueueSnackbar("Successfully updated", { variant: "success" })) : (enqueueSnackbar("Successfully added", { variant: "success" }))
             setisforAgenda(null);
             setIsDialogOpen(false);
           }}

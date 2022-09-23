@@ -21,6 +21,7 @@ import * as yup from "yup";
 import { IMeetingType } from "../Tables/meetingTypeTable";
 import useMeetingType from "../hooks/useMeetingType";
 import useUserMeetingType from "../hooks/useUserMeetingType";
+import { useSnackbar } from "notistack";
 
 interface AddMeetingTypeProps extends DialogProps {
   onAddMeetingTypeDiscardDialog: () => void;
@@ -53,6 +54,7 @@ export default function AddMeetingTypeDialog({
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const handleCloseMenu = () => {
     setAnchorEl(null);
   };
@@ -70,9 +72,13 @@ export default function AddMeetingTypeDialog({
         .then((res) => res.data),
     {
       onSuccess() {
+        enqueueSnackbar("Successfully Created Meeting Type.", { variant: "success" })
         refetch();
         onAddMeetingTypeSuccessDialog();
       },
+      onError: () => {
+        enqueueSnackbar("Can not create Meeting Type.", { variant: "error" })
+      }
     }
   );
 
@@ -89,9 +95,13 @@ export default function AddMeetingTypeDialog({
         .then((res) => res.data),
     {
       onSuccess() {
+        enqueueSnackbar("Successfully Updated Meeting Type.", { variant: "success" })
         refetch();
         onAddMeetingTypeSuccessDialog();
       },
+      onError: () => {
+        enqueueSnackbar("Can not create Meeting Type.", { variant: "error" })
+      }
     }
   );
 
