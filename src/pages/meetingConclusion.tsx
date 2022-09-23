@@ -288,7 +288,7 @@ export default function MeetingConclusion() {
                     marginBottom: 2,
                   }}
                 >
-                  Agenda
+                  Minutes
                 </Typography>
 
                 <Formik
@@ -402,7 +402,7 @@ export default function MeetingConclusion() {
                                         fontWeight: 600,
                                       }}
                                     >
-                                      <b>Title :</b> {value.agenda}
+                                      <b>Agenda :</b> {value.agenda}
                                     </Typography>
                                   </Box>
 
