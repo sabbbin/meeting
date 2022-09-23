@@ -213,6 +213,19 @@ const UserFormDialog = ({
       <DialogTitle>{!!toEdit ? "Update" : "Add"} User Form</DialogTitle>
       <DialogContent>
         <TextField
+          margin="dense"
+          id="fullName"
+          name="fullName"
+          value={formik.values.fullName}
+          onChange={formik.handleChange}
+          error={formik.touched.fullName && Boolean(formik.errors.fullName)}
+          helperText={formik.touched.fullName && formik.errors.fullName}
+          label="Full Name"
+          type="name"
+          fullWidth
+          variant="standard"
+        />
+        <TextField
           autoFocus
           margin="dense"
           id="name"
@@ -239,19 +252,7 @@ const UserFormDialog = ({
           fullWidth
           variant="standard"
         />
-        <TextField
-          margin="dense"
-          id="fullName"
-          name="fullName"
-          value={formik.values.fullName}
-          onChange={formik.handleChange}
-          error={formik.touched.fullName && Boolean(formik.errors.fullName)}
-          helperText={formik.touched.fullName && formik.errors.fullName}
-          label="Full Name"
-          type="name"
-          fullWidth
-          variant="standard"
-        />
+
         {!toEdit && (
           <TextField
             margin="dense"

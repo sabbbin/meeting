@@ -678,7 +678,7 @@ export default function UserTable() {
               handleClose();
             }}
           >
-            Add Type
+            Add Meeting Type
           </MenuItem>
           <MenuItem
             onClick={() => {
