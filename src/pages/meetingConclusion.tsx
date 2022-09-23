@@ -160,8 +160,18 @@ export default function MeetingConclusion() {
       meetTypeId: meeting.meetTypeId!,
     },
     validationSchema() {
-      yup.object().shape({
+      return yup.object().shape({
         location: yup.string().required("required"),
+        meetDatetime: yup
+          .string()
+          .required()
+          .test({
+            test: (dt) => {
+              return dayjs(dt).isAfter(meeting.meetDatetime);
+            },
+
+            message: "Meeting Date cannot be less than current date",
+          }),
       });
     },
     onSubmit: (values) => {
@@ -245,7 +255,7 @@ export default function MeetingConclusion() {
       enabled: false,
     }
   );
-  console.log("abc", formikMeetingBasicInfo);
+  console.log(formikMeetingBasicInfo.errors);
   return (
     <>
       <Toolbar />
@@ -493,7 +503,7 @@ export default function MeetingConclusion() {
                                         errors.forms &&
                                         (
                                           errors.forms[
-                                          index
+                                            index
                                           ] as FormikErrors<IGetMinutes>
                                         )?.discussion
                                       }
@@ -514,7 +524,7 @@ export default function MeetingConclusion() {
                                         errors.forms &&
                                         (
                                           errors.forms[
-                                          index
+                                            index
                                           ] as FormikErrors<IGetMinutes>
                                         )?.conclusion
                                       }
@@ -545,7 +555,7 @@ export default function MeetingConclusion() {
                                         errors.forms &&
                                         (
                                           errors.forms[
-                                          index
+                                            index
                                           ] as FormikErrors<IGetMinutes>
                                         )?.presentedBy
                                       }
@@ -642,21 +652,20 @@ export default function MeetingConclusion() {
                       formikMeetingBasicInfo.values.location == "" &&
                       "select location"
                     }
-                  // error={
-                  //   formikMeetingBasicInfo.touched.location &&
-                  //   Boolean(formikMeetingBasicInfo.errors.location)
-                  // }
-                  // helperText={
-                  //   formikMeetingBasicInfo.touched.location &&
-                  //   formikMeetingBasicInfo.errors.location
-                  // }
+                    // error={
+                    //   formikMeetingBasicInfo.touched.location &&
+                    //   Boolean(formikMeetingBasicInfo.errors.location)
+                    // }
+                    // helperText={
+                    //   formikMeetingBasicInfo.touched.location &&
+                    //   formikMeetingBasicInfo.errors.location
+                    // }
                   />
                 </Item>
 
                 <Item>
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DateTimePicker
-                      disablePast
                       label="Meeting Date and Time"
                       value={dayjs(
                         formikMeetingBasicInfo.values.meetDatetime
@@ -665,22 +674,18 @@ export default function MeetingConclusion() {
                       onChange={(newValue) => {
                         formikMeetingBasicInfo.setFieldValue(
                           "meetDatetime",
-                          newValue
+                          newValue?.toString()
                         );
                       }}
                       renderInput={(params) => (
                         <TextField
                           fullWidth
                           size="small"
-                          error={
-                            formikMeetingBasicInfo.touched.meetDatetime &&
-                            Boolean(formikMeetingBasicInfo.errors.meetDatetime)
-                          }
                           helperText={
-                            formikMeetingBasicInfo.touched.meetDatetime &&
                             formikMeetingBasicInfo.errors.meetDatetime
                           }
                           {...params}
+                          error={!!formikMeetingBasicInfo.errors.meetDatetime}
                         />
                       )}
                     />
@@ -835,7 +840,7 @@ export default function MeetingConclusion() {
                                       errors.invities &&
                                       (
                                         errors.invities[
-                                        index
+                                          index
                                         ] as FormikErrors<IInvities>
                                       )?.invitie
                                     }
@@ -863,7 +868,7 @@ export default function MeetingConclusion() {
                                       errors.invities &&
                                       (
                                         errors.invities[
-                                        index
+                                          index
                                         ] as FormikErrors<IInvities>
                                       )?.description
                                     }
