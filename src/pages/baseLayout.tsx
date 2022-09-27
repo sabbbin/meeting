@@ -136,7 +136,7 @@ export default function BaseLayout() {
       icon: <MeetingRoomIcon />,
       role: [Roles.ADMIN],
       onClick: () => {
-        navigate("./meeting");
+        navigate("./");
       },
     },
     {

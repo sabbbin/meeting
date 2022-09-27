@@ -33,10 +33,10 @@ const MeetingTableRow = ({ row }: MeetingTableProps) => {
     ["getMinutes", row.original.meetId],
     () => {
       return axios
-        .get("api/Minute/GetAgenda", {
+        .get("api/Minute/GetMinute", {
           params: {
             meetId: row.original.meetId!,
-            meetTypeId: row.original.meetTypeId!,
+
           },
           headers: {
             Authorization: "bearer " + accessToken,

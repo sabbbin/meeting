@@ -67,6 +67,7 @@ import StyledTableRow from "../components/StyledTableRow";
 import StyledTableCell from "../components/StyledTableCell";
 import SearchIcon from "@mui/icons-material/Search";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
+import { confirmAlert } from "react-confirm-alert";
 
 export interface IMeetingType {
   meetTypeId?: number;
@@ -276,8 +277,25 @@ export default function MeetingTypeTable() {
   );
 
   const handleDelete = (value: any) => {
-    const deleteId = isforMenu?.meetTypeId!;
-    deleteMutatae(deleteId);
+    confirmAlert({
+      title: 'Confirm to Delete',
+      message: 'Are you sure you want to Delete ?',
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: () => {
+            const deleteId = isforMenu?.meetTypeId!;
+            deleteMutatae(deleteId);
+          }
+        },
+        {
+          label: 'No',
+          onClick: () => alert('Click No')
+        }
+      ]
+    })
+
+
   };
 
   const handleStatusChange = (value: any) => {

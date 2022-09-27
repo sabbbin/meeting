@@ -24,7 +24,7 @@ export const AppRoutes: RouteObject[] = [
         element: <UserTable />,
       },
       {
-        path: "/meeting",
+        path: "/",
         element: <Meeting />,
       },
       {
