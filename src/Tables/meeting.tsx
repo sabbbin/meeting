@@ -117,7 +117,7 @@ export default function Meeting() {
 
   const [sortCol, setSortCol] = useState<SortingState>([
     {
-      id: "postedBy",
+      id: "postedOn",
       desc: true,
     },
   ]);
@@ -331,7 +331,7 @@ export default function Meeting() {
         enableSorting: false,
         cell: (info) =>
           info.getValue().status === "Concluded" ||
-          info.getValue().status === "Cancel" ? null : (
+            info.getValue().status === "Cancel" ? null : (
             <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
               <MoreVertIcon />
             </IconButton>
@@ -502,7 +502,7 @@ export default function Meeting() {
                           sx={{
                             marginRight: "5px",
                             ...(filterOperator == "is empty" ||
-                            filterOperator == "is not empty"
+                              filterOperator == "is not empty"
                               ? { display: "none" }
                               : { display: "inline-block" }),
                           }}
@@ -550,7 +550,7 @@ export default function Meeting() {
                     sx={{
                       marginRight: "5px",
                       ...(filterOperator == "is empty" ||
-                      filterOperator == "is not empty"
+                        filterOperator == "is not empty"
                         ? { display: "none" }
                         : { display: "inline-block" }),
                     }}
@@ -696,7 +696,7 @@ export default function Meeting() {
             ) : null}
 
             {isForMenu?.status === "Called" ||
-            isForMenu?.status === "Pospond" ? (
+              isForMenu?.status === "Pospond" ? (
               <MenuItem
                 onClick={() => {
                   handleClose();
@@ -727,7 +727,7 @@ export default function Meeting() {
               </MenuItem>
             ) : null}
             {isForMenu?.status === "Called" ||
-            isForMenu?.status === "Pospond" ? (
+              isForMenu?.status === "Pospond" ? (
               <MenuItem
                 onClick={() => {
                   setisForPostpond(true);
@@ -738,7 +738,7 @@ export default function Meeting() {
               </MenuItem>
             ) : null}
             {isForMenu?.status === "Called" ||
-            isForMenu?.status === "Pospond" ? (
+              isForMenu?.status === "Pospond" ? (
               <MenuItem
                 onClick={() => {
                   setIsForCancle(true);
