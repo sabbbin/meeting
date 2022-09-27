@@ -47,6 +47,8 @@ import StyledTableRow from "../components/StyledTableRow";
 import StyledTableCell from "../components/StyledTableCell";
 import SearchIcon from "@mui/icons-material/Search";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
+import { confirmAlert } from "react-confirm-alert";
+import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
 export interface IAgenda {
   agendaId: string;
   agenda: string;
@@ -115,6 +117,7 @@ export default function AgendaTable() {
 
   const handleCloseMenu = () => {
     setOpenMenu(false);
+    setisforAgenda(null);
   };
 
   const handleClickColumn = (
@@ -217,7 +220,7 @@ export default function AgendaTable() {
         enableSorting: false,
         cell: (info) =>
           info.getValue().statusId === 6 &&
-          info.getValue().postedBy ===
+            info.getValue().postedBy ===
             Number(localStorage.getItem("userId")) ? (
             <IconButton onClick={(e) => handleClickColumn(e, info.getValue())}>
               <MoreVertIcon />
@@ -306,7 +309,23 @@ export default function AgendaTable() {
     }
   );
 
-  const handleDelete = () => deleteMutatae(isforAgenda?.agendaId!);
+  const handleDelete = () => confirmAlert({
+    title: 'Confirm to Delete',
+    message: 'Are you sure you want to Delete ?',
+    buttons: [
+      {
+        label: 'Yes',
+        onClick: () => {
+          deleteMutatae(isforAgenda?.agendaId!)
+        }
+      },
+      {
+        label: 'No',
+        // onClick: () => alert('')
+      }
+    ]
+  })
+    ;
 
   const table = useReactTable({
     data: meetingAgendaData,
@@ -460,7 +479,7 @@ export default function AgendaTable() {
                         sx={{
                           marginRight: "5px",
                           ...(filterOperator == "is empty" ||
-                          filterOperator == "is not empty"
+                            filterOperator == "is not empty"
                             ? { display: "none" }
                             : { display: "inline-block" }),
                         }}
@@ -508,7 +527,7 @@ export default function AgendaTable() {
                   sx={{
                     marginRight: "5px",
                     ...(filterOperator == "is empty" ||
-                    filterOperator == "is not empty"
+                      filterOperator == "is not empty"
                       ? { display: "none" }
                       : { display: "inline-block" }),
                   }}

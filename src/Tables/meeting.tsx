@@ -38,6 +38,7 @@ import React, { MouseEvent, useEffect, useMemo, useState } from "react";
 // import AddMeetingDialog from "../dialog/addMeeting";
 import axios from "axios";
 import useMeeting from "../hooks/useMeeting";
+import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
 import usePagination from "../hooks/usePagination";
 
 import AddMeetingDrawer from "../drawer/addMemberDrawer";
@@ -61,6 +62,7 @@ import PostpondMeeting from "../dialog/postpond";
 import CancleMeeting from "../dialog/cancleMeeting";
 import { IGetAgenda } from "../dialog/getAgenda";
 import MeetingTableRow from "../components/meetingTableRow";
+import { confirmAlert } from "react-confirm-alert";
 
 export interface IMeeting {
   meetId?: number | undefined;
@@ -141,6 +143,7 @@ export default function Meeting() {
 
   const handleClose = () => {
     setOpenMenu(false);
+    setIsForMenu(null);
   };
   const handleCloseMenu = () => {
     setAnchorEl(null);
@@ -361,8 +364,25 @@ export default function Meeting() {
   );
 
   const handleDelete = () => {
-    const deleteId = isForMenu?.meetId;
-    deleteMutatae(deleteId!);
+    confirmAlert({
+      title: 'Confirm to Delete',
+      message: 'Are you sure you want to Delete ?',
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: () => {
+            const deleteId = isForMenu?.meetId;
+            deleteMutatae(deleteId!);
+          }
+        },
+        {
+          label: 'No',
+          // onClick: () => alert('')
+        }
+      ]
+    })
+
+
   };
   const table = useReactTable({
     data: meetingData,

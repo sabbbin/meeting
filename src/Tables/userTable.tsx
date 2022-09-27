@@ -105,6 +105,7 @@ export default function UserTable() {
 
   const handleClose = () => {
     setOpenMenu(false);
+    setIsForMenu(null);
   };
   const [removeFilterFlag, setRemoveFilterFlag] = useState<boolean>(false);
 

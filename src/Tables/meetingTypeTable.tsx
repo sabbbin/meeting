@@ -51,7 +51,7 @@ import ChangeStatusDialog, {
   IChangeStatusDialog,
 } from "../dialog/changeStatusDialog";
 import ChangePasswordDialog from "../dialog/changePasswordDialog copy";
-
+import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
 import useMeetingType from "../hooks/useMeetingType";
 import AddMeetingTypeDialog from "../dialog/addMeetingType";
 
@@ -116,6 +116,7 @@ export default function MeetingTypeTable() {
 
   const handleCloseMenu = () => {
     setOpenMenu(false);
+    setisforMenu(null);
   };
 
   const filterOptions = [
@@ -290,7 +291,7 @@ export default function MeetingTypeTable() {
         },
         {
           label: 'No',
-          onClick: () => alert('Click No')
+          // onClick: () => alert('')
         }
       ]
     })
