@@ -17,6 +17,7 @@ import { IUser } from "../Tables/userTable";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 
+
 const theme = createTheme();
 
 export interface ILogin {
@@ -94,7 +95,7 @@ export default function Login() {
           <Box
             component="img"
             alt="Channakya Software"
-            src="/src/logo/Channakya-logo.png"
+            src="/Channakya-logo.png"
             sx={{
               height: 61,
               width: 263.13,

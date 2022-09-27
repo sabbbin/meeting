@@ -1,6 +1,7 @@
 import { lazy } from "react";
 import { RouteObject } from "react-router-dom";
 import MeetingConclusion from "./pages/meetingConclusion";
+import RequireAuthentication from "./route/withAuthentication";
 
 const Login = lazy(() => import("./pages/login"));
 const BaseLayout = lazy(() => import("./pages/baseLayout"));
@@ -16,7 +17,7 @@ export const AppRoutes: RouteObject[] = [
   },
   {
     path: "/",
-    element: <BaseLayout />,
+    element: <RequireAuthentication><BaseLayout /></RequireAuthentication>,
     children: [
       {
         path: "/userTable",
