@@ -121,16 +121,9 @@ export default function BaseLayout() {
   const [isforMenu, setisforMenu] = useState<IUser | null>();
 
   const UserName = sessionStorage.getItem("username");
-
+  let RoleId = Number(localStorage.getItem('roleId'));
   const sidebarItems: INavItemsProps[] = [
-    {
-      label: "Users",
-      icon: <GroupIcon />,
-      role: [Roles.ADMIN],
-      onClick: () => {
-        navigate("./userTable");
-      },
-    },
+
     {
       label: "Meetings",
       icon: <MeetingRoomIcon />,
@@ -156,6 +149,18 @@ export default function BaseLayout() {
       },
     },
   ];
+  if (RoleId != 4) {
+    sidebarItems.unshift(
+      {
+        label: "Users",
+        icon: <GroupIcon />,
+        role: [Roles.ADMIN],
+        onClick: () => {
+          navigate("./userTable");
+        },
+      },
+    )
+  }
 
   return (
     <Box sx={{ display: "flex" }}>

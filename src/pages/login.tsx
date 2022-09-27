@@ -59,6 +59,7 @@ export default function Login() {
     refreshToken: string;
     userId: string;
     fullname: string;
+    roleId: string;
   }
 
   const LoginMutation = useMutation<ILoginOutput, unknown, ILogin>(
@@ -70,6 +71,7 @@ export default function Login() {
         localStorage.setItem("refresh_toke", data.refreshToken);
         localStorage.setItem("userId", data.userId);
         localStorage.setItem("fullname", data.fullname);
+        localStorage.setItem("roleId", data.roleId);
         navigate("/", {
           replace: true,
         });
