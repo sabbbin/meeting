@@ -186,7 +186,7 @@ export default function AddAgendaDialog({
           variant="standard"
           // value={formik.values.meetTypeId}
           SelectProps={{
-            value: formik.values.meetTypeId ?? userMeetingtypeData[0].meetTypeId ?? 1,
+            value: formik.values.meetTypeId ?? userMeetingtypeData[0]?.meetTypeId ?? 1,
             onChange: formik.handleChange,
           }}
         >
